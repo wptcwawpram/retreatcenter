@@ -1,0 +1,427 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── ENUMS ──────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
+  RECEPTIONIST
+  HOUSEKEEPER
+  ACCOUNTANT
+  MAINTENANCE
+  GUEST
+}
+
+enum RoomStatus {
+  AVAILABLE
+  OCCUPIED
+  DIRTY
+  CLEANING
+  AWAITING_INSPECTION
+  MAINTENANCE
+  BLOCKED
+}
+
+enum RoomType {
+  ONE_IN_ONE
+  TWO_IN_ONE
+  THREE_IN_ONE
+  FOUR_IN_ONE
+  DORMITORY
+  CUSTOM
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELLED
+  NO_SHOW
+  PENDING_SYNC
+}
+
+enum PaymentMethod {
+  CASH
+  MOBILE_MONEY
+  BANK_TRANSFER
+  PAYSTACK
+  CHEQUE
+  MANUAL
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  PARTIALLY_PAID
+}
+
+enum ComplaintCategory {
+  ELECTRICAL
+  PLUMBING
+  FURNITURE
+  MATTRESS
+  INTERNET
+  CLEANING
+  WATER
+  DOORS_LOCKS
+  AC_FANS
+  OTHER
+}
+
+enum ComplaintStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum HousekeepingStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  INSPECTED
+  FAILED_INSPECTION
+}
+
+enum MessageChannel {
+  SMS
+  EMAIL
+  WHATSAPP
+}
+
+enum MessageStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+}
+
+enum SyncStatus {
+  SYNCED
+  PENDING_SYNC
+  SYNC_FAILED
+  CONFLICT
+}
+
+// ─── MODELS ─────────────────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String   @unique
+  firstName String
+  lastName  String
+  phone     String?
+  role      UserRole @default(GUEST)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings                 Booking[]
+  payments                 Payment[]
+  assignedTasks            HousekeepingTask[]      @relation("AssignedHousekeeper")
+  inspectedTasks           HousekeepingTask[]      @relation("TaskInspector")
+  complaints               Complaint[]
+  maintenanceAssigned      MaintenanceAssignment[] @relation("MaintenanceWorker")
+  maintenanceAssignedBy    MaintenanceAssignment[] @relation("MaintenanceAssigner")
+  roomTypeChanges          RoomTypeChange[]
+  messagesSent             MessageLog[]
+  financeRecords           FinanceRecord[]
+  guest                    Guest?
+}
+
+model Building {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  floors      Int      @default(1)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rooms Room[]
+}
+
+model Room {
+  id              String     @id @default(cuid())
+  roomNumber      String     @unique
+  buildingId      String
+  floor           Int        @default(1)
+  defaultRoomType RoomType
+  currentRoomType RoomType
+  status          RoomStatus @default(AVAILABLE)
+  capacity        Int
+  bedCount        Int
+  pricePerNight   Decimal
+  facilities      String[]
+  description     String?
+  notes           String?
+  photos          String[]
+  isActive        Boolean    @default(true)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  building         Building           @relation(fields: [buildingId], references: [id])
+  bookingRooms     BookingRoom[]
+  housekeepingTasks HousekeepingTask[]
+  complaints       Complaint[]
+  roomTypeChanges  RoomTypeChange[]
+  roomInventory    RoomInventory[]
+
+  @@index([status])
+  @@index([buildingId])
+}
+
+model RoomTypeChange {
+  id               String   @id @default(cuid())
+  roomId           String
+  previousType     RoomType
+  newType          RoomType
+  changedById      String
+  reason           String?
+  isTemporary      Boolean  @default(false)
+  relatedBookingId String?
+  createdAt        DateTime @default(now())
+
+  room           Room     @relation(fields: [roomId], references: [id])
+  changedBy      User     @relation(fields: [changedById], references: [id])
+  relatedBooking Booking? @relation(fields: [relatedBookingId], references: [id])
+}
+
+model Guest {
+  id               String   @id @default(cuid())
+  userId           String?  @unique
+  firstName        String
+  lastName         String
+  email            String?
+  phone            String
+  idType           String?
+  idNumber         String?
+  nationality      String?
+  address          String?
+  emergencyContact String?
+  emergencyPhone   String?
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user       User?       @relation(fields: [userId], references: [id])
+  bookings   Booking[]
+  complaints Complaint[]
+}
+
+model Booking {
+  id               String        @id @default(cuid())
+  bookingReference String        @unique
+  guestId          String
+  checkInDate      DateTime
+  checkOutDate     DateTime
+  actualCheckIn    DateTime?
+  actualCheckOut   DateTime?
+  numberOfGuests   Int
+  status           BookingStatus @default(PENDING)
+  totalAmount      Decimal
+  amountPaid       Decimal       @default(0)
+  specialRequests  String?
+  notes            String?
+  bookedById       String
+  syncStatus       SyncStatus    @default(SYNCED)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  guest           Guest            @relation(fields: [guestId], references: [id])
+  bookedBy        User             @relation(fields: [bookedById], references: [id])
+  bookingRooms    BookingRoom[]
+  payments        Payment[]
+  roomTypeChanges RoomTypeChange[]
+
+  @@index([status])
+  @@index([guestId])
+  @@index([checkInDate])
+  @@index([checkOutDate])
+  @@index([bookingReference])
+}
+
+model BookingRoom {
+  id            String  @id @default(cuid())
+  bookingId     String
+  roomId        String
+  pricePerNight Decimal
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  room    Room    @relation(fields: [roomId], references: [id])
+
+  @@unique([bookingId, roomId])
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  bookingId     String
+  amount        Decimal
+  method        PaymentMethod
+  status        PaymentStatus @default(PENDING)
+  reference     String?
+  receiptNumber String?       @unique
+  notes         String?
+  processedById String
+  syncStatus    SyncStatus    @default(SYNCED)
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  booking     Booking @relation(fields: [bookingId], references: [id])
+  processedBy User    @relation(fields: [processedById], references: [id])
+
+  @@index([bookingId])
+  @@index([status])
+}
+
+model HousekeepingTask {
+  id            String             @id @default(cuid())
+  roomId        String
+  assignedToId  String?
+  inspectedById String?
+  status        HousekeepingStatus @default(PENDING)
+  priority      Int                @default(1)
+  notes         String?
+  photos        String[]
+  startedAt     DateTime?
+  completedAt   DateTime?
+  inspectedAt   DateTime?
+  syncStatus    SyncStatus         @default(SYNCED)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  room        Room  @relation(fields: [roomId], references: [id])
+  assignedTo  User? @relation("AssignedHousekeeper", fields: [assignedToId], references: [id])
+  inspectedBy User? @relation("TaskInspector", fields: [inspectedById], references: [id])
+
+  @@index([status])
+  @@index([roomId])
+  @@index([assignedToId])
+}
+
+model Complaint {
+  id           String            @id @default(cuid())
+  roomId       String?
+  guestId      String?
+  reportedById String
+  category     ComplaintCategory
+  status       ComplaintStatus   @default(OPEN)
+  title        String
+  description  String
+  photos       String[]
+  resolution   String?
+  resolvedAt   DateTime?
+  syncStatus   SyncStatus        @default(SYNCED)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  room                   Room?                   @relation(fields: [roomId], references: [id])
+  guest                  Guest?                  @relation(fields: [guestId], references: [id])
+  reportedBy             User                    @relation(fields: [reportedById], references: [id])
+  maintenanceAssignments MaintenanceAssignment[]
+
+  @@index([status])
+  @@index([roomId])
+}
+
+model MaintenanceAssignment {
+  id           String    @id @default(cuid())
+  complaintId  String
+  assignedToId String
+  assignedById String
+  notes        String?
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  complaint  Complaint @relation(fields: [complaintId], references: [id])
+  assignedTo User      @relation("MaintenanceWorker", fields: [assignedToId], references: [id])
+  assignedBy User      @relation("MaintenanceAssigner", fields: [assignedById], references: [id])
+}
+
+model RoomInventory {
+  id        String   @id @default(cuid())
+  roomId    String
+  itemName  String
+  quantity  Int      @default(1)
+  condition String?
+  lastCheck DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  room Room @relation(fields: [roomId], references: [id])
+
+  @@index([roomId])
+}
+
+model FinanceRecord {
+  id           String     @id @default(cuid())
+  type         String
+  category     String
+  amount       Decimal
+  description  String
+  reference    String?
+  date         DateTime
+  recordedById String
+  syncStatus   SyncStatus @default(SYNCED)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  recordedBy User @relation(fields: [recordedById], references: [id])
+
+  @@index([type])
+  @@index([category])
+  @@index([date])
+}
+
+model MessageLog {
+  id               String        @id @default(cuid())
+  channel          MessageChannel
+  recipientId      String?
+  recipientContact String
+  subject          String?
+  content          String
+  status           MessageStatus @default(PENDING)
+  sentAt           DateTime?
+  errorMessage     String?
+  templateId       String?
+  createdAt        DateTime      @default(now())
+
+  recipient User? @relation(fields: [recipientId], references: [id])
+
+  @@index([status])
+  @@index([channel])
+}
+
+model MessageTemplate {
+  id        String         @id @default(cuid())
+  name      String         @unique
+  channel   MessageChannel
+  subject   String?
+  content   String
+  isActive  Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model SystemSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+}
