@@ -33,13 +33,12 @@ const RELATIONSHIP_STATUSES = ["Married", "Single", "In a Relationship", "Divorc
 const ID_TYPES = ["Ghana Card", "Passport", "Driver's License"];
 
 const ROOM_OPTIONS = [
-  { label: "2 IN 1", price: 100 },
-  { label: "4 IN 1", price: 120 },
-  { label: "6 IN 1", price: 140 },
-  { label: "8 IN 1", price: 160 },
-  { label: "Suite without AC", price: 250 },
-  { label: "Suite with AC", price: 650 },
-  { label: "Holy Family Apartment", price: 700 },
+  { label: "2 IN 1", price: 150 },
+  { label: "4 IN 1", price: 200 },
+  { label: "6 IN 1", price: 270 },
+  { label: "Suite (Fan)", price: 350 },
+  { label: "Suite (AC)", price: 750 },
+  { label: "Holy Family Apartment", price: 750 },
 ];
 
 const HALL_OPTIONS = ["Faith Hall", "Pavilion", "Common Room"];

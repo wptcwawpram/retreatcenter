@@ -106,11 +106,12 @@ export const AMENITIES = [
   },
 ] as const;
 
+// Updated effective 1st March 2026
 export const ROOMS = [
   {
     name: "2 in 1 Room",
     slug: "2-in-1",
-    price: 100,
+    price: 150,
     capacity: 2,
     beds: 2,
     description:
@@ -121,7 +122,7 @@ export const ROOMS = [
   {
     name: "4 in 1 Room",
     slug: "4-in-1",
-    price: 120,
+    price: 200,
     capacity: 4,
     beds: 4,
     description:
@@ -132,7 +133,7 @@ export const ROOMS = [
   {
     name: "6 in 1 Room",
     slug: "6-in-1",
-    price: 140,
+    price: 270,
     capacity: 6,
     beds: 6,
     description:
@@ -141,25 +142,15 @@ export const ROOMS = [
     featured: false,
   },
   {
-    name: "8 in 1 Room",
-    slug: "8-in-1",
-    price: 160,
-    capacity: 8,
-    beds: 8,
-    description:
-      "Ideal for big groups, offering 8 beds, washroom, and a built-in desk with seating. Perfect for large ministry delegations.",
-    amenities: ["Washroom", "Built-in Desk", "Seating Area", "Reception Access", "Restaurant Access", "Room Service"],
-    featured: false,
-  },
-  {
-    name: "Executive Suite 1",
-    slug: "executive-suite-1",
-    price: 250,
+    name: "Suite (Fan)",
+    slug: "suite-fan",
+    price: 350,
     capacity: 2,
     beds: 2,
     description:
       "Enjoy a private washroom, mini kitchen, fridge, two beds, and a spacious hall with TV. A premium experience for discerning guests.",
     amenities: [
+      "Fan",
       "Private Washroom",
       "Mini Kitchen",
       "Fridge",
@@ -171,13 +162,13 @@ export const ROOMS = [
     featured: true,
   },
   {
-    name: "Executive Suite 2",
-    slug: "executive-suite-2",
-    price: 650,
+    name: "Suite (AC)",
+    slug: "suite-ac",
+    price: 750,
     capacity: 2,
     beds: 2,
     description:
-      "Our finest accommodation — relax in a spacious air-conditioned suite with washroom, mini kitchen, fridge, two beds, and a hall with TV.",
+      "Our finest suite — relax in a spacious air-conditioned suite with washroom, mini kitchen, fridge, two beds, and a hall with TV.",
     amenities: [
       "Air Conditioning",
       "Private Washroom",
@@ -193,12 +184,13 @@ export const ROOMS = [
   {
     name: "Holy Family Apartment",
     slug: "holy-family-apartment",
-    price: 700,
-    capacity: 4,
-    beds: 2,
+    price: 750,
+    capacity: 6,
+    beds: 3,
     description:
-      "A self-contained family apartment offering the ultimate in comfort and privacy. Ideal for families and VIP guests seeking an extended stay.",
+      "A self-contained three-bedroom family apartment with a furnished kitchen and living room. The ultimate in comfort and privacy for families and VIP guests.",
     amenities: [
+      "3 Bedrooms",
       "Air Conditioning",
       "Private Washroom",
       "Full Kitchen",
@@ -212,20 +204,71 @@ export const ROOMS = [
   },
 ] as const;
 
+// Additional rooms (Queens Hall annex)
+export const QUEENS_HALL_ROOMS = [
+  { name: "2 in 1 (Queens Hall)", price: 160, capacity: 2, beds: 2 },
+  { name: "3 in 1 (Queens Hall)", price: 270, capacity: 3, beds: 3 },
+  { name: "Kitchen (Queens Hall)", price: 220, capacity: 1, beds: 0 },
+  { name: "Hall (Queens Hall)", price: 350, capacity: 50, beds: 0 },
+] as const;
+
+// Updated effective 1st March 2026
 export const HALLS = [
   {
-    name: "Faith Hall",
+    name: "Faith Hall 1 (Conference Hall)",
     description: "Our largest indoor venue for conferences, worship services, seminars, and major gatherings.",
     capacity: "200+",
+    priceWithoutAC: 400,
+    priceWithAC: 550,
   },
   {
     name: "Pavilion",
     description: "Open-air venue ideal for outdoor worship, weddings, and special ceremonies. Available with or without canopy covers.",
     capacity: "300+",
+    priceWithCanopy: 900,
+    priceWithoutCanopy: 700,
   },
   {
-    name: "Common Room",
-    description: "Intimate space perfect for small group meetings, bible studies, and counselling sessions.",
-    capacity: "50+",
+    name: "Kitchen & Dining Hall",
+    description: "Fully equipped kitchen and spacious dining hall for communal meals. Pricing based on group size.",
+    capacity: "55+",
+    pricing: [
+      { label: "55 persons and above", price: 500 },
+      { label: "30 to 50 persons", price: 400 },
+      { label: "Below 20 persons", price: 250 },
+    ],
   },
+] as const;
+
+// Wedding grounds
+export const WEDDING_GROUNDS_PRICE = 4000;
+export const BREAKAGE_DEPOSIT = 500;
+
+// Cafeteria menu - Updated effective 1st March 2026
+export const CAFETERIA = {
+  meals: [
+    "Jollof Rice", "Plain Rice", "Curry Rice", "Irony Rice", "Waakye",
+    "Spaghetti", "Red Red & Fish/Chicken", "Local Jollof Rice",
+  ],
+  mealWithChicken: 60,
+  mealWithFish: 70,
+  ampesi: 70,
+  mealWithSoup: 80,
+  breakfast: 40,
+  breakfastNote: "Tea/Cocoa/Oats/Tom Brown/Koko Porridge with bread, eggs, or baked beans & vegies",
+} as const;
+
+// Laundry services
+export const LAUNDRY = [
+  { item: "Normal Shirt / Jeans / Trousers", price: 15 },
+  { item: "Suit (set)", price: 30 },
+  { item: "Straight Dress / Shirt", price: 15 },
+  { item: "Kaba and Slit", price: 30 },
+] as const;
+
+// Contact numbers (updated)
+export const CONTACT_NUMBERS = [
+  "+233 265 159 131",
+  "+233 546 802 414",
+  "+233 244 590 013",
 ] as const;
