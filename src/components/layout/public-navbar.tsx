@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Church, Phone, Mail } from "lucide-react";
+import { Menu, Church, Phone, Mail, LogIn } from "lucide-react";
 import { NAV_LINKS, SITE } from "@/lib/site-data";
 
 export function PublicNavbar() {
@@ -75,6 +75,16 @@ export function PublicNavbar() {
 
           {/* Right side */}
           <div className="flex items-center gap-2.5">
+            <Link href="/dashboard">
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden sm:inline-flex border-amber-300 text-amber-800 hover:bg-amber-50 gap-1.5"
+              >
+                <LogIn className="h-3.5 w-3.5" />
+                Staff Login
+              </Button>
+            </Link>
             <Link href="/booking">
               <Button
                 size="sm"
@@ -128,8 +138,12 @@ export function PublicNavbar() {
                     </Link>
                   ))}
                   <div className="border-t my-3" />
+                  <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-gray-600 hover:text-amber-900 hover:bg-amber-50 rounded-lg transition-colors">
+                    <LogIn className="h-4 w-4" />
+                    Staff Login
+                  </Link>
                   <Link href="/booking">
-                    <Button className="w-full bg-amber-800 hover:bg-amber-900">
+                    <Button className="w-full bg-amber-800 hover:bg-amber-900 mt-2">
                       Book Now
                     </Button>
                   </Link>

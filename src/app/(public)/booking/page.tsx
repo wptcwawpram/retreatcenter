@@ -1,18 +1,18 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SITE, ROOMS, HALLS } from "@/lib/site-data";
+import { NumberStepper } from "@/components/ui/number-stepper";
+import { SITE } from "@/lib/site-data";
+import { IMAGES } from "@/lib/images";
 import {
   CalendarCheck,
   User,
-  Phone,
-  Mail,
-  MapPin,
   Heart,
   Shield,
   BedDouble,
@@ -21,6 +21,7 @@ import {
   Church,
   Users,
   AlertCircle,
+  ChevronDown,
 } from "lucide-react";
 
 const AGE_RANGES = [
@@ -41,7 +42,17 @@ const ROOM_OPTIONS = [
   { label: "Holy Family Apartment", price: 750 },
 ];
 
-const HALL_OPTIONS = ["Faith Hall", "Pavilion", "Common Room"];
+const HALL_OPTIONS = [
+  { label: "Faith Hall (without AC)", price: 400 },
+  { label: "Faith Hall (with AC)", price: 550 },
+  { label: "Pavilion (with canopy)", price: 900 },
+  { label: "Pavilion (without canopy)", price: 700 },
+  { label: "Kitchen & Dining (55+ persons)", price: 500 },
+  { label: "Kitchen & Dining (30-50 persons)", price: 400 },
+  { label: "Kitchen & Dining (below 20 persons)", price: 250 },
+];
+
+const WEDDING_GROUNDS_PRICE = 4000;
 
 export default function BookingPage() {
   const [bookingType, setBookingType] = useState<"individual" | "group">("individual");
@@ -52,24 +63,69 @@ export default function BookingPage() {
   const [selectedHall, setSelectedHall] = useState("");
   const [hallDays, setHallDays] = useState(1);
   const [needsGrounds, setNeedsGrounds] = useState(false);
-  const [pavilionCanopy, setPavilionCanopy] = useState<"with" | "without">("with");
 
   // Group room quantities
   const [roomQuantities, setRoomQuantities] = useState<Record<string, number>>({});
 
-  const roomPrice = useMemo(() => {
-    if (bookingType === "individual") {
+  // Expandable breakdowns
+  const [showRoomBreakdown, setShowRoomBreakdown] = useState(false);
+  const [showHallBreakdown, setShowHallBreakdown] = useState(false);
+
+  // Room calculation breakdown lines
+  const roomBreakdownLines = useMemo(() => {
+    const lines: { label: string; calc: string; amount: number }[] = [];
+    if (bookingType === "individual" && selectedRoom) {
       const room = ROOM_OPTIONS.find((r) => r.label === selectedRoom);
-      return room ? room.price * nights : 0;
+      if (room) {
+        lines.push({
+          label: room.label,
+          calc: `GH₵${room.price} × ${nights} night${nights > 1 ? "s" : ""}`,
+          amount: room.price * nights,
+        });
+      }
+    } else if (bookingType === "group") {
+      ROOM_OPTIONS.forEach((room) => {
+        const qty = roomQuantities[room.label] || 0;
+        if (qty > 0) {
+          lines.push({
+            label: `${room.label} × ${qty} room${qty > 1 ? "s" : ""}`,
+            calc: `GH₵${room.price} × ${qty} × ${nights} night${nights > 1 ? "s" : ""}`,
+            amount: room.price * qty * nights,
+          });
+        }
+      });
     }
-    // Group: sum all room quantities × price × nights
-    return ROOM_OPTIONS.reduce((total, room) => {
-      const qty = roomQuantities[room.label] || 0;
-      return total + room.price * qty * nights;
-    }, 0);
+    return lines;
   }, [selectedRoom, nights, bookingType, roomQuantities]);
 
-  const hallPrice = needsHall === "yes" ? hallDays * 200 : 0; // placeholder hall pricing
+  const roomPrice = roomBreakdownLines.reduce((s, l) => s + l.amount, 0);
+
+  // Hall calculation
+  const hallOption = HALL_OPTIONS.find((h) => h.label === selectedHall);
+  const hallBasePrice = needsHall === "yes" && hallOption ? hallOption.price : 0;
+  const hallTotal = hallBasePrice * hallDays;
+  const groundsPrice = needsGrounds ? WEDDING_GROUNDS_PRICE : 0;
+  const hallPrice = hallTotal + groundsPrice;
+
+  const hallBreakdownLines = useMemo(() => {
+    const lines: { label: string; calc: string; amount: number }[] = [];
+    if (needsHall === "yes" && hallOption) {
+      lines.push({
+        label: hallOption.label,
+        calc: `GH₵${hallOption.price} × ${hallDays} day${hallDays > 1 ? "s" : ""}`,
+        amount: hallOption.price * hallDays,
+      });
+    }
+    if (needsGrounds) {
+      lines.push({
+        label: "Wedding Grounds",
+        calc: "Fixed rate",
+        amount: WEDDING_GROUNDS_PRICE,
+      });
+    }
+    return lines;
+  }, [needsHall, hallOption, hallDays, needsGrounds]);
+
   const totalAmount = roomPrice + hallPrice;
   const deposit = Math.ceil(totalAmount * 0.3);
   const balance = totalAmount - deposit;
@@ -77,10 +133,19 @@ export default function BookingPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative bg-gradient-to-br from-amber-950 via-amber-900 to-amber-800 text-white py-20 md:py-28">
-        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
+      <section className="relative text-white py-20 md:py-28 overflow-hidden">
+        <Image
+          src={IMAGES.hero.booking}
+          alt="Book your stay at WPTC"
+          fill
+          className="object-cover"
+          priority
+          quality={85}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
+        <div className="absolute inset-0 bg-amber-950/30" />
         <div className="relative container mx-auto px-4 text-center">
-          <Badge variant="outline" className="mb-6 text-amber-200 border-amber-400/30 bg-white/10 px-4 py-1">
+          <Badge variant="outline" className="mb-6 text-amber-200 border-amber-400/30 bg-white/10 px-4 py-1 backdrop-blur-sm">
             <CalendarCheck className="h-3.5 w-3.5 mr-1" />
             Book Your Stay
           </Badge>
@@ -90,7 +155,7 @@ export default function BookingPage() {
               Form
             </span>
           </h1>
-          <p className="text-lg text-amber-100/80 max-w-2xl mx-auto">
+          <p className="text-lg text-white/80 max-w-2xl mx-auto">
             Complete the form below to reserve your room, suite, or hall.
             A 30% deposit is required to confirm your booking.
           </p>
@@ -317,17 +382,13 @@ export default function BookingPage() {
                                 <p className="text-sm font-medium text-gray-900">{r.label}</p>
                                 <p className="text-xs text-gray-400">GH₵{r.price}/night</p>
                               </div>
-                              <Input
-                                type="number"
-                                min={0}
+                              <NumberStepper
                                 value={roomQuantities[r.label] || 0}
-                                onChange={(e) =>
-                                  setRoomQuantities((prev) => ({
-                                    ...prev,
-                                    [r.label]: Math.max(0, parseInt(e.target.value) || 0),
-                                  }))
+                                onChange={(val) =>
+                                  setRoomQuantities((prev) => ({ ...prev, [r.label]: val }))
                                 }
-                                className="w-20 h-9 text-center border-gray-200 focus-visible:ring-amber-500"
+                                min={0}
+                                max={20}
                               />
                             </div>
                           ))}
@@ -336,15 +397,8 @@ export default function BookingPage() {
                     )}
 
                     <div className="space-y-2">
-                      <Label htmlFor="nights">Number of Nights</Label>
-                      <Input
-                        id="nights"
-                        type="number"
-                        min={1}
-                        value={nights}
-                        onChange={(e) => setNights(Math.max(1, parseInt(e.target.value) || 1))}
-                        className="w-32 border-gray-200 focus-visible:ring-amber-500"
-                      />
+                      <Label>Number of Nights</Label>
+                      <NumberStepper value={nights} onChange={setNights} min={1} max={90} />
                     </div>
                   </div>
                 )}
@@ -383,7 +437,7 @@ export default function BookingPage() {
                 {needsHall === "yes" && (
                   <div className="space-y-5">
                     <div className="space-y-2">
-                      <Label htmlFor="hall">Select Hall</Label>
+                      <Label htmlFor="hall">Select Hall / Venue</Label>
                       <select
                         id="hall"
                         value={selectedHall}
@@ -392,43 +446,16 @@ export default function BookingPage() {
                       >
                         <option value="">Choose a hall</option>
                         {HALL_OPTIONS.map((h) => (
-                          <option key={h} value={h}>{h}</option>
+                          <option key={h.label} value={h.label}>
+                            {h.label} — GH₵{h.price}/day
+                          </option>
                         ))}
                       </select>
                     </div>
 
-                    {selectedHall === "Pavilion" && (
-                      <div className="space-y-2">
-                        <Label>Pavilion Canopy</Label>
-                        <div className="flex gap-4">
-                          {(["with", "without"] as const).map((opt) => (
-                            <button
-                              key={opt}
-                              type="button"
-                              onClick={() => setPavilionCanopy(opt)}
-                              className={`px-5 py-2 rounded-xl text-sm font-medium border-2 transition-all ${
-                                pavilionCanopy === opt
-                                  ? "border-amber-500 bg-amber-50 text-amber-900"
-                                  : "border-gray-200 text-gray-500 hover:border-amber-300"
-                              }`}
-                            >
-                              {opt === "with" ? "With Canopy" : "Without Canopy"}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
                     <div className="space-y-2">
-                      <Label htmlFor="hallDays">Duration of Hall Usage (days)</Label>
-                      <Input
-                        id="hallDays"
-                        type="number"
-                        min={1}
-                        value={hallDays}
-                        onChange={(e) => setHallDays(Math.max(1, parseInt(e.target.value) || 1))}
-                        className="w-32 border-gray-200 focus-visible:ring-amber-500"
-                      />
+                      <Label>Duration of Hall Usage (days)</Label>
+                      <NumberStepper value={hallDays} onChange={setHallDays} min={1} max={30} />
                     </div>
                   </div>
                 )}
@@ -443,7 +470,7 @@ export default function BookingPage() {
                     className="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
                   />
                   <Label htmlFor="weddingGrounds" className="text-sm text-gray-700 cursor-pointer">
-                    I need the grounds for a Wedding Ceremony
+                    I need the grounds for a Wedding Ceremony (GH₵{WEDDING_GROUNDS_PRICE.toLocaleString()})
                   </Label>
                 </div>
               </CardContent>
@@ -488,15 +515,68 @@ export default function BookingPage() {
                   Payment Summary
                 </h2>
 
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center justify-between py-2 border-b border-dashed border-gray-200">
-                    <span className="text-sm text-gray-600">Total Room Amount</span>
-                    <span className="text-sm font-semibold text-gray-900">GH₵{roomPrice.toFixed(2)}</span>
+                <div className="space-y-1 mb-6">
+                  {/* Room Amount — expandable */}
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => roomBreakdownLines.length > 0 && setShowRoomBreakdown(!showRoomBreakdown)}
+                      className="flex items-center justify-between w-full py-3 border-b border-dashed border-gray-200 group"
+                    >
+                      <span className="text-sm text-gray-600 flex items-center gap-1.5">
+                        Total Room Amount
+                        {roomBreakdownLines.length > 0 && (
+                          <ChevronDown className={`h-3.5 w-3.5 text-amber-600 transition-transform ${showRoomBreakdown ? "rotate-180" : ""}`} />
+                        )}
+                      </span>
+                      <span className="text-sm font-semibold text-gray-900">GH₵{roomPrice.toFixed(2)}</span>
+                    </button>
+                    {showRoomBreakdown && roomBreakdownLines.length > 0 && (
+                      <div className="ml-4 py-2 space-y-1.5 border-l-2 border-amber-200 pl-4 my-2">
+                        {roomBreakdownLines.map((line, i) => (
+                          <div key={i} className="flex items-center justify-between text-xs">
+                            <div>
+                              <span className="font-medium text-gray-700">{line.label}</span>
+                              <span className="text-gray-400 ml-2">{line.calc}</span>
+                            </div>
+                            <span className="font-semibold text-gray-700">= GH₵{line.amount.toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center justify-between py-2 border-b border-dashed border-gray-200">
-                    <span className="text-sm text-gray-600">Halls / Grounds Amount</span>
-                    <span className="text-sm font-semibold text-gray-900">GH₵{hallPrice.toFixed(2)}</span>
+
+                  {/* Hall Amount — expandable */}
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => hallBreakdownLines.length > 0 && setShowHallBreakdown(!showHallBreakdown)}
+                      className="flex items-center justify-between w-full py-3 border-b border-dashed border-gray-200 group"
+                    >
+                      <span className="text-sm text-gray-600 flex items-center gap-1.5">
+                        Halls / Grounds Amount
+                        {hallBreakdownLines.length > 0 && (
+                          <ChevronDown className={`h-3.5 w-3.5 text-amber-600 transition-transform ${showHallBreakdown ? "rotate-180" : ""}`} />
+                        )}
+                      </span>
+                      <span className="text-sm font-semibold text-gray-900">GH₵{hallPrice.toFixed(2)}</span>
+                    </button>
+                    {showHallBreakdown && hallBreakdownLines.length > 0 && (
+                      <div className="ml-4 py-2 space-y-1.5 border-l-2 border-amber-200 pl-4 my-2">
+                        {hallBreakdownLines.map((line, i) => (
+                          <div key={i} className="flex items-center justify-between text-xs">
+                            <div>
+                              <span className="font-medium text-gray-700">{line.label}</span>
+                              <span className="text-gray-400 ml-2">{line.calc}</span>
+                            </div>
+                            <span className="font-semibold text-gray-700">= GH₵{line.amount.toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
+
+                  {/* Totals */}
                   <div className="flex items-center justify-between py-3 border-b-2 border-amber-300">
                     <span className="text-base font-bold text-gray-900">Overall Total</span>
                     <span className="text-lg font-bold text-amber-800">GH₵{totalAmount.toFixed(2)}</span>
