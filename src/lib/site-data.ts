@@ -204,12 +204,12 @@ export const ROOMS = [
   },
 ] as const;
 
-// Additional rooms (Queens Hall annex)
-export const QUEENS_HALL_ROOMS = [
-  { name: "2 in 1 (Queens Hall)", price: 160, capacity: 2, beds: 2 },
-  { name: "3 in 1 (Queens Hall)", price: 270, capacity: 3, beds: 3 },
-  { name: "Kitchen (Queens Hall)", price: 220, capacity: 1, beds: 0 },
-  { name: "Hall (Queens Hall)", price: 350, capacity: 50, beds: 0 },
+// Additional rooms & facilities
+export const ADDITIONAL_ROOMS = [
+  { name: "2 in 1 (Additional)", price: 160, capacity: 2, beds: 2 },
+  { name: "3 in 1 (Additional)", price: 270, capacity: 3, beds: 3 },
+  { name: "Kitchen", price: 220, capacity: 1, beds: 0 },
+  { name: "Hall", price: 350, capacity: 50, beds: 0 },
 ] as const;
 
 // Updated effective 1st March 2026
