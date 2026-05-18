@@ -1,8 +1,10 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SITE } from "@/lib/site-data";
+import { IMAGES } from "@/lib/images";
 import {
   ArrowRight,
   CheckCircle,
@@ -19,6 +21,7 @@ const PACKAGES = [
     price: "Contact us",
     duration: "1 day",
     capacity: "10 - 200+",
+    image: IMAGES.venues.faithHall,
     includes: [
       "Use of Faith Hall or Pavilion",
       "PA system and projector",
@@ -34,6 +37,7 @@ const PACKAGES = [
     price: "Contact us",
     duration: "2 - 3 days",
     capacity: "10 - 100+",
+    image: IMAGES.lifestyle.prayer,
     includes: [
       "Accommodation (room of choice)",
       "Use of conference hall",
@@ -51,6 +55,7 @@ const PACKAGES = [
     price: "Contact us",
     duration: "4 - 7 days",
     capacity: "5 - 50+",
+    image: IMAGES.lifestyle.fellowship,
     includes: [
       "Accommodation (room of choice)",
       "Full board meals",
@@ -69,6 +74,7 @@ const PACKAGES = [
     price: "Contact us",
     duration: "2 - 5 days",
     capacity: "2 - 10",
+    image: IMAGES.lifestyle.family,
     includes: [
       "Executive Suite or Holy Family Apartment",
       "Full board meals",
@@ -85,10 +91,19 @@ export default function PackagesPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative bg-gradient-to-br from-amber-950 via-amber-900 to-amber-800 text-white py-20 md:py-28">
-        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
+      <section className="relative text-white py-28 md:py-36 overflow-hidden">
+        <Image
+          src={IMAGES.hero.packages}
+          alt="WPTC Retreat Packages"
+          fill
+          className="object-cover"
+          priority
+          quality={85}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
+        <div className="absolute inset-0 bg-amber-950/30" />
         <div className="relative container mx-auto px-4 text-center">
-          <Badge variant="outline" className="mb-6 text-amber-200 border-amber-400/30 bg-white/10 px-4 py-1">
+          <Badge variant="outline" className="mb-6 text-amber-200 border-amber-400/30 bg-white/10 px-4 py-1 backdrop-blur-sm">
             Packages
           </Badge>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
@@ -97,7 +112,7 @@ export default function PackagesPage() {
               Packages
             </span>
           </h1>
-          <p className="text-lg text-amber-100/80 max-w-2xl mx-auto">
+          <p className="text-lg text-white/80 max-w-2xl mx-auto">
             Customized packages for churches, organisations, families, and
             individuals. We tailor every retreat to your needs.
           </p>
@@ -126,16 +141,23 @@ export default function PackagesPage() {
                   </div>
                 )}
 
-                <div className="h-2 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400" />
+                {/* Package image */}
+                <div className="relative h-48 overflow-hidden">
+                  <Image
+                    src={pkg.image}
+                    alt={pkg.name}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                  <div className="absolute bottom-3 left-3">
+                    <h3 className="text-xl font-bold text-white">{pkg.name}</h3>
+                    <p className="text-sm text-amber-200">{pkg.subtitle}</p>
+                  </div>
+                </div>
 
                 <CardContent className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-1">
-                    {pkg.name}
-                  </h3>
-                  <p className="text-sm text-amber-700 font-medium mb-4">
-                    {pkg.subtitle}
-                  </p>
-
                   <div className="flex items-center gap-4 mb-5 text-sm text-gray-500">
                     <span className="flex items-center gap-1.5">
                       <Church className="h-4 w-4 text-amber-600" />
@@ -174,16 +196,27 @@ export default function PackagesPage() {
 
           {/* Custom package CTA */}
           <div className="max-w-2xl mx-auto mt-16 text-center">
-            <Card className="border-0 ring-0 shadow-lg bg-gradient-to-br from-amber-50 to-amber-100/30">
-              <CardContent className="p-8">
-                <h3 className="text-xl font-bold text-gray-900 mb-3">
-                  Need a Custom Package?
-                </h3>
-                <p className="text-gray-500 mb-6">
-                  We can create a tailored retreat package to match your
-                  group size, budget, and specific requirements. Contact us
-                  to discuss your needs.
-                </p>
+            <Card className="border-0 ring-0 shadow-lg overflow-hidden">
+              <div className="relative h-48 overflow-hidden">
+                <Image
+                  src={IMAGES.lifestyle.wedding}
+                  alt="Special events at WPTC"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 672px"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-amber-950/90 via-amber-950/50 to-amber-950/20" />
+                <div className="absolute bottom-0 left-0 right-0 p-8 text-center">
+                  <h3 className="text-xl font-bold text-white mb-2">
+                    Need a Custom Package?
+                  </h3>
+                  <p className="text-amber-100/80 text-sm">
+                    We can create a tailored retreat package to match your
+                    group size, budget, and specific requirements.
+                  </p>
+                </div>
+              </div>
+              <CardContent className="p-6">
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                   <Link href="/contact">
                     <Button className="bg-amber-800 hover:bg-amber-900 text-white gap-1.5">

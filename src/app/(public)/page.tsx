@@ -1,8 +1,10 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SITE, SERVICES, ROOMS, AMENITIES, HALLS } from "@/lib/site-data";
+import { IMAGES } from "@/lib/images";
 import {
   Church,
   ArrowRight,
@@ -48,13 +50,20 @@ export default function HomePage() {
   return (
     <>
       {/* ═══════════════════ HERO ═══════════════════ */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-amber-950 via-amber-900 to-amber-800 text-white">
-        {/* decorative pattern */}
-        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
-
-        {/* glowing orbs */}
-        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-amber-500/10 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-amber-400/10 blur-3xl" />
+      <section className="relative overflow-hidden min-h-[90vh] flex items-center text-white">
+        {/* background image */}
+        <Image
+          src={IMAGES.hero.home}
+          alt="Warriors Prayer Tower Complex"
+          fill
+          className="object-cover"
+          priority
+          quality={85}
+        />
+        {/* dark overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70" />
+        {/* amber tint */}
+        <div className="absolute inset-0 bg-amber-950/30" />
 
         <div className="relative container mx-auto px-4 py-24 md:py-36 lg:py-44">
           <div className="max-w-4xl mx-auto text-center">
@@ -72,7 +81,7 @@ export default function HomePage() {
               </span>
             </h1>
 
-            <p className="text-lg md:text-xl text-amber-100/80 max-w-2xl mx-auto mb-10 leading-relaxed">
+            <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-10 leading-relaxed">
               {SITE.heroText}
             </p>
 
@@ -98,7 +107,7 @@ export default function HomePage() {
             </div>
 
             {/* trust indicators */}
-            <div className="flex flex-wrap items-center justify-center gap-6 mt-12 text-sm text-amber-200/70">
+            <div className="flex flex-wrap items-center justify-center gap-6 mt-12 text-sm text-white/70">
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-amber-400" />
                 Peaceful & Secure
@@ -139,7 +148,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {SERVICES.map((service, i) => {
+            {SERVICES.map((service) => {
               const Icon = ICON_MAP[service.icon] ?? Church;
               return (
                 <Card
@@ -198,8 +207,17 @@ export default function HomePage() {
                   </div>
                 )}
 
-                {/* color header bar */}
-                <div className="h-2 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400" />
+                {/* Room image */}
+                <div className="relative h-48 overflow-hidden">
+                  <Image
+                    src={IMAGES.rooms[room.slug as keyof typeof IMAGES.rooms]}
+                    alt={room.name}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                </div>
 
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
@@ -281,8 +299,15 @@ export default function HomePage() {
       </section>
 
       {/* ═══════════════════ STATS ═══════════════════ */}
-      <section className="py-16 md:py-20 bg-gradient-to-r from-amber-900 via-amber-800 to-amber-900 text-white relative overflow-hidden">
-        <div className="absolute inset-0 opacity-5" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23fff' fill-opacity='1' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E\")" }} />
+      <section className="relative py-16 md:py-20 text-white overflow-hidden">
+        <Image
+          src={IMAGES.lifestyle.prayer}
+          alt="Worship and prayer"
+          fill
+          className="object-cover"
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-amber-950/85" />
         <div className="relative container mx-auto px-4">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             {[
@@ -361,41 +386,61 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {HALLS.map((hall) => (
-              <Card
-                key={hall.name}
-                className="group border-0 ring-0 shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden"
-              >
-                <div className="h-2 bg-gradient-to-r from-amber-700 to-amber-500" />
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-gray-900">
-                      {hall.name}
-                    </h3>
-                    <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-0">
+            {HALLS.map((hall, i) => {
+              const venueImages = [IMAGES.venues.faithHall, IMAGES.venues.pavilion, IMAGES.venues.diningHall];
+              return (
+                <Card
+                  key={hall.name}
+                  className="group border-0 ring-0 shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden"
+                >
+                  {/* Venue image */}
+                  <div className="relative h-48 overflow-hidden">
+                    <Image
+                      src={venueImages[i] ?? venueImages[0]}
+                      alt={hall.name}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                    <Badge className="absolute bottom-3 left-3 bg-white/90 text-amber-800 border-0 backdrop-blur-sm">
                       <Users className="h-3 w-3 mr-1" />
                       {hall.capacity}
                     </Badge>
                   </div>
-                  <p className="text-sm text-gray-500 leading-relaxed">
-                    {hall.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
+
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">
+                      {hall.name}
+                    </h3>
+                    <p className="text-sm text-gray-500 leading-relaxed">
+                      {hall.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* ═══════════════════ TESTIMONIAL / TAGLINE ═══════════════════ */}
-      <section className="py-20 md:py-28 bg-white">
-        <div className="container mx-auto px-4">
+      <section className="relative py-20 md:py-28 text-white overflow-hidden">
+        <Image
+          src={IMAGES.lifestyle.fellowship}
+          alt="Fellowship at WPTC"
+          fill
+          className="object-cover"
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-amber-950/80" />
+        <div className="relative container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
             <Quote className="h-12 w-12 text-amber-300 mx-auto mb-6" />
-            <blockquote className="text-2xl md:text-3xl font-medium text-gray-900 leading-snug mb-6">
+            <blockquote className="text-2xl md:text-3xl font-medium leading-snug mb-6">
               &ldquo;{SITE.tagline}&rdquo;
             </blockquote>
-            <p className="text-gray-500 text-lg">
+            <p className="text-amber-200/80 text-lg">
               {SITE.name} &mdash; {SITE.address}
             </p>
           </div>
@@ -403,9 +448,15 @@ export default function HomePage() {
       </section>
 
       {/* ═══════════════════ CTA ═══════════════════ */}
-      <section className="py-20 md:py-28 bg-gradient-to-br from-amber-900 via-amber-800 to-amber-950 text-white relative overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-amber-500/10 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full bg-amber-400/10 blur-3xl" />
+      <section className="relative py-20 md:py-28 text-white overflow-hidden">
+        <Image
+          src={IMAGES.hero.about}
+          alt="Warriors Prayer Tower Complex building"
+          fill
+          className="object-cover"
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-950/90 via-amber-900/85 to-amber-950/90" />
 
         <div className="relative container mx-auto px-4 text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-sm mb-8">

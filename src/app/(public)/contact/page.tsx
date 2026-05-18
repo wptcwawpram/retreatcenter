@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SITE } from "@/lib/site-data";
+import { IMAGES } from "@/lib/images";
 import { Phone, Mail, MapPin, Clock, Send } from "lucide-react";
 
 const CONTACT_INFO = [
@@ -38,10 +40,19 @@ export default function ContactPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative bg-gradient-to-br from-amber-950 via-amber-900 to-amber-800 text-white py-20 md:py-28">
-        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
+      <section className="relative text-white py-28 md:py-36 overflow-hidden">
+        <Image
+          src={IMAGES.hero.contact}
+          alt="Contact WPTC"
+          fill
+          className="object-cover"
+          priority
+          quality={85}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
+        <div className="absolute inset-0 bg-amber-950/30" />
         <div className="relative container mx-auto px-4 text-center">
-          <Badge variant="outline" className="mb-6 text-amber-200 border-amber-400/30 bg-white/10 px-4 py-1">
+          <Badge variant="outline" className="mb-6 text-amber-200 border-amber-400/30 bg-white/10 px-4 py-1 backdrop-blur-sm">
             Get in Touch
           </Badge>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
@@ -50,7 +61,7 @@ export default function ContactPage() {
               Us
             </span>
           </h1>
-          <p className="text-lg text-amber-100/80 max-w-2xl mx-auto">
+          <p className="text-lg text-white/80 max-w-2xl mx-auto">
             Have a question or ready to plan your retreat? Reach out to us and
             we&rsquo;ll be happy to help.
           </p>
@@ -97,18 +108,21 @@ export default function ContactPage() {
                 ))}
               </div>
 
-              {/* Map placeholder */}
-              <div className="mt-8 rounded-2xl overflow-hidden border border-gray-200">
-                <div className="aspect-[4/3] bg-gradient-to-br from-amber-50 to-amber-100/50 flex items-center justify-center">
-                  <div className="text-center">
-                    <MapPin className="h-8 w-8 text-amber-400 mx-auto mb-2" />
-                    <p className="text-sm text-amber-700 font-medium">
-                      Atwima Boko, Kumasi
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      Map integration coming soon
-                    </p>
-                  </div>
+              {/* Image instead of map placeholder */}
+              <div className="mt-8 relative h-[250px] rounded-2xl overflow-hidden shadow-md">
+                <Image
+                  src={IMAGES.hero.home}
+                  alt="Warriors Prayer Tower Complex"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 40vw"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-amber-950/60 to-transparent" />
+                <div className="absolute bottom-4 left-4">
+                  <p className="text-sm font-semibold text-white">
+                    {SITE.address}
+                  </p>
+                  <p className="text-xs text-amber-200/80">Ghana, West Africa</p>
                 </div>
               </div>
             </div>

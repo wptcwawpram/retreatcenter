@@ -1,8 +1,10 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ROOMS, HALLS } from "@/lib/site-data";
+import { IMAGES } from "@/lib/images";
 import {
   BedDouble,
   Users,
@@ -15,10 +17,19 @@ export default function RoomsPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative bg-gradient-to-br from-amber-950 via-amber-900 to-amber-800 text-white py-20 md:py-28">
-        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
+      <section className="relative text-white py-28 md:py-36 overflow-hidden">
+        <Image
+          src={IMAGES.hero.rooms}
+          alt="Elegant hotel room"
+          fill
+          className="object-cover"
+          priority
+          quality={85}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
+        <div className="absolute inset-0 bg-amber-950/30" />
         <div className="relative container mx-auto px-4 text-center">
-          <Badge variant="outline" className="mb-6 text-amber-200 border-amber-400/30 bg-white/10 px-4 py-1">
+          <Badge variant="outline" className="mb-6 text-amber-200 border-amber-400/30 bg-white/10 px-4 py-1 backdrop-blur-sm">
             Accommodation
           </Badge>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
@@ -27,7 +38,7 @@ export default function RoomsPage() {
               Rooms & Suites
             </span>
           </h1>
-          <p className="text-lg text-amber-100/80 max-w-2xl mx-auto">
+          <p className="text-lg text-white/80 max-w-2xl mx-auto">
             From affordable shared rooms to premium executive suites &mdash; we have
             the perfect accommodation for every guest and budget.
           </p>
@@ -56,7 +67,23 @@ export default function RoomsPage() {
                   </div>
                 )}
 
-                <div className="h-2 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400" />
+                {/* Room image */}
+                <div className="relative h-56 overflow-hidden">
+                  <Image
+                    src={IMAGES.rooms[room.slug as keyof typeof IMAGES.rooms]}
+                    alt={room.name}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                  <div className="absolute bottom-3 left-3">
+                    <span className="inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-sm text-amber-800 text-sm font-bold px-3 py-1.5 rounded-lg">
+                      GH₵{room.price}
+                      <span className="text-xs font-normal text-gray-500">/ night</span>
+                    </span>
+                  </div>
+                </div>
 
                 <CardContent className="p-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-amber-800 transition-colors">
@@ -88,15 +115,9 @@ export default function RoomsPage() {
                     ))}
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t">
-                    <div>
-                      <span className="text-3xl font-bold text-amber-800">
-                        GH₵{room.price}
-                      </span>
-                      <span className="text-sm text-gray-400 ml-1">/ night</span>
-                    </div>
-                    <Link href="/booking">
-                      <Button className="bg-amber-800 hover:bg-amber-900 text-white gap-1.5">
+                  <div className="pt-4 border-t">
+                    <Link href="/booking" className="block">
+                      <Button className="w-full bg-amber-800 hover:bg-amber-900 text-white gap-1.5">
                         Book Now
                         <ArrowRight className="h-4 w-4" />
                       </Button>
@@ -122,23 +143,34 @@ export default function RoomsPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {HALLS.map((hall) => (
-              <Card key={hall.name} className="border-0 ring-0 shadow-md overflow-hidden">
-                <div className="h-2 bg-gradient-to-r from-amber-700 to-amber-500" />
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-gray-900">{hall.name}</h3>
-                    <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-0">
+            {HALLS.map((hall, i) => {
+              const venueImages = [IMAGES.venues.faithHall, IMAGES.venues.pavilion, IMAGES.venues.diningHall];
+              return (
+                <Card key={hall.name} className="group border-0 ring-0 shadow-md overflow-hidden hover:shadow-xl transition-all duration-300">
+                  {/* Venue image */}
+                  <div className="relative h-48 overflow-hidden">
+                    <Image
+                      src={venueImages[i] ?? venueImages[0]}
+                      alt={hall.name}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                    <Badge className="absolute bottom-3 left-3 bg-white/90 text-amber-800 border-0 backdrop-blur-sm">
                       <Users className="h-3 w-3 mr-1" />
                       {hall.capacity}
                     </Badge>
                   </div>
-                  <p className="text-sm text-gray-500 leading-relaxed">
-                    {hall.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">{hall.name}</h3>
+                    <p className="text-sm text-gray-500 leading-relaxed">
+                      {hall.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </section>

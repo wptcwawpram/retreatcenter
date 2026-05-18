@@ -1,5 +1,7 @@
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { AMENITIES } from "@/lib/site-data";
+import { IMAGES } from "@/lib/images";
 import {
   BedDouble,
   TreePine,
@@ -22,14 +24,34 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Tent,
 };
 
+const AMENITY_IMAGES: Record<string, string> = {
+  Accommodation: IMAGES.amenities.accommodation,
+  "Serene Environment": IMAGES.amenities.serene,
+  Kitchen: IMAGES.amenities.kitchen,
+  "Dining Area": IMAGES.amenities.dining,
+  Store: IMAGES.amenities.store,
+  "Common Room": IMAGES.amenities.commonRoom,
+  "Faith Hall": IMAGES.amenities.faithHall,
+  Pavilion: IMAGES.amenities.pavilion,
+};
+
 export default function AmenitiesPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative bg-gradient-to-br from-amber-950 via-amber-900 to-amber-800 text-white py-20 md:py-28">
-        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
+      <section className="relative text-white py-28 md:py-36 overflow-hidden">
+        <Image
+          src={IMAGES.hero.amenities}
+          alt="Resort facilities"
+          fill
+          className="object-cover"
+          priority
+          quality={85}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
+        <div className="absolute inset-0 bg-amber-950/30" />
         <div className="relative container mx-auto px-4 text-center">
-          <Badge variant="outline" className="mb-6 text-amber-200 border-amber-400/30 bg-white/10 px-4 py-1">
+          <Badge variant="outline" className="mb-6 text-amber-200 border-amber-400/30 bg-white/10 px-4 py-1 backdrop-blur-sm">
             Facilities
           </Badge>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
@@ -38,34 +60,50 @@ export default function AmenitiesPage() {
               Facilities
             </span>
           </h1>
-          <p className="text-lg text-amber-100/80 max-w-2xl mx-auto">
+          <p className="text-lg text-white/80 max-w-2xl mx-auto">
             Modern facilities set within a peaceful, lush environment designed
             for your comfort and spiritual renewal.
           </p>
         </div>
       </section>
 
-      {/* Amenities Grid */}
+      {/* Amenities Grid — cards with images */}
       <section className="py-20 md:py-28 bg-white">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {AMENITIES.map((amenity) => {
               const Icon = ICON_MAP[amenity.icon] ?? Church;
+              const imgSrc = AMENITY_IMAGES[amenity.title];
               return (
                 <div
                   key={amenity.title}
-                  className="group flex items-start gap-5 p-6 rounded-2xl border border-gray-100 hover:border-amber-200 hover:bg-amber-50/30 transition-all duration-300"
+                  className="group flex flex-col sm:flex-row overflow-hidden rounded-2xl border border-gray-100 hover:border-amber-200 hover:shadow-lg transition-all duration-300"
                 >
-                  <div className="shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-100 to-amber-200/50 flex items-center justify-center text-amber-800 group-hover:scale-110 transition-transform">
-                    <Icon className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      {amenity.title}
-                    </h3>
-                    <p className="text-gray-500 leading-relaxed">
-                      {amenity.description}
-                    </p>
+                  {/* Image */}
+                  {imgSrc && (
+                    <div className="relative w-full sm:w-48 h-48 sm:h-auto shrink-0 overflow-hidden">
+                      <Image
+                        src={imgSrc}
+                        alt={amenity.title}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        sizes="(max-width: 640px) 100vw, 200px"
+                      />
+                    </div>
+                  )}
+                  {/* Content */}
+                  <div className="flex items-start gap-4 p-6">
+                    <div className="shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-amber-100 to-amber-200/50 flex items-center justify-center text-amber-800 group-hover:scale-110 transition-transform">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        {amenity.title}
+                      </h3>
+                      <p className="text-gray-500 leading-relaxed text-sm">
+                        {amenity.description}
+                      </p>
+                    </div>
                   </div>
                 </div>
               );

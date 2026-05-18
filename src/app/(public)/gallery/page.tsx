@@ -1,38 +1,38 @@
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Camera, ImageIcon } from "lucide-react";
+import { IMAGES } from "@/lib/images";
+import { Camera } from "lucide-react";
 
-/* Placeholder gallery items — will be replaced with real images from CMS / uploads */
 const GALLERY_SECTIONS = [
   {
     title: "Accommodation",
     description: "Our comfortable rooms and suites",
-    count: 6,
+    images: IMAGES.gallery.accommodation,
   },
   {
     title: "Faith Hall & Pavilion",
     description: "Conference and worship venues",
-    count: 4,
+    images: IMAGES.gallery.venues,
   },
   {
     title: "Grounds & Gardens",
     description: "Our serene, lush environment",
-    count: 5,
+    images: IMAGES.gallery.grounds,
   },
   {
     title: "Dining & Kitchen",
     description: "Where meals and fellowship happen",
-    count: 3,
+    images: IMAGES.gallery.dining,
   },
   {
     title: "Events & Retreats",
     description: "Memorable moments at WPTC",
-    count: 4,
+    images: IMAGES.gallery.events,
   },
   {
     title: "The Complex",
     description: "Aerial and exterior views",
-    count: 3,
+    images: IMAGES.gallery.exterior,
   },
 ];
 
@@ -40,10 +40,19 @@ export default function GalleryPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative bg-gradient-to-br from-amber-950 via-amber-900 to-amber-800 text-white py-20 md:py-28">
-        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
+      <section className="relative text-white py-28 md:py-36 overflow-hidden">
+        <Image
+          src={IMAGES.hero.gallery}
+          alt="WPTC Gallery"
+          fill
+          className="object-cover"
+          priority
+          quality={85}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
+        <div className="absolute inset-0 bg-amber-950/30" />
         <div className="relative container mx-auto px-4 text-center">
-          <Badge variant="outline" className="mb-6 text-amber-200 border-amber-400/30 bg-white/10 px-4 py-1">
+          <Badge variant="outline" className="mb-6 text-amber-200 border-amber-400/30 bg-white/10 px-4 py-1 backdrop-blur-sm">
             <Camera className="h-3.5 w-3.5 mr-1" />
             Gallery
           </Badge>
@@ -53,47 +62,47 @@ export default function GalleryPage() {
               Gallery
             </span>
           </h1>
-          <p className="text-lg text-amber-100/80 max-w-2xl mx-auto">
+          <p className="text-lg text-white/80 max-w-2xl mx-auto">
             Take a visual tour of Warriors Prayer Tower Complex and see what
             awaits you.
           </p>
         </div>
       </section>
 
-      {/* Gallery Grid */}
+      {/* Gallery Sections */}
       <section className="py-20 md:py-28 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <p className="text-gray-500 max-w-xl mx-auto text-lg">
-              Photos coming soon. We are currently updating our gallery with
-              the latest images of our facilities.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="max-w-6xl mx-auto space-y-20">
             {GALLERY_SECTIONS.map((section) => (
-              <Card
-                key={section.title}
-                className="group border-0 ring-0 shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden"
-              >
-                {/* placeholder image area */}
-                <div className="aspect-[4/3] bg-gradient-to-br from-amber-100 to-amber-200/30 flex items-center justify-center">
-                  <div className="text-center">
-                    <ImageIcon className="h-10 w-10 text-amber-400 mx-auto mb-2" />
-                    <p className="text-xs text-amber-600 font-medium">
-                      {section.count} photos
-                    </p>
-                  </div>
-                </div>
-                <CardContent className="p-5">
-                  <h3 className="font-semibold text-gray-900 mb-1">
+              <div key={section.title}>
+                <div className="mb-8">
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
                     {section.title}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {section.description}
-                  </p>
-                </CardContent>
-              </Card>
+                  </h2>
+                  <p className="text-gray-500">{section.description}</p>
+                </div>
+
+                {/* Masonry-style grid */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {section.images.map((src, i) => (
+                    <div
+                      key={i}
+                      className={`group relative overflow-hidden rounded-xl shadow-md hover:shadow-xl transition-all duration-300 ${
+                        i === 0 ? "col-span-2 row-span-2 h-[300px] md:h-[400px]" : "h-[200px]"
+                      }`}
+                    >
+                      <Image
+                        src={src}
+                        alt={`${section.title} - Photo ${i + 1}`}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-700"
+                        sizes={i === 0 ? "(max-width: 768px) 100vw, 66vw" : "(max-width: 768px) 50vw, 33vw"}
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+                    </div>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </div>
