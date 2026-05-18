@@ -97,9 +97,8 @@ export default function HomePage() {
               </Link>
               <Link href="/rooms">
                 <Button
-                  variant="outline"
                   size="lg"
-                  className="min-w-[200px] border-white/30 text-white hover:bg-white/10 backdrop-blur-sm text-base h-12"
+                  className="min-w-[200px] bg-white/20 backdrop-blur-sm border-2 border-white text-white hover:bg-white hover:text-amber-900 font-semibold text-base h-12"
                 >
                   Explore Rooms
                 </Button>
@@ -481,9 +480,8 @@ export default function HomePage() {
             </Link>
             <Link href="/contact">
               <Button
-                variant="outline"
                 size="lg"
-                className="min-w-[200px] border-white/30 text-white hover:bg-white/10 text-base h-12"
+                className="min-w-[200px] bg-white/20 backdrop-blur-sm border-2 border-white text-white hover:bg-white hover:text-amber-900 font-semibold text-base h-12"
               >
                 Contact Us
               </Button>
