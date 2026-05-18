@@ -3,7 +3,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ROOMS, HALLS } from "@/lib/site-data";
+import { ROOMS, HALLS, QUEENS_HALL_ROOMS } from "@/lib/site-data";
 import { IMAGES } from "@/lib/images";
 import {
   BedDouble,
@@ -122,6 +122,52 @@ export default function RoomsPage() {
                         <ArrowRight className="h-4 w-4" />
                       </Button>
                     </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Queens Hall Annex */}
+      <section className="py-20 md:py-28 bg-gradient-to-b from-white to-amber-50/50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <Badge variant="outline" className="mb-4 text-amber-800 border-amber-300 bg-amber-50 px-4 py-1">
+              Queens Hall Annex
+            </Badge>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Queens Hall
+            </h2>
+            <p className="text-gray-500 max-w-xl mx-auto text-lg">
+              Additional rooms and facilities available at our Queens Hall annex.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+            {QUEENS_HALL_ROOMS.map((room) => (
+              <Card key={room.name} className="group border-0 ring-0 shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden">
+                <div className="h-2 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400" />
+                <CardContent className="p-5">
+                  <h3 className="font-bold text-gray-900 mb-3 group-hover:text-amber-800 transition-colors">
+                    {room.name}
+                  </h3>
+                  <div className="space-y-2 text-sm text-gray-500 mb-4">
+                    {room.beds > 0 && (
+                      <div className="flex items-center gap-1.5">
+                        <BedDouble className="h-4 w-4 text-amber-600" />
+                        {room.beds} Beds
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1.5">
+                      <Users className="h-4 w-4 text-amber-600" />
+                      {room.capacity === 50 ? "Up to 50" : `Up to ${room.capacity}`} {room.capacity === 1 ? "user" : "guests"}
+                    </div>
+                  </div>
+                  <div className="pt-3 border-t">
+                    <span className="text-xl font-bold text-amber-800">GH₵{room.price}</span>
+                    <span className="text-sm text-gray-400 ml-1">/ night</span>
                   </div>
                 </CardContent>
               </Card>
