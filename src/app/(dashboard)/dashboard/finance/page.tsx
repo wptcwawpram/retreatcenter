@@ -4,18 +4,23 @@ import { useState } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { DataTable, type Column } from "@/components/dashboard/data-table";
+import { FormDialog, type FormField } from "@/components/dashboard/form-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { getFinanceRecords } from "@/lib/supabase/queries";
+import { getFinanceRecords, createFinanceRecord } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight, Loader2 } from "lucide-react";
 import type { FinanceRecord } from "@/lib/supabase/types";
 
+const INCOME_CATEGORIES = ["Room Booking", "Hall Rental", "Event Hosting", "Dining", "Other Income"];
+const EXPENSE_CATEGORIES = ["Salaries", "Utilities", "Maintenance", "Supplies", "Equipment", "Food & Catering", "Marketing", "Transport", "Other Expense"];
+
 export default function FinancePage() {
-  const { data: finance, loading } = useSupabaseQuery(() => getFinanceRecords(), []);
+  const { data: finance, loading, refetch } = useSupabaseQuery(() => getFinanceRecords(), []);
   const [typeFilter, setTypeFilter] = useState("ALL");
+  const [showAdd, setShowAdd] = useState(false);
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-amber-500" /></div>;
@@ -27,6 +32,27 @@ export default function FinancePage() {
   const totalIncome = allRecords.filter((f) => f.type === "INCOME").reduce((s, f) => s + Number(f.amount), 0);
   const totalExpenses = allRecords.filter((f) => f.type === "EXPENSE").reduce((s, f) => s + Number(f.amount), 0);
   const netIncome = totalIncome - totalExpenses;
+
+  const addFields: FormField[] = [
+    { name: "type", label: "Type", type: "select", required: true, options: [{ label: "Income", value: "INCOME" }, { label: "Expense", value: "EXPENSE" }] },
+    { name: "category", label: "Category", type: "select", required: true, options: [...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES].map((c) => ({ label: c, value: c })) },
+    { name: "amount", label: "Amount (GH₵)", type: "number", required: true, min: 0, step: 0.01 },
+    { name: "date", label: "Date", type: "date", required: true, defaultValue: new Date().toISOString().split("T")[0] },
+    { name: "description", label: "Description", type: "textarea", required: true, colSpan: 2, placeholder: "Describe the transaction" },
+  ];
+
+  const handleAdd = async (values: Record<string, unknown>) => {
+    await createFinanceRecord({
+      type: values.type as "INCOME" | "EXPENSE",
+      category: values.category as string,
+      amount: Number(values.amount),
+      date: values.date as string,
+      description: values.description as string,
+      recorded_by: null,
+      booking_id: null,
+    });
+    refetch();
+  };
 
   const columns: Column<FinanceRecord>[] = [
     { header: "Date", accessor: (f) => <span className="text-sm">{formatDate(f.date)}</span> },
@@ -47,21 +73,14 @@ export default function FinancePage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Finance" description="Income, expenses, and financial overview" action={{ label: "Add Record" }} />
+      <PageHeader title="Finance" description="Income, expenses, and financial overview" action={{ label: "Add Record", onClick: () => setShowAdd(true) }} />
 
-      {/* Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard title="Total Income" value={formatCurrency(totalIncome)} icon={TrendingUp} iconClassName="bg-emerald-50 text-emerald-600" />
         <StatCard title="Total Expenses" value={formatCurrency(totalExpenses)} icon={TrendingDown} iconClassName="bg-red-50 text-red-600" />
-        <StatCard
-          title="Net Income"
-          value={formatCurrency(netIncome)}
-          icon={DollarSign}
-          iconClassName={netIncome >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"}
-        />
+        <StatCard title="Net Income" value={formatCurrency(netIncome)} icon={DollarSign} iconClassName={netIncome >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"} />
       </div>
 
-      {/* Income by Category */}
       <Card>
         <CardContent className="p-6">
           <h3 className="font-semibold mb-4">Income Breakdown</h3>
@@ -86,7 +105,6 @@ export default function FinancePage() {
         </CardContent>
       </Card>
 
-      {/* Filter & Table */}
       <div className="flex gap-3">
         <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v ?? "ALL")}>
           <SelectTrigger className="w-[160px]"><SelectValue placeholder="Type" /></SelectTrigger>
@@ -99,6 +117,8 @@ export default function FinancePage() {
       </div>
 
       <DataTable columns={columns} data={filtered} keyExtractor={(f) => f.id} total={filtered.length} emptyMessage="No records found" />
+
+      <FormDialog open={showAdd} onOpenChange={setShowAdd} title="Add Finance Record" description="Record income or expense" fields={addFields} onSubmit={handleAdd} submitLabel="Add Record" />
     </div>
   );
 }

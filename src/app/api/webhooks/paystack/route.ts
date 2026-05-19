@@ -1,43 +1,99 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyWebhookSignature, verifyPayment } from "@/lib/paystack";
+import { createServerClient } from "@supabase/ssr";
+import { sendSms, SMS_TEMPLATES } from "@/lib/hubtel-sms";
+
+function createServiceClient() {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { cookies: { getAll: () => [], setAll: () => {} } },
+  );
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.text();
     const signature = request.headers.get("x-paystack-signature") || "";
 
-    // Verify webhook signature
     if (!verifyWebhookSignature(body, signature)) {
-      return NextResponse.json(
-        { error: "Invalid signature" },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
     const event = JSON.parse(body);
 
     if (event.event === "charge.success") {
-      const { reference, amount } = event.data;
+      const { reference } = event.data;
 
-      // Verify the transaction
+      // Verify the transaction with Paystack
       const verification = await verifyPayment(reference);
 
       if (verification.data.status === "success") {
-        // TODO: Update payment record in Supabase
-        // TODO: Update booking payment_status
-        // TODO: Send SMS confirmation via Hubtel
-        console.log(
-          `Payment successful: ${reference}, Amount: GHS ${amount / 100}`,
-        );
+        const amountPaid = verification.data.amount / 100;
+        const metadata = verification.data.metadata as Record<string, string> | undefined;
+        const bookingRef = metadata?.booking_reference;
+        const guestName = metadata?.guest_name;
+        const guestPhone = metadata?.guest_phone;
+        const checkIn = metadata?.check_in;
+        const checkOut = metadata?.check_out;
+
+        if (bookingRef) {
+          const supabase = createServiceClient();
+
+          // Get the booking
+          const { data: booking } = await supabase
+            .from("bookings")
+            .select("id, total_amount, paid_amount, payment_status")
+            .eq("reference", bookingRef)
+            .maybeSingle();
+
+          if (booking && booking.payment_status !== "PAID") {
+            const newPaid = Number(booking.paid_amount) + amountPaid;
+            const remaining = Math.max(0, Number(booking.total_amount) - newPaid);
+            const paymentStatus = remaining <= 0 ? "PAID" : "PARTIAL";
+
+            // Update booking
+            await supabase
+              .from("bookings")
+              .update({
+                paid_amount: newPaid,
+                balance: remaining,
+                payment_status: paymentStatus,
+                status: "CONFIRMED",
+              })
+              .eq("id", booking.id);
+
+            // Record payment
+            await supabase.from("payments").insert({
+              booking_id: booking.id,
+              amount: amountPaid,
+              method: "PAYSTACK",
+              status: "COMPLETED",
+              reference: verification.data.reference,
+              notes: `Paystack webhook payment via ${verification.data.channel}`,
+            });
+
+            // Send confirmation SMS
+            try {
+              if (guestPhone && guestName && checkIn && checkOut) {
+                const checkInFmt = new Date(checkIn).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+                const checkOutFmt = new Date(checkOut).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+                await sendSms({
+                  to: guestPhone,
+                  message: SMS_TEMPLATES.bookingConfirmation(guestName, bookingRef, checkInFmt, checkOutFmt),
+                });
+              }
+            } catch (smsErr) {
+              console.error("Webhook SMS failed:", smsErr);
+            }
+          }
+        }
       }
     }
 
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error("Webhook error:", error);
-    return NextResponse.json(
-      { error: "Webhook processing failed" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
   }
 }

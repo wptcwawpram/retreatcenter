@@ -39,10 +39,36 @@ export async function getRoomById(id: string) {
   return data as Room;
 }
 
+export async function createRoom(room: Omit<Room, "id" | "created_at" | "updated_at">) {
+  const { data, error } = await supabase()
+    .from("rooms")
+    .insert(room)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as Room;
+}
+
+export async function updateRoom(id: string, updates: Partial<Omit<Room, "id" | "created_at" | "updated_at">>) {
+  const { error } = await supabase()
+    .from("rooms")
+    .update(updates)
+    .eq("id", id);
+  if (error) throw error;
+}
+
 export async function updateRoomStatus(id: string, status: Room["status"]) {
   const { error } = await supabase()
     .from("rooms")
     .update({ status })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteRoom(id: string) {
+  const { error } = await supabase()
+    .from("rooms")
+    .delete()
     .eq("id", id);
   if (error) throw error;
 }
@@ -68,6 +94,22 @@ export async function createGuest(guest: Omit<Guest, "id" | "created_at" | "upda
     .single();
   if (error) throw error;
   return data as Guest;
+}
+
+export async function updateGuest(id: string, updates: Partial<Omit<Guest, "id" | "created_at" | "updated_at">>) {
+  const { error } = await supabase()
+    .from("guests")
+    .update(updates)
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteGuest(id: string) {
+  const { error } = await supabase()
+    .from("guests")
+    .delete()
+    .eq("id", id);
+  if (error) throw error;
 }
 
 export async function getGuestByPhone(phone: string) {
@@ -120,10 +162,26 @@ export async function updateBookingStatus(id: string, status: Booking["status"])
   if (error) throw error;
 }
 
+export async function updateBooking(id: string, updates: Partial<Omit<Booking, "id" | "reference" | "created_at" | "updated_at">>) {
+  const { error } = await supabase()
+    .from("bookings")
+    .update(updates)
+    .eq("id", id);
+  if (error) throw error;
+}
+
 export async function updateBookingPayment(id: string, paidAmount: number, paymentStatus: Booking["payment_status"]) {
   const { error } = await supabase()
     .from("bookings")
     .update({ paid_amount: paidAmount, balance: 0, payment_status: paymentStatus })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteBooking(id: string) {
+  const { error } = await supabase()
+    .from("bookings")
+    .delete()
     .eq("id", id);
   if (error) throw error;
 }
@@ -164,12 +222,30 @@ export async function getHousekeepingTasks() {
   return data as (HousekeepingTask & { room: { number: string; name: string }; assignee: { full_name: string } | null })[];
 }
 
+export async function createHousekeepingTask(task: Omit<HousekeepingTask, "id" | "created_at" | "completed_at" | "room" | "assignee">) {
+  const { data, error } = await supabase()
+    .from("housekeeping_tasks")
+    .insert(task)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as HousekeepingTask;
+}
+
 export async function updateHousekeepingStatus(id: string, status: HousekeepingTask["status"]) {
   const updates: Record<string, unknown> = { status };
   if (status === "COMPLETED") updates.completed_at = new Date().toISOString();
   const { error } = await supabase()
     .from("housekeeping_tasks")
     .update(updates)
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteHousekeepingTask(id: string) {
+  const { error } = await supabase()
+    .from("housekeeping_tasks")
+    .delete()
     .eq("id", id);
   if (error) throw error;
 }
@@ -187,6 +263,24 @@ export async function getComplaints() {
   return data as (Complaint & { guest: { full_name: string } | null })[];
 }
 
+export async function createComplaint(complaint: Omit<Complaint, "id" | "created_at" | "resolved_at" | "guest">) {
+  const { data, error } = await supabase()
+    .from("complaints")
+    .insert(complaint)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as Complaint;
+}
+
+export async function updateComplaint(id: string, updates: Partial<Omit<Complaint, "id" | "created_at" | "guest">>) {
+  const { error } = await supabase()
+    .from("complaints")
+    .update(updates)
+    .eq("id", id);
+  if (error) throw error;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // INVENTORY
 // ═══════════════════════════════════════════════════════════════
@@ -198,6 +292,32 @@ export async function getInventoryItems() {
     .order("name");
   if (error) throw error;
   return data as InventoryItem[];
+}
+
+export async function createInventoryItem(item: Omit<InventoryItem, "id" | "created_at">) {
+  const { data, error } = await supabase()
+    .from("inventory_items")
+    .insert(item)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as InventoryItem;
+}
+
+export async function updateInventoryItem(id: string, updates: Partial<Omit<InventoryItem, "id" | "created_at">>) {
+  const { error } = await supabase()
+    .from("inventory_items")
+    .update(updates)
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteInventoryItem(id: string) {
+  const { error } = await supabase()
+    .from("inventory_items")
+    .delete()
+    .eq("id", id);
+  if (error) throw error;
 }
 
 // ═══════════════════════════════════════════════════════════════

@@ -222,5 +222,6 @@ export const PUBLIC_NAV = [
   { label: "Packages", href: "/packages" },
   { label: "Events", href: "/events" },
   { label: "Book Now", href: "/booking" },
+  { label: "Guest Portal", href: "/guest-portal" },
   { label: "Contact", href: "/contact" },
 ] as const;
