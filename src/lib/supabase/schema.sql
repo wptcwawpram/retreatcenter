@@ -38,7 +38,7 @@ $$ language plpgsql;
 -- ════════════════════════════════════════════════════════════
 
 -- ── Profiles (extends auth.users) ──────────────────────────
-create table profiles (
+create table if not exists profiles (
   id          uuid primary key references auth.users(id) on delete cascade,
   email       text not null,
   full_name   text not null,
@@ -51,12 +51,13 @@ create table profiles (
   updated_at  timestamptz not null default now()
 );
 
+drop trigger if exists profiles_updated_at on profiles;
 create trigger profiles_updated_at
   before update on profiles
   for each row execute function trigger_set_updated_at();
 
 -- ── Rooms ──────────────────────────────────────────────────
-create table rooms (
+create table if not exists rooms (
   id              uuid primary key default uuid_generate_v4(),
   number          text not null unique,
   name            text not null,
@@ -78,12 +79,13 @@ create table rooms (
   updated_at      timestamptz not null default now()
 );
 
+drop trigger if exists rooms_updated_at on rooms;
 create trigger rooms_updated_at
   before update on rooms
   for each row execute function trigger_set_updated_at();
 
 -- ── Venues / Halls ─────────────────────────────────────────
-create table venues (
+create table if not exists venues (
   id              uuid primary key default uuid_generate_v4(),
   name            text not null,
   description     text,
@@ -95,12 +97,13 @@ create table venues (
   updated_at      timestamptz not null default now()
 );
 
+drop trigger if exists venues_updated_at on venues;
 create trigger venues_updated_at
   before update on venues
   for each row execute function trigger_set_updated_at();
 
 -- ── Guests ─────────────────────────────────────────────────
-create table guests (
+create table if not exists guests (
   id          uuid primary key default uuid_generate_v4(),
   full_name   text not null,
   email       text,
@@ -114,12 +117,13 @@ create table guests (
   updated_at  timestamptz not null default now()
 );
 
+drop trigger if exists guests_updated_at on guests;
 create trigger guests_updated_at
   before update on guests
   for each row execute function trigger_set_updated_at();
 
 -- ── Bookings ───────────────────────────────────────────────
-create table bookings (
+create table if not exists bookings (
   id               uuid primary key default uuid_generate_v4(),
   reference        text not null unique,
   guest_id         uuid not null references guests(id) on delete restrict,
@@ -148,16 +152,18 @@ create table bookings (
   updated_at       timestamptz not null default now()
 );
 
+drop trigger if exists bookings_updated_at on bookings;
 create trigger bookings_updated_at
   before update on bookings
   for each row execute function trigger_set_updated_at();
 
+drop trigger if exists bookings_generate_reference on bookings;
 create trigger bookings_generate_reference
   before insert on bookings
   for each row execute function generate_booking_reference();
 
 -- ── Payments ───────────────────────────────────────────────
-create table payments (
+create table if not exists payments (
   id                  uuid primary key default uuid_generate_v4(),
   booking_id          uuid not null references bookings(id) on delete cascade,
   amount              numeric(10,2) not null,
@@ -173,7 +179,7 @@ create table payments (
 );
 
 -- ── Housekeeping Tasks ─────────────────────────────────────
-create table housekeeping_tasks (
+create table if not exists housekeeping_tasks (
   id            uuid primary key default uuid_generate_v4(),
   room_id       uuid not null references rooms(id) on delete cascade,
   assigned_to   uuid references profiles(id),
@@ -189,7 +195,7 @@ create table housekeeping_tasks (
 );
 
 -- ── Complaints ─────────────────────────────────────────────
-create table complaints (
+create table if not exists complaints (
   id          uuid primary key default uuid_generate_v4(),
   booking_id  uuid references bookings(id),
   guest_id    uuid references guests(id),
@@ -209,7 +215,7 @@ create table complaints (
 );
 
 -- ── Inventory ──────────────────────────────────────────────
-create table inventory_items (
+create table if not exists inventory_items (
   id              uuid primary key default uuid_generate_v4(),
   name            text not null,
   category        text not null,
@@ -223,7 +229,7 @@ create table inventory_items (
 );
 
 -- ── Events ─────────────────────────────────────────────────
-create table events (
+create table if not exists events (
   id          uuid primary key default uuid_generate_v4(),
   name        text not null,
   organizer   text not null,
@@ -239,7 +245,7 @@ create table events (
 );
 
 -- ── Finance Records ────────────────────────────────────────
-create table finance_records (
+create table if not exists finance_records (
   id          uuid primary key default uuid_generate_v4(),
   type        text not null check (type in ('INCOME','EXPENSE')),
   category    text not null,
@@ -256,22 +262,22 @@ create table finance_records (
 -- INDEXES
 -- ════════════════════════════════════════════════════════════
 
-create index idx_rooms_status       on rooms(status);
-create index idx_rooms_type         on rooms(type);
-create index idx_bookings_status    on bookings(status);
-create index idx_bookings_guest     on bookings(guest_id);
-create index idx_bookings_checkin   on bookings(check_in);
-create index idx_bookings_checkout  on bookings(check_out);
-create index idx_bookings_reference on bookings(reference);
-create index idx_payments_booking   on payments(booking_id);
-create index idx_payments_status    on payments(status);
-create index idx_housekeeping_room  on housekeeping_tasks(room_id);
-create index idx_housekeeping_status on housekeeping_tasks(status);
-create index idx_complaints_status  on complaints(status);
-create index idx_events_dates       on events(start_date, end_date);
-create index idx_finance_date       on finance_records(date);
-create index idx_finance_type       on finance_records(type);
-create index idx_guests_phone       on guests(phone);
+create index if not exists idx_rooms_status       on rooms(status);
+create index if not exists idx_rooms_type         on rooms(type);
+create index if not exists idx_bookings_status    on bookings(status);
+create index if not exists idx_bookings_guest     on bookings(guest_id);
+create index if not exists idx_bookings_checkin   on bookings(check_in);
+create index if not exists idx_bookings_checkout  on bookings(check_out);
+create index if not exists idx_bookings_reference on bookings(reference);
+create index if not exists idx_payments_booking   on payments(booking_id);
+create index if not exists idx_payments_status    on payments(status);
+create index if not exists idx_housekeeping_room  on housekeeping_tasks(room_id);
+create index if not exists idx_housekeeping_status on housekeeping_tasks(status);
+create index if not exists idx_complaints_status  on complaints(status);
+create index if not exists idx_events_dates       on events(start_date, end_date);
+create index if not exists idx_finance_date       on finance_records(date);
+create index if not exists idx_finance_type       on finance_records(type);
+create index if not exists idx_guests_phone       on guests(phone);
 
 
 -- ════════════════════════════════════════════════════════════
@@ -297,161 +303,191 @@ returns text as $$
 $$ language sql security definer stable;
 
 -- ── Profiles ───────────────────────────────────────────────
+drop policy if exists "Authenticated users can read all profiles" on profiles;
 create policy "Authenticated users can read all profiles"
   on profiles for select
   to authenticated
   using (true);
 
+drop policy if exists "Users can update their own profile" on profiles;
 create policy "Users can update their own profile"
   on profiles for update
   to authenticated
   using (id = auth.uid());
 
+drop policy if exists "Admins can insert profiles" on profiles;
 create policy "Admins can insert profiles"
   on profiles for insert
   to authenticated
   with check (auth_user_role() = 'admin');
 
+drop policy if exists "Admins can delete profiles" on profiles;
 create policy "Admins can delete profiles"
   on profiles for delete
   to authenticated
   using (auth_user_role() = 'admin');
 
 -- ── Rooms ──────────────────────────────────────────────────
+drop policy if exists "Authenticated users can read rooms" on rooms;
 create policy "Authenticated users can read rooms"
   on rooms for select
   to authenticated
   using (true);
 
+drop policy if exists "Admins and managers can manage rooms" on rooms;
 create policy "Admins and managers can manage rooms"
   on rooms for all
   to authenticated
   using (auth_user_role() in ('admin', 'manager'));
 
 -- ── Venues ─────────────────────────────────────────────────
+drop policy if exists "Authenticated users can read venues" on venues;
 create policy "Authenticated users can read venues"
   on venues for select
   to authenticated
   using (true);
 
+drop policy if exists "Admins and managers can manage venues" on venues;
 create policy "Admins and managers can manage venues"
   on venues for all
   to authenticated
   using (auth_user_role() in ('admin', 'manager'));
 
 -- ── Guests ─────────────────────────────────────────────────
+drop policy if exists "Authenticated users can read guests" on guests;
 create policy "Authenticated users can read guests"
   on guests for select
   to authenticated
   using (true);
 
+drop policy if exists "Staff can insert guests" on guests;
 create policy "Staff can insert guests"
   on guests for insert
   to authenticated
   with check (true);
 
+drop policy if exists "Staff can update guests" on guests;
 create policy "Staff can update guests"
   on guests for update
   to authenticated
   using (true);
 
 -- ── Bookings ───────────────────────────────────────────────
+drop policy if exists "Authenticated users can read bookings" on bookings;
 create policy "Authenticated users can read bookings"
   on bookings for select
   to authenticated
   using (true);
 
+drop policy if exists "Staff can insert bookings" on bookings;
 create policy "Staff can insert bookings"
   on bookings for insert
   to authenticated
   with check (true);
 
+drop policy if exists "Staff can update bookings" on bookings;
 create policy "Staff can update bookings"
   on bookings for update
   to authenticated
   using (true);
 
 -- ── Payments ───────────────────────────────────────────────
+drop policy if exists "Authenticated users can read payments" on payments;
 create policy "Authenticated users can read payments"
   on payments for select
   to authenticated
   using (true);
 
+drop policy if exists "Staff can insert payments" on payments;
 create policy "Staff can insert payments"
   on payments for insert
   to authenticated
   with check (true);
 
+drop policy if exists "Admins can manage payments" on payments;
 create policy "Admins can manage payments"
   on payments for all
   to authenticated
   using (auth_user_role() in ('admin', 'manager'));
 
 -- ── Housekeeping Tasks ─────────────────────────────────────
+drop policy if exists "Authenticated users can read housekeeping tasks" on housekeeping_tasks;
 create policy "Authenticated users can read housekeeping tasks"
   on housekeeping_tasks for select
   to authenticated
   using (true);
 
+drop policy if exists "Staff can insert housekeeping tasks" on housekeeping_tasks;
 create policy "Staff can insert housekeeping tasks"
   on housekeeping_tasks for insert
   to authenticated
   with check (true);
 
+drop policy if exists "Staff can update housekeeping tasks" on housekeeping_tasks;
 create policy "Staff can update housekeeping tasks"
   on housekeeping_tasks for update
   to authenticated
   using (true);
 
 -- ── Complaints ─────────────────────────────────────────────
+drop policy if exists "Authenticated users can read complaints" on complaints;
 create policy "Authenticated users can read complaints"
   on complaints for select
   to authenticated
   using (true);
 
+drop policy if exists "Staff can insert complaints" on complaints;
 create policy "Staff can insert complaints"
   on complaints for insert
   to authenticated
   with check (true);
 
+drop policy if exists "Staff can update complaints" on complaints;
 create policy "Staff can update complaints"
   on complaints for update
   to authenticated
   using (true);
 
 -- ── Inventory ──────────────────────────────────────────────
+drop policy if exists "Authenticated users can read inventory" on inventory_items;
 create policy "Authenticated users can read inventory"
   on inventory_items for select
   to authenticated
   using (true);
 
+drop policy if exists "Admins and managers can manage inventory" on inventory_items;
 create policy "Admins and managers can manage inventory"
   on inventory_items for all
   to authenticated
   using (auth_user_role() in ('admin', 'manager'));
 
 -- ── Events ─────────────────────────────────────────────────
+drop policy if exists "Authenticated users can read events" on events;
 create policy "Authenticated users can read events"
   on events for select
   to authenticated
   using (true);
 
+drop policy if exists "Staff can insert events" on events;
 create policy "Staff can insert events"
   on events for insert
   to authenticated
   with check (true);
 
+drop policy if exists "Staff can update events" on events;
 create policy "Staff can update events"
   on events for update
   to authenticated
   using (true);
 
 -- ── Finance Records ────────────────────────────────────────
+drop policy if exists "Admins and managers can read finance" on finance_records;
 create policy "Admins and managers can read finance"
   on finance_records for select
   to authenticated
   using (auth_user_role() in ('admin', 'manager'));
 
+drop policy if exists "Admins and managers can manage finance" on finance_records;
 create policy "Admins and managers can manage finance"
   on finance_records for all
   to authenticated
@@ -475,15 +511,20 @@ insert into rooms (number, name, type, building, floor, capacity, beds, price_pe
   ('A01', 'Holy Family Apt',  'APARTMENT', 'Holy Family',  1, 4, 2, 750.00, true,  true,  true,  '{"ac","tv","fridge","kitchen","towels"}', 'Self-contained apartment with kitchen'),
   ('T01', '3-in-1 Room T01',  '3_IN_1',    'Annex',        1, 3, 3, 100.00, false, false, false, '{"fan","towels"}',                        'Budget triple room'),
   ('T02', '3-in-1 Room T02',  '3_IN_1',    'Annex',        1, 3, 3, 100.00, false, false, false, '{"fan","towels"}',                        'Budget triple room'),
-  ('K01', 'Kitchen K01',      'KITCHEN',   'Annex',        1, 2, 1, 100.00, false, false, false, '{"fan","kitchenette"}',                   'Room with kitchenette access');
+  ('K01', 'Kitchen K01',      'KITCHEN',   'Annex',        1, 2, 1, 100.00, false, false, false, '{"fan","kitchenette"}',                   'Room with kitchenette access')
+on conflict (number) do nothing;
 
 -- ── Venues / Halls (WPTC rate sheet) ───────────────────────
-insert into venues (name, description, capacity, price_per_day, amenities) values
-  ('Faith Hall (No AC)',          'Main conference hall without air conditioning',           200, 400.00,  '{"chairs","tables","PA system","projector"}'),
-  ('Faith Hall (With AC)',        'Main conference hall with air conditioning',              200, 550.00,  '{"chairs","tables","PA system","projector","ac"}'),
-  ('Pavilion (With Canopy)',      'Open-air pavilion with canopy coverage',                 300, 900.00,  '{"chairs","tables","canopy","lighting"}'),
-  ('Pavilion (Without Canopy)',   'Open-air pavilion without canopy',                       300, 700.00,  '{"chairs","tables","lighting"}'),
-  ('Kitchen & Dining (55+)',      'Full kitchen and dining hall for 55+ guests',              60, 500.00,  '{"kitchen","tables","chairs","serving area"}'),
-  ('Kitchen & Dining (30-50)',    'Kitchen and dining hall for 30-50 guests',                 50, 400.00,  '{"kitchen","tables","chairs","serving area"}'),
-  ('Kitchen & Dining (Below 20)', 'Kitchen and dining for small groups under 20',            20, 250.00,  '{"kitchen","tables","chairs"}'),
-  ('Wedding Grounds',             'Scenic outdoor wedding grounds with landscaped gardens', 500, 4000.00, '{"chairs","decoration area","parking","lighting","gardens"}');
+-- Only insert if venues table is empty (avoids duplicates on re-run)
+insert into venues (name, description, capacity, price_per_day, amenities)
+select * from (values
+  ('Faith Hall (No AC)',          'Main conference hall without air conditioning',           200, 400.00::numeric,  '{"chairs","tables","PA system","projector"}'::text[]),
+  ('Faith Hall (With AC)',        'Main conference hall with air conditioning',              200, 550.00::numeric,  '{"chairs","tables","PA system","projector","ac"}'::text[]),
+  ('Pavilion (With Canopy)',      'Open-air pavilion with canopy coverage',                 300, 900.00::numeric,  '{"chairs","tables","canopy","lighting"}'::text[]),
+  ('Pavilion (Without Canopy)',   'Open-air pavilion without canopy',                       300, 700.00::numeric,  '{"chairs","tables","lighting"}'::text[]),
+  ('Kitchen & Dining (55+)',      'Full kitchen and dining hall for 55+ guests',              60, 500.00::numeric,  '{"kitchen","tables","chairs","serving area"}'::text[]),
+  ('Kitchen & Dining (30-50)',    'Kitchen and dining hall for 30-50 guests',                 50, 400.00::numeric,  '{"kitchen","tables","chairs","serving area"}'::text[]),
+  ('Kitchen & Dining (Below 20)', 'Kitchen and dining for small groups under 20',            20, 250.00::numeric,  '{"kitchen","tables","chairs"}'::text[]),
+  ('Wedding Grounds',             'Scenic outdoor wedding grounds with landscaped gardens', 500, 4000.00::numeric, '{"chairs","decoration area","parking","lighting","gardens"}'::text[])
+) as v(name, description, capacity, price_per_day, amenities)
+where not exists (select 1 from venues limit 1);
