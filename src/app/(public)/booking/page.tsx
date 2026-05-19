@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,6 +25,24 @@ import {
   Loader2,
   CheckCircle,
 } from "lucide-react";
+
+// Declare Paystack inline type
+declare global {
+  interface Window {
+    PaystackPop: {
+      setup: (config: {
+        key: string;
+        email: string;
+        amount: number;
+        currency: string;
+        ref: string;
+        access_code?: string;
+        onClose: () => void;
+        callback: (response: { reference: string }) => void;
+      }) => { openIframe: () => void };
+    };
+  }
+}
 
 const AGE_RANGES = [
   "18-25", "26-30", "31-36", "36-40", "41-45",
@@ -88,6 +106,17 @@ export default function BookingPage() {
   const [submitted, setSubmitted] = useState(false);
   const [bookingRef, setBookingRef] = useState("");
   const [submitError, setSubmitError] = useState("");
+  const [paymentStep, setPaymentStep] = useState<"idle" | "processing" | "paying" | "verifying">("idle");
+
+  // Load Paystack inline script
+  useEffect(() => {
+    if (document.getElementById("paystack-inline-script")) return;
+    const script = document.createElement("script");
+    script.id = "paystack-inline-script";
+    script.src = "https://js.paystack.co/v2/inline.js";
+    script.async = true;
+    document.head.appendChild(script);
+  }, []);
 
   const updateField = (field: string, value: string) =>
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -105,8 +134,10 @@ export default function BookingPage() {
 
     setSubmitting(true);
     setSubmitError("");
+    setPaymentStep("processing");
 
     try {
+      // Step 1: Create booking (no SMS, no success screen yet)
       const res = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -139,36 +170,63 @@ export default function BookingPage() {
         throw new Error(data.error || "Failed to create booking");
       }
 
-      setBookingRef(data.booking.reference);
-      setSubmitted(true);
-
-      // If there's a deposit to pay and Paystack is configured, redirect to payment
+      const ref = data.booking.reference;
       const paystackKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
-      if (paystackKey && data.booking.deposit > 0) {
-        try {
-          const payRes = await fetch("/api/payments/initialize", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: formData.email,
-              amount: data.booking.deposit,
-              bookingReference: data.booking.reference,
-              guestName: formData.name,
-            }),
+
+      // Step 2: If payment is due, open Paystack popup BEFORE showing success
+      if (paystackKey && data.payment?.access_code) {
+        setPaymentStep("paying");
+
+        // Wait for Paystack script to load
+        await new Promise<void>((resolve) => {
+          const check = () => {
+            if (window.PaystackPop) return resolve();
+            setTimeout(check, 100);
+          };
+          check();
+        });
+
+        // Open Paystack inline popup — blocks until user pays or closes
+        await new Promise<void>((resolve, reject) => {
+          const handler = window.PaystackPop.setup({
+            key: paystackKey,
+            email: formData.email,
+            amount: data.booking.deposit * 100, // pesewas
+            currency: "GHS",
+            ref: data.payment.reference,
+            access_code: data.payment.access_code,
+            onClose: () => {
+              // User closed popup without paying
+              reject(new Error("Payment was cancelled. Your booking has been saved — you can pay later by contacting us with reference: " + ref));
+            },
+            callback: async (response: { reference: string }) => {
+              // Payment completed — verify on server (this also sends SMS)
+              setPaymentStep("verifying");
+              try {
+                const verifyRes = await fetch(`/api/payments/verify?reference=${response.reference}`);
+                const verifyData = await verifyRes.json();
+                if (verifyData.status === "success") {
+                  resolve();
+                } else {
+                  reject(new Error("Payment verification failed. Please contact us with reference: " + ref));
+                }
+              } catch {
+                reject(new Error("Could not verify payment. Please contact us with reference: " + ref));
+              }
+            },
           });
-          const payData = await payRes.json();
-          if (payData.authorization_url) {
-            window.location.href = payData.authorization_url;
-            return;
-          }
-        } catch {
-          // Payment init failed — booking still created, they can pay later
-          console.error("Paystack redirect failed, booking still created");
-        }
+          handler.openIframe();
+        });
       }
+
+      // Step 3: ONLY show success after payment completes (or if no payment needed)
+      setBookingRef(ref);
+      setSubmitted(true);
+      setPaymentStep("idle");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Something went wrong";
       setSubmitError(message);
+      setPaymentStep("idle");
     } finally {
       setSubmitting(false);
     }
@@ -274,12 +332,12 @@ export default function BookingPage() {
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-100 mb-6">
                 <CheckCircle className="h-10 w-10 text-emerald-600" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-3">Booking Submitted!</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">Booking Confirmed!</h2>
               <p className="text-gray-600 mb-2">Your booking reference is:</p>
               <p className="text-3xl font-bold text-amber-800 font-mono mb-6">{bookingRef}</p>
               <p className="text-sm text-gray-500 mb-8">
-                A confirmation SMS has been sent to {formData.phone}. Please save your reference number for check-in.
-                {totalAmount > 0 && " You will be redirected to make your 30% deposit payment shortly."}
+                Payment received! A confirmation SMS has been sent to {formData.phone}.
+                Please save your reference number for check-in.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <a href="/">
@@ -743,10 +801,14 @@ export default function BookingPage() {
                   disabled={submitting}
                   className="w-full bg-amber-700 hover:bg-amber-800 text-white font-bold text-base h-12 shadow-lg shadow-amber-700/20 disabled:opacity-60"
                 >
-                  {submitting ? (
-                    <><Loader2 className="h-5 w-5 animate-spin mr-2" />Processing...</>
+                  {paymentStep === "processing" ? (
+                    <><Loader2 className="h-5 w-5 animate-spin mr-2" />Creating booking...</>
+                  ) : paymentStep === "paying" ? (
+                    <><Loader2 className="h-5 w-5 animate-spin mr-2" />Complete payment in popup...</>
+                  ) : paymentStep === "verifying" ? (
+                    <><Loader2 className="h-5 w-5 animate-spin mr-2" />Verifying payment...</>
                   ) : (
-                    "Book Now!"
+                    "Book Now & Pay Deposit"
                   )}
                 </Button>
               </CardContent>

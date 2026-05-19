@@ -17,6 +17,7 @@ function PaymentCallbackContent() {
   const [paymentData, setPaymentData] = useState<{
     amount: number;
     reference: string;
+    booking_reference: string | null;
   } | null>(null);
 
   useEffect(() => {
@@ -30,7 +31,7 @@ function PaymentCallbackContent() {
       .then((data) => {
         if (data.status === "success") {
           setStatus("success");
-          setPaymentData({ amount: data.amount, reference: data.reference });
+          setPaymentData({ amount: data.amount, reference: data.reference, booking_reference: data.booking_reference });
         } else {
           setStatus("failed");
         }
@@ -109,8 +110,19 @@ function PaymentCallbackContent() {
             transition={{ delay: 0.6 }}
             className="mt-8 space-y-3 rounded-xl bg-stone-50 p-5 text-left"
           >
+            {paymentData.booking_reference && (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-stone-500">Booking Ref</span>
+                  <span className="font-mono text-sm font-bold text-amber-700">
+                    {paymentData.booking_reference}
+                  </span>
+                </div>
+                <div className="h-px bg-stone-200" />
+              </>
+            )}
             <div className="flex items-center justify-between">
-              <span className="text-sm text-stone-500">Reference</span>
+              <span className="text-sm text-stone-500">Payment Ref</span>
               <span className="font-mono text-sm font-semibold text-stone-800">
                 {paymentData.reference}
               </span>

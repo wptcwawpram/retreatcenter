@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
-import { sendSms, SMS_TEMPLATES } from "@/lib/hubtel-sms";
 
 // Use service role key so public booking form can insert without auth
 function createServiceClient() {
@@ -54,7 +53,7 @@ export async function POST(request: NextRequest) {
       guestRecord = data;
     }
 
-    // 2. Create booking
+    // 2. Create booking (NO SMS here — SMS is sent only after payment succeeds)
     const totalAmount = Number(booking.total_amount) || 0;
     const { data: bookingRecord, error: bookingError } = await supabase
       .from("bookings")
@@ -93,18 +92,49 @@ export async function POST(request: NextRequest) {
       booking_id: bookingRecord.id,
     });
 
-    // 4. Send confirmation SMS (best effort)
-    try {
-      if (guest.phone) {
-        const checkInFormatted = new Date(booking.check_in).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-        const checkOutFormatted = new Date(booking.check_out).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-        await sendSms({
-          to: guest.phone,
-          message: SMS_TEMPLATES.bookingConfirmation(guest.full_name, bookingRecord.reference, checkInFormatted, checkOutFormatted),
+    // 4. Initialize Paystack payment so frontend can open inline popup
+    const paystackKey = process.env.PAYSTACK_SECRET_KEY;
+    let paymentAccessCode: string | null = null;
+    let paymentReference: string | null = null;
+
+    const depositAmount = Math.ceil(totalAmount * 0.3);
+    if (paystackKey && depositAmount > 0 && guest.email) {
+      try {
+        const payRef = `PAY-${bookingRecord.reference}-${Date.now()}`;
+        const origin = request.nextUrl.origin;
+        const payRes = await fetch("https://api.paystack.co/transaction/initialize", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${paystackKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: guest.email,
+            amount: Math.round(depositAmount * 100), // pesewas
+            reference: payRef,
+            callback_url: `${origin}/booking/payment-callback`,
+            currency: "GHS",
+            metadata: {
+              booking_reference: bookingRecord.reference,
+              guest_name: guest.full_name,
+              guest_phone: guest.phone,
+              check_in: booking.check_in,
+              check_out: booking.check_out,
+              custom_fields: [
+                { display_name: "Booking Reference", variable_name: "booking_ref", value: bookingRecord.reference },
+                { display_name: "Guest Name", variable_name: "guest_name", value: guest.full_name },
+              ],
+            },
+          }),
         });
+        const payData = await payRes.json();
+        if (payData.status && payData.data) {
+          paymentAccessCode = payData.data.access_code;
+          paymentReference = payData.data.reference;
+        }
+      } catch (payError) {
+        console.error("Paystack init failed (non-blocking):", payError);
       }
-    } catch (smsError) {
-      console.error("SMS send failed (non-blocking):", smsError);
     }
 
     return NextResponse.json({
@@ -113,8 +143,11 @@ export async function POST(request: NextRequest) {
         id: bookingRecord.id,
         reference: bookingRecord.reference,
         total_amount: totalAmount,
-        deposit: Math.ceil(totalAmount * 0.3),
+        deposit: depositAmount,
       },
+      payment: paymentAccessCode
+        ? { access_code: paymentAccessCode, reference: paymentReference }
+        : null,
     });
   } catch (error: unknown) {
     console.error("Booking creation error:", error);
