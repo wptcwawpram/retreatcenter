@@ -9,27 +9,34 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ROOM_STATUS_CONFIG } from "@/lib/constants";
-import { DEMO_ROOMS } from "@/lib/demo-data";
+import { getRooms } from "@/lib/supabase/queries";
+import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatCurrency } from "@/lib/format";
-import { BedDouble, Users, LayoutGrid, List, Search } from "lucide-react";
+import { BedDouble, Users, LayoutGrid, List, Search, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function RoomsPage() {
+  const { data: rooms, loading } = useSupabaseQuery(() => getRooms(), []);
   const [view, setView] = useState<"grid" | "table">("grid");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [buildingFilter, setBuildingFilter] = useState("ALL");
   const [search, setSearch] = useState("");
 
-  const buildings = [...new Set(DEMO_ROOMS.map((r) => r.building))];
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-amber-500" /></div>;
+  }
 
-  const filtered = DEMO_ROOMS.filter((r) => {
+  const allRooms = rooms || [];
+  const buildings = [...new Set(allRooms.map((r) => r.building))];
+
+  const filtered = allRooms.filter((r) => {
     if (statusFilter !== "ALL" && r.status !== statusFilter) return false;
     if (buildingFilter !== "ALL" && r.building !== buildingFilter) return false;
-    if (search && !r.number.toLowerCase().includes(search.toLowerCase()) && !r.guestName?.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search && !r.number.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
 
-  const statusCounts = DEMO_ROOMS.reduce((acc, r) => {
+  const statusCounts = allRooms.reduce((acc, r) => {
     acc[r.status] = (acc[r.status] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
@@ -93,15 +100,7 @@ export default function RoomsPage() {
                   </div>
                   <StatusBadge status={room.status} config={ROOM_STATUS_CONFIG} className="mb-2" />
                   <p className="text-xs text-muted-foreground truncate">{room.type.replace(/_/g, " ")}</p>
-                  <p className="text-xs font-medium mt-1">{formatCurrency(room.price)}/night</p>
-                  {room.guestName && (
-                    <div className="mt-2 pt-2 border-t">
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Users className="h-3 w-3" />
-                        {room.guestName}
-                      </p>
-                    </div>
-                  )}
+                  <p className="text-xs font-medium mt-1">{formatCurrency(Number(room.price_per_night))}/night</p>
                 </CardContent>
               </Card>
             );
@@ -119,7 +118,6 @@ export default function RoomsPage() {
                   <th className="text-left p-3 font-medium">Floor</th>
                   <th className="text-left p-3 font-medium">Status</th>
                   <th className="text-left p-3 font-medium">Price</th>
-                  <th className="text-left p-3 font-medium">Guest</th>
                 </tr>
               </thead>
               <tbody>
@@ -130,8 +128,7 @@ export default function RoomsPage() {
                     <td className="p-3">{room.building}</td>
                     <td className="p-3">{room.floor}</td>
                     <td className="p-3"><StatusBadge status={room.status} config={ROOM_STATUS_CONFIG} /></td>
-                    <td className="p-3">{formatCurrency(room.price)}</td>
-                    <td className="p-3 text-muted-foreground">{room.guestName || "—"}</td>
+                    <td className="p-3">{formatCurrency(Number(room.price_per_night))}</td>
                   </tr>
                 ))}
               </tbody>

@@ -8,39 +8,57 @@ import { DataTable, type Column } from "@/components/dashboard/data-table";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PAYMENT_STATUS_CONFIG, PAYMENT_METHOD_LABELS } from "@/lib/constants";
-import { DEMO_PAYMENTS } from "@/lib/demo-data";
+import { getPayments } from "@/lib/supabase/queries";
+import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { Search, Wallet, Clock, CreditCard, TrendingUp } from "lucide-react";
+import { Search, Wallet, Clock, CreditCard, TrendingUp, Loader2 } from "lucide-react";
 
-type Payment = (typeof DEMO_PAYMENTS)[number];
+type PaymentRow = {
+  id: string;
+  booking_id: string;
+  amount: number;
+  method: string;
+  status: string;
+  reference: string;
+  notes: string | null;
+  created_at: string;
+  booking: { reference: string; guest_id: string; guest: { full_name: string } };
+};
 
 export default function PaymentsPage() {
+  const { data: payments, loading } = useSupabaseQuery(() => getPayments(), []);
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [methodFilter, setMethodFilter] = useState("ALL");
   const [search, setSearch] = useState("");
 
-  const filtered = DEMO_PAYMENTS.filter((p) => {
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-amber-500" /></div>;
+  }
+
+  const allPayments = (payments || []) as PaymentRow[];
+
+  const filtered = allPayments.filter((p) => {
     if (statusFilter !== "ALL" && p.status !== statusFilter) return false;
     if (methodFilter !== "ALL" && p.method !== methodFilter) return false;
     if (search) {
       const q = search.toLowerCase();
-      return p.receiptNo.toLowerCase().includes(q) || p.guestName.toLowerCase().includes(q) || p.bookingRef.toLowerCase().includes(q);
+      return p.reference.toLowerCase().includes(q) || p.booking?.guest?.full_name?.toLowerCase().includes(q) || p.booking?.reference?.toLowerCase().includes(q);
     }
     return true;
   });
 
-  const totalCompleted = DEMO_PAYMENTS.filter((p) => p.status === "COMPLETED").reduce((s, p) => s + p.amount, 0);
-  const totalPending = DEMO_PAYMENTS.filter((p) => p.status === "PENDING").reduce((s, p) => s + p.amount, 0);
+  const totalCompleted = allPayments.filter((p) => p.status === "COMPLETED").reduce((s, p) => s + Number(p.amount), 0);
+  const totalPending = allPayments.filter((p) => p.status === "PENDING").reduce((s, p) => s + Number(p.amount), 0);
 
-  const columns: Column<Payment>[] = [
-    { header: "Receipt", accessor: (p) => <span className="font-mono text-xs font-bold">{p.receiptNo}</span> },
-    { header: "Booking", accessor: (p) => <span className="font-mono text-xs">{p.bookingRef}</span> },
-    { header: "Guest", accessor: (p) => <span className="font-medium">{p.guestName}</span> },
-    { header: "Amount", accessor: (p) => <span className="font-semibold">{formatCurrency(p.amount)}</span> },
-    { header: "Method", accessor: (p) => <span className="text-xs">{PAYMENT_METHOD_LABELS[p.method] ?? p.method}</span> },
+  const columns: Column<PaymentRow>[] = [
+    { header: "Reference", accessor: (p) => <span className="font-mono text-xs font-bold">{p.reference}</span> },
+    { header: "Booking", accessor: (p) => <span className="font-mono text-xs">{p.booking?.reference ?? "—"}</span> },
+    { header: "Guest", accessor: (p) => <span className="font-medium">{p.booking?.guest?.full_name ?? "—"}</span> },
+    { header: "Amount", accessor: (p) => <span className="font-semibold">{formatCurrency(Number(p.amount))}</span> },
+    { header: "Method", accessor: (p) => <span className="text-xs">{PAYMENT_METHOD_LABELS[p.method as keyof typeof PAYMENT_METHOD_LABELS] ?? p.method}</span> },
     { header: "Status", accessor: (p) => <StatusBadge status={p.status} config={PAYMENT_STATUS_CONFIG} /> },
-    { header: "Date", accessor: (p) => <span className="text-sm">{formatDate(p.date)}</span> },
-    { header: "Note", accessor: (p) => <span className="text-xs text-muted-foreground">{p.note}</span> },
+    { header: "Date", accessor: (p) => <span className="text-sm">{formatDate(p.created_at)}</span> },
+    { header: "Note", accessor: (p) => <span className="text-xs text-muted-foreground">{p.notes ?? ""}</span> },
   ];
 
   return (
@@ -51,8 +69,8 @@ export default function PaymentsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Total Collected" value={formatCurrency(totalCompleted)} icon={Wallet} iconClassName="bg-emerald-50 text-emerald-600" />
         <StatCard title="Pending" value={formatCurrency(totalPending)} icon={Clock} iconClassName="bg-amber-50 text-amber-600" />
-        <StatCard title="Transactions" value={DEMO_PAYMENTS.length} icon={CreditCard} iconClassName="bg-blue-50 text-blue-600" />
-        <StatCard title="Today" value={formatCurrency(1200)} icon={TrendingUp} iconClassName="bg-purple-50 text-purple-600" />
+        <StatCard title="Transactions" value={allPayments.length} icon={CreditCard} iconClassName="bg-blue-50 text-blue-600" />
+        <StatCard title="Today" value={formatCurrency(allPayments.filter((p) => p.status === "COMPLETED" && p.created_at?.startsWith(new Date().toISOString().split("T")[0])).reduce((s, p) => s + Number(p.amount), 0))} icon={TrendingUp} iconClassName="bg-purple-50 text-purple-600" />
       </div>
 
       {/* Filters */}

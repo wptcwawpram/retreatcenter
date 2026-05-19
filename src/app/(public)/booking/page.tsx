@@ -22,6 +22,8 @@ import {
   Users,
   AlertCircle,
   ChevronDown,
+  Loader2,
+  CheckCircle,
 } from "lucide-react";
 
 const AGE_RANGES = [
@@ -70,6 +72,107 @@ export default function BookingPage() {
   // Expandable breakdowns
   const [showRoomBreakdown, setShowRoomBreakdown] = useState(false);
   const [showHallBreakdown, setShowHallBreakdown] = useState(false);
+
+  // Form fields
+  const [formData, setFormData] = useState({
+    name: "", email: "", phone: "", address: "",
+    denomination: "", ageRange: "", relationship: "",
+    emergencyName: "", emergencyRelationship: "", emergencyPhone: "",
+    idType: "", idNumber: "",
+    fromDate: "", toDate: "", startTime: "", endTime: "",
+    specialRequests: "",
+  });
+
+  // Submission state
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [bookingRef, setBookingRef] = useState("");
+  const [submitError, setSubmitError] = useState("");
+
+  const updateField = (field: string, value: string) =>
+    setFormData((prev) => ({ ...prev, [field]: value }));
+
+  const handleSubmit = async () => {
+    // Validation
+    if (!formData.name || !formData.phone || !formData.email) {
+      setSubmitError("Please fill in your name, email, and phone number.");
+      return;
+    }
+    if (!formData.fromDate || !formData.toDate) {
+      setSubmitError("Please select your check-in and check-out dates.");
+      return;
+    }
+
+    setSubmitting(true);
+    setSubmitError("");
+
+    try {
+      const res = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          guest: {
+            full_name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            id_type: formData.idType || undefined,
+            id_number: formData.idNumber || undefined,
+          },
+          booking: {
+            check_in: formData.fromDate,
+            check_out: formData.toDate,
+            nights,
+            adults: 1,
+            children: 0,
+            total_amount: totalAmount,
+            booking_type: bookingType === "group" ? "GROUP" : "INDIVIDUAL",
+            special_requests: formData.specialRequests || undefined,
+            hall_days: needsHall === "yes" ? hallDays : 0,
+            hall_amount: hallPrice,
+          },
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to create booking");
+      }
+
+      setBookingRef(data.booking.reference);
+      setSubmitted(true);
+
+      // If there's a deposit to pay and Paystack is configured, redirect to payment
+      const paystackKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
+      if (paystackKey && data.booking.deposit > 0) {
+        try {
+          const payRes = await fetch("/api/payments/initialize", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: formData.email,
+              amount: data.booking.deposit,
+              bookingReference: data.booking.reference,
+              guestName: formData.name,
+            }),
+          });
+          const payData = await payRes.json();
+          if (payData.authorization_url) {
+            window.location.href = payData.authorization_url;
+            return;
+          }
+        } catch {
+          // Payment init failed — booking still created, they can pay later
+          console.error("Paystack redirect failed, booking still created");
+        }
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Something went wrong";
+      setSubmitError(message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   // Room calculation breakdown lines
   const roomBreakdownLines = useMemo(() => {
@@ -165,9 +268,32 @@ export default function BookingPage() {
       {/* Booking Form */}
       <section className="py-16 md:py-24 bg-gradient-to-b from-amber-50/30 to-white">
         <div className="container mx-auto px-4">
+          {/* ─── Success State ─── */}
+          {submitted ? (
+            <div className="max-w-lg mx-auto text-center py-12">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-100 mb-6">
+                <CheckCircle className="h-10 w-10 text-emerald-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">Booking Submitted!</h2>
+              <p className="text-gray-600 mb-2">Your booking reference is:</p>
+              <p className="text-3xl font-bold text-amber-800 font-mono mb-6">{bookingRef}</p>
+              <p className="text-sm text-gray-500 mb-8">
+                A confirmation SMS has been sent to {formData.phone}. Please save your reference number for check-in.
+                {totalAmount > 0 && " You will be redirected to make your 30% deposit payment shortly."}
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="/">
+                  <Button className="bg-amber-700 hover:bg-amber-800 text-white">Return to Homepage</Button>
+                </a>
+                <a href="/booking">
+                  <Button variant="outline" className="border-amber-300 text-amber-800 hover:bg-amber-50">Make Another Booking</Button>
+                </a>
+              </div>
+            </div>
+          ) : (
           <form
             className="max-w-4xl mx-auto space-y-8"
-            onSubmit={(e) => e.preventDefault()}
+            onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}
           >
             {/* ─── Booking Type ─── */}
             <Card className="border-0 ring-0 shadow-lg overflow-hidden">
@@ -210,13 +336,15 @@ export default function BookingPage() {
                     <Label htmlFor="name">
                       {bookingType === "group" ? "Booker Name" : "Name"} <span className="text-red-500">*</span>
                     </Label>
-                    <Input id="name" placeholder="Full name" className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="name" placeholder="Full name" value={formData.name} onChange={(e) => updateField("name", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="ageRange">Age Range</Label>
                     <select
                       id="ageRange"
+                      value={formData.ageRange}
+                      onChange={(e) => updateField("ageRange", e.target.value)}
                       className="w-full h-9 rounded-md border border-gray-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                     >
                       <option value="">Select age range</option>
@@ -228,28 +356,30 @@ export default function BookingPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
-                    <Input id="email" type="email" placeholder="your@email.com" className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="email" type="email" placeholder="your@email.com" value={formData.email} onChange={(e) => updateField("email", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone / Mobile <span className="text-red-500">*</span></Label>
-                    <Input id="phone" type="tel" placeholder="+233 XXX XXX XXX" className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="phone" type="tel" placeholder="+233 XXX XXX XXX" value={formData.phone} onChange={(e) => updateField("phone", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="address">Address</Label>
-                    <Input id="address" placeholder="Your address" className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="address" placeholder="Your address" value={formData.address} onChange={(e) => updateField("address", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="denomination">Denomination</Label>
-                    <Input id="denomination" placeholder="e.g. Methodist, Catholic, Pentecostal" className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="denomination" placeholder="e.g. Methodist, Catholic, Pentecostal" value={formData.denomination} onChange={(e) => updateField("denomination", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="relationship">Relationship Status</Label>
                     <select
                       id="relationship"
+                      value={formData.relationship}
+                      onChange={(e) => updateField("relationship", e.target.value)}
                       className="w-full h-9 rounded-md border border-gray-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                     >
                       <option value="">Select status</option>
@@ -274,15 +404,15 @@ export default function BookingPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                   <div className="space-y-2">
                     <Label htmlFor="emergencyName">Contact Name</Label>
-                    <Input id="emergencyName" placeholder="Emergency contact name" className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="emergencyName" placeholder="Emergency contact name" value={formData.emergencyName} onChange={(e) => updateField("emergencyName", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="emergencyRelationship">Relationship</Label>
-                    <Input id="emergencyRelationship" placeholder="e.g. Spouse, Parent, Sibling" className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="emergencyRelationship" placeholder="e.g. Spouse, Parent, Sibling" value={formData.emergencyRelationship} onChange={(e) => updateField("emergencyRelationship", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="emergencyPhone">Contact Phone</Label>
-                    <Input id="emergencyPhone" type="tel" placeholder="+233 XXX XXX XXX" className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="emergencyPhone" type="tel" placeholder="+233 XXX XXX XXX" value={formData.emergencyPhone} onChange={(e) => updateField("emergencyPhone", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
                   </div>
                 </div>
               </CardContent>
@@ -302,6 +432,8 @@ export default function BookingPage() {
                     <Label htmlFor="idType">ID Card Type</Label>
                     <select
                       id="idType"
+                      value={formData.idType}
+                      onChange={(e) => updateField("idType", e.target.value)}
                       className="w-full h-9 rounded-md border border-gray-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                     >
                       <option value="">Select ID type</option>
@@ -312,7 +444,7 @@ export default function BookingPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="idNumber">ID Card Number</Label>
-                    <Input id="idNumber" placeholder="Enter your ID number" className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="idNumber" placeholder="Enter your ID number" value={formData.idNumber} onChange={(e) => updateField("idNumber", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
                   </div>
                 </div>
               </CardContent>
@@ -488,19 +620,19 @@ export default function BookingPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="space-y-2">
                     <Label htmlFor="fromDate">From Date <span className="text-red-500">*</span></Label>
-                    <Input id="fromDate" type="date" className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="fromDate" type="date" value={formData.fromDate} onChange={(e) => updateField("fromDate", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="toDate">To Date <span className="text-red-500">*</span></Label>
-                    <Input id="toDate" type="date" className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="toDate" type="date" value={formData.toDate} onChange={(e) => updateField("toDate", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="startTime">Starting Time</Label>
-                    <Input id="startTime" type="time" className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="startTime" type="time" value={formData.startTime} onChange={(e) => updateField("startTime", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="endTime">Ending Time</Label>
-                    <Input id="endTime" type="time" className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="endTime" type="time" value={formData.endTime} onChange={(e) => updateField("endTime", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
                   </div>
                 </div>
               </CardContent>
@@ -599,15 +731,28 @@ export default function BookingPage() {
                   </p>
                 </div>
 
+                {submitError && (
+                  <div className="flex items-start gap-3 p-4 rounded-xl bg-red-50 border border-red-200 mb-4">
+                    <AlertCircle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
+                    <p className="text-sm text-red-800">{submitError}</p>
+                  </div>
+                )}
+
                 <Button
                   type="submit"
-                  className="w-full bg-amber-700 hover:bg-amber-800 text-white font-bold text-base h-12 shadow-lg shadow-amber-700/20"
+                  disabled={submitting}
+                  className="w-full bg-amber-700 hover:bg-amber-800 text-white font-bold text-base h-12 shadow-lg shadow-amber-700/20 disabled:opacity-60"
                 >
-                  Book Now!
+                  {submitting ? (
+                    <><Loader2 className="h-5 w-5 animate-spin mr-2" />Processing...</>
+                  ) : (
+                    "Book Now!"
+                  )}
                 </Button>
               </CardContent>
             </Card>
           </form>
+          )}
         </div>
       </section>
     </>

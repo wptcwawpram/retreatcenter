@@ -5,29 +5,35 @@ import { PageHeader } from "@/components/dashboard/page-header";
 import { DataTable, type Column } from "@/components/dashboard/data-table";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { DEMO_GUESTS } from "@/lib/demo-data";
+import { getGuests } from "@/lib/supabase/queries";
+import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatDate } from "@/lib/format";
-import { Search } from "lucide-react";
-
-type Guest = (typeof DEMO_GUESTS)[number];
+import { Search, Loader2 } from "lucide-react";
+import type { Guest } from "@/lib/supabase/types";
 
 export default function GuestsPage() {
+  const { data: guests, loading } = useSupabaseQuery(() => getGuests(), []);
   const [search, setSearch] = useState("");
 
-  const filtered = DEMO_GUESTS.filter((g) => {
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-amber-500" /></div>;
+  }
+
+  const allGuests = guests || [];
+
+  const filtered = allGuests.filter((g) => {
     if (!search) return true;
     const q = search.toLowerCase();
-    return `${g.firstName} ${g.lastName}`.toLowerCase().includes(q) || g.phone.includes(q) || g.email.toLowerCase().includes(q);
+    return g.full_name.toLowerCase().includes(q) || g.phone.includes(q) || (g.email ?? "").toLowerCase().includes(q);
   });
 
   const columns: Column<Guest>[] = [
-    { header: "Name", accessor: (g) => <span className="font-medium">{g.firstName} {g.lastName}</span> },
+    { header: "Name", accessor: (g) => <span className="font-medium">{g.full_name}</span> },
     { header: "Phone", accessor: "phone" },
-    { header: "Email", accessor: (g) => <span className="text-xs">{g.email}</span> },
-    { header: "ID Type", accessor: "idType" },
+    { header: "Email", accessor: (g) => <span className="text-xs">{g.email ?? "—"}</span> },
+    { header: "ID Type", accessor: (g) => g.id_type ?? "—" },
     { header: "Nationality", accessor: "nationality" },
-    { header: "Bookings", accessor: (g) => <Badge variant="secondary">{g.totalBookings}</Badge>, className: "text-center" },
-    { header: "Last Visit", accessor: (g) => <span className="text-sm">{formatDate(g.lastVisit)}</span> },
+    { header: "Joined", accessor: (g) => <span className="text-sm">{formatDate(g.created_at)}</span> },
   ];
 
   return (

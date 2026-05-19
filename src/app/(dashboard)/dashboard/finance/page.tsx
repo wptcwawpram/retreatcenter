@@ -7,19 +7,25 @@ import { DataTable, type Column } from "@/components/dashboard/data-table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { DEMO_FINANCE } from "@/lib/demo-data";
+import { getFinanceRecords } from "@/lib/supabase/queries";
+import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight } from "lucide-react";
-
-type FinanceRecord = (typeof DEMO_FINANCE)[number];
+import { TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight, Loader2 } from "lucide-react";
+import type { FinanceRecord } from "@/lib/supabase/types";
 
 export default function FinancePage() {
+  const { data: finance, loading } = useSupabaseQuery(() => getFinanceRecords(), []);
   const [typeFilter, setTypeFilter] = useState("ALL");
 
-  const filtered = DEMO_FINANCE.filter((f) => typeFilter === "ALL" || f.type === typeFilter);
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-amber-500" /></div>;
+  }
 
-  const totalIncome = DEMO_FINANCE.filter((f) => f.type === "INCOME").reduce((s, f) => s + f.amount, 0);
-  const totalExpenses = DEMO_FINANCE.filter((f) => f.type === "EXPENSE").reduce((s, f) => s + f.amount, 0);
+  const allRecords = finance || [];
+  const filtered = allRecords.filter((f) => typeFilter === "ALL" || f.type === typeFilter);
+
+  const totalIncome = allRecords.filter((f) => f.type === "INCOME").reduce((s, f) => s + Number(f.amount), 0);
+  const totalExpenses = allRecords.filter((f) => f.type === "EXPENSE").reduce((s, f) => s + Number(f.amount), 0);
   const netIncome = totalIncome - totalExpenses;
 
   const columns: Column<FinanceRecord>[] = [
@@ -34,7 +40,7 @@ export default function FinancePage() {
     { header: "Description", accessor: (f) => <span className="text-sm text-muted-foreground">{f.description}</span> },
     { header: "Amount", accessor: (f) => (
       <span className={`font-semibold ${f.type === "INCOME" ? "text-emerald-600" : "text-red-600"}`}>
-        {f.type === "INCOME" ? "+" : "-"}{formatCurrency(f.amount)}
+        {f.type === "INCOME" ? "+" : "-"}{formatCurrency(Number(f.amount))}
       </span>
     )},
   ];
@@ -61,8 +67,8 @@ export default function FinancePage() {
           <h3 className="font-semibold mb-4">Income Breakdown</h3>
           <div className="space-y-3">
             {Object.entries(
-              DEMO_FINANCE.filter((f) => f.type === "INCOME").reduce((acc, f) => {
-                acc[f.category] = (acc[f.category] || 0) + f.amount;
+              allRecords.filter((f) => f.type === "INCOME").reduce((acc, f) => {
+                acc[f.category] = (acc[f.category] || 0) + Number(f.amount);
                 return acc;
               }, {} as Record<string, number>)
             ).sort((a, b) => b[1] - a[1]).map(([cat, amount]) => (
@@ -70,7 +76,7 @@ export default function FinancePage() {
                 <span className="text-sm">{cat}</span>
                 <div className="flex items-center gap-3">
                   <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${(amount / totalIncome) * 100}%` }} />
+                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${totalIncome > 0 ? (amount / totalIncome) * 100 : 0}%` }} />
                   </div>
                   <span className="text-sm font-medium w-24 text-right">{formatCurrency(amount)}</span>
                 </div>
