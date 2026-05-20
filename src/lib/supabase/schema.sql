@@ -257,6 +257,28 @@ create table if not exists finance_records (
   created_at  timestamptz not null default now()
 );
 
+-- ── Messages (SMS log) ────────────────────────────────────
+create table if not exists messages (
+  id             uuid primary key default uuid_generate_v4(),
+  to_phone       text not null,
+  recipient_name text,
+  channel        text not null default 'SMS',
+  subject        text,
+  body           text not null,
+  status         text not null default 'SENT' check (status in ('SENT','FAILED','PENDING')),
+  error          text,
+  sent_by        uuid references profiles(id),
+  created_at     timestamptz not null default now()
+);
+
+-- ── Settings (key-value store) ────────────────────────────
+create table if not exists settings (
+  key        text primary key,
+  value      text not null,
+  updated_by uuid references profiles(id),
+  updated_at timestamptz not null default now()
+);
+
 
 -- ════════════════════════════════════════════════════════════
 -- INDEXES
@@ -278,6 +300,8 @@ create index if not exists idx_events_dates       on events(start_date, end_date
 create index if not exists idx_finance_date       on finance_records(date);
 create index if not exists idx_finance_type       on finance_records(type);
 create index if not exists idx_guests_phone       on guests(phone);
+create index if not exists idx_messages_sent_by   on messages(sent_by);
+create index if not exists idx_messages_created   on messages(created_at);
 
 
 -- ════════════════════════════════════════════════════════════
@@ -295,6 +319,8 @@ alter table complaints        enable row level security;
 alter table inventory_items   enable row level security;
 alter table events            enable row level security;
 alter table finance_records   enable row level security;
+alter table messages          enable row level security;
+alter table settings          enable row level security;
 
 -- ── Helper: get current user's role ────────────────────────
 create or replace function auth_user_role()
@@ -490,6 +516,32 @@ create policy "Admins and managers can read finance"
 drop policy if exists "Admins and managers can manage finance" on finance_records;
 create policy "Admins and managers can manage finance"
   on finance_records for all
+  to authenticated
+  using (auth_user_role() in ('admin', 'manager'));
+
+-- ── Messages ──────────────────────────────────────────────
+drop policy if exists "Staff can read messages" on messages;
+create policy "Staff can read messages"
+  on messages for select
+  to authenticated
+  using (true);
+
+drop policy if exists "Staff can send messages" on messages;
+create policy "Staff can send messages"
+  on messages for insert
+  to authenticated
+  with check (true);
+
+-- ── Settings ──────────────────────────────────────────────
+drop policy if exists "Staff can read settings" on settings;
+create policy "Staff can read settings"
+  on settings for select
+  to authenticated
+  using (true);
+
+drop policy if exists "Admins can manage settings" on settings;
+create policy "Admins can manage settings"
+  on settings for all
   to authenticated
   using (auth_user_role() in ('admin', 'manager'));
 
