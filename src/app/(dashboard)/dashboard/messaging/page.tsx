@@ -4,6 +4,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, type Column } from "@/components/dashboard/data-table";
@@ -129,7 +132,6 @@ export default function MessagingPage() {
   const useTemplate = (template: (typeof TEMPLATES)[number]) => {
     setMsgBody(template.body);
     setSubject(template.name);
-    // Switch to compose tab
     composeTabRef.current?.click();
   };
 
@@ -217,50 +219,44 @@ export default function MessagingPage() {
               <form onSubmit={handleSend} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium" htmlFor="to-phone">Phone Number *</label>
-                    <input
+                    <Label htmlFor="to-phone">Phone Number *</Label>
+                    <Input
                       id="to-phone"
                       type="tel"
                       placeholder="+233 XXX XXX XXX"
                       value={toPhone}
                       onChange={(e) => setToPhone(e.target.value)}
                       required
-                      className="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium" htmlFor="recipient">Recipient Name</label>
-                    <input
+                    <Label htmlFor="recipient">Recipient Name</Label>
+                    <Input
                       id="recipient"
-                      type="text"
                       placeholder="Guest name (optional)"
                       value={recipientName}
                       onChange={(e) => setRecipientName(e.target.value)}
-                      className="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium" htmlFor="msg-subject">Subject</label>
-                  <input
+                  <Label htmlFor="msg-subject">Subject</Label>
+                  <Input
                     id="msg-subject"
-                    type="text"
                     placeholder="Message subject (optional)"
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
-                    className="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium" htmlFor="msg-body">Message *</label>
-                  <textarea
+                  <Label htmlFor="msg-body">Message *</Label>
+                  <Textarea
                     id="msg-body"
                     placeholder="Type your message..."
                     rows={5}
                     value={msgBody}
                     onChange={(e) => setMsgBody(e.target.value)}
                     required
-                    className="flex field-sizing-content min-h-16 w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
                   />
                   <p className="text-xs text-muted-foreground">
                     {msgBody.length} characters &bull; SMS is sent via Hubtel
@@ -284,11 +280,7 @@ export default function MessagingPage() {
                   </div>
                 )}
 
-                <button
-                  type="submit"
-                  disabled={sending || !toPhone || !msgBody}
-                  className="inline-flex shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-medium h-8 gap-1.5 px-2.5 transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
-                >
+                <Button type="submit" disabled={sending || !toPhone || !msgBody}>
                   {sending ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -300,7 +292,7 @@ export default function MessagingPage() {
                       Send SMS
                     </>
                   )}
-                </button>
+                </Button>
               </form>
             </CardContent>
           </Card>
