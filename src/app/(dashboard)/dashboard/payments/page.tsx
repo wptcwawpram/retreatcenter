@@ -9,10 +9,11 @@ import { FormDialog, type FormField } from "@/components/dashboard/form-dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PAYMENT_STATUS_CONFIG, PAYMENT_METHOD_LABELS } from "@/lib/constants";
-import { getPayments, getBookings, createPayment } from "@/lib/supabase/queries";
+import { getPayments, getBookings, createPayment, deletePayment } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { Search, Wallet, Clock, CreditCard, TrendingUp, Loader2 } from "lucide-react";
+import { Search, Wallet, Clock, CreditCard, TrendingUp, Loader2, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type PaymentRow = {
   id: string;
@@ -33,6 +34,20 @@ export default function PaymentsPage() {
   const [methodFilter, setMethodFilter] = useState("ALL");
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const handleDeletePayment = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this payment record?")) return;
+    setDeleting(id);
+    try {
+      await deletePayment(id);
+      refetch();
+    } catch {
+      alert("Failed to delete payment.");
+    } finally {
+      setDeleting(null);
+    }
+  };
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-amber-500" /></div>;
@@ -87,6 +102,11 @@ export default function PaymentsPage() {
     { header: "Status", accessor: (p) => <StatusBadge status={p.status} config={PAYMENT_STATUS_CONFIG} /> },
     { header: "Date", accessor: (p) => <span className="text-sm">{formatDate(p.created_at)}</span> },
     { header: "Note", accessor: (p) => <span className="text-xs text-muted-foreground">{p.notes ?? ""}</span> },
+    { header: "", accessor: (p) => (
+      <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); handleDeletePayment(p.id); }} disabled={deleting === p.id}>
+        {deleting === p.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5 text-red-500" />}
+      </Button>
+    )},
   ];
 
   return (

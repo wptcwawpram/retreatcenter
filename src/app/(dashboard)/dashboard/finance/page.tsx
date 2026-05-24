@@ -8,10 +8,11 @@ import { FormDialog, type FormField } from "@/components/dashboard/form-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { getFinanceRecords, createFinanceRecord } from "@/lib/supabase/queries";
+import { getFinanceRecords, createFinanceRecord, deleteFinanceRecord } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight, Loader2 } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight, Loader2, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { FinanceRecord } from "@/lib/supabase/types";
 
 const INCOME_CATEGORIES = ["Room Booking", "Hall Rental", "Event Hosting", "Dining", "Other Income"];
@@ -21,6 +22,20 @@ export default function FinancePage() {
   const { data: finance, loading, refetch } = useSupabaseQuery(() => getFinanceRecords(), []);
   const [typeFilter, setTypeFilter] = useState("ALL");
   const [showAdd, setShowAdd] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this record?")) return;
+    setDeleting(id);
+    try {
+      await deleteFinanceRecord(id);
+      refetch();
+    } catch {
+      alert("Failed to delete record.");
+    } finally {
+      setDeleting(null);
+    }
+  };
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-amber-500" /></div>;
@@ -68,6 +83,11 @@ export default function FinancePage() {
       <span className={`font-semibold ${f.type === "INCOME" ? "text-emerald-600" : "text-red-600"}`}>
         {f.type === "INCOME" ? "+" : "-"}{formatCurrency(Number(f.amount))}
       </span>
+    )},
+    { header: "", accessor: (f) => (
+      <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); handleDelete(f.id); }} disabled={deleting === f.id}>
+        {deleting === f.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5 text-red-500" />}
+      </Button>
     )},
   ];
 

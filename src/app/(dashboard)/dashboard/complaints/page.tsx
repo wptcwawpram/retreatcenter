@@ -7,10 +7,10 @@ import { FormDialog, type FormField } from "@/components/dashboard/form-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { COMPLAINT_CATEGORY_LABELS } from "@/lib/constants";
-import { getComplaints, createComplaint, updateComplaint, getGuests } from "@/lib/supabase/queries";
+import { getComplaints, createComplaint, updateComplaint, deleteComplaint, getGuests } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatDate } from "@/lib/format";
-import { Loader2, Edit2 } from "lucide-react";
+import { Loader2, Edit2, Trash2 } from "lucide-react";
 import type { Complaint } from "@/lib/supabase/types";
 
 type ComplaintRow = Complaint & { guest: { full_name: string } | null };
@@ -27,6 +27,20 @@ export default function ComplaintsPage() {
   const { data: guests } = useSupabaseQuery(() => getGuests(), []);
   const [showAdd, setShowAdd] = useState(false);
   const [editItem, setEditItem] = useState<ComplaintRow | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const handleDeleteComplaint = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this complaint?")) return;
+    setDeleting(id);
+    try {
+      await deleteComplaint(id);
+      refetch();
+    } catch {
+      alert("Failed to delete complaint.");
+    } finally {
+      setDeleting(null);
+    }
+  };
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-amber-500" /></div>;
@@ -94,7 +108,12 @@ export default function ComplaintsPage() {
       return <Badge className={`${cfg?.bgColor} ${cfg?.color} border`}>{cfg?.label ?? c.status}</Badge>;
     }},
     { header: "", accessor: (c) => (
-      <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); setEditItem(c); }}><Edit2 className="h-3.5 w-3.5" /></Button>
+      <div className="flex gap-1">
+        <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); setEditItem(c); }}><Edit2 className="h-3.5 w-3.5" /></Button>
+        <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); handleDeleteComplaint(c.id); }} disabled={deleting === c.id}>
+          {deleting === c.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5 text-red-500" />}
+        </Button>
+      </div>
     )},
   ];
 

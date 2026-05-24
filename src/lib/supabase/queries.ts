@@ -209,6 +209,14 @@ export async function createPayment(payment: Omit<Payment, "id" | "created_at">)
   return data as Payment;
 }
 
+export async function deletePayment(id: string) {
+  const { error } = await supabase()
+    .from("payments")
+    .delete()
+    .eq("id", id);
+  if (error) throw error;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // HOUSEKEEPING
 // ═══════════════════════════════════════════════════════════════
@@ -281,6 +289,14 @@ export async function updateComplaint(id: string, updates: Partial<Omit<Complain
   if (error) throw error;
 }
 
+export async function deleteComplaint(id: string) {
+  const { error } = await supabase()
+    .from("complaints")
+    .delete()
+    .eq("id", id);
+  if (error) throw error;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // INVENTORY
 // ═══════════════════════════════════════════════════════════════
@@ -333,6 +349,32 @@ export async function getEvents() {
   return data as (Event & { venue: { name: string } | null })[];
 }
 
+export async function createEvent(event: Omit<Event, "id" | "created_at">) {
+  const { data, error } = await supabase()
+    .from("events")
+    .insert(event)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as Event;
+}
+
+export async function updateEvent(id: string, updates: Partial<Omit<Event, "id" | "created_at">>) {
+  const { error } = await supabase()
+    .from("events")
+    .update(updates)
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteEvent(id: string) {
+  const { error } = await supabase()
+    .from("events")
+    .delete()
+    .eq("id", id);
+  if (error) throw error;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // FINANCE
 // ═══════════════════════════════════════════════════════════════
@@ -354,6 +396,14 @@ export async function createFinanceRecord(record: Omit<FinanceRecord, "id" | "cr
     .single();
   if (error) throw error;
   return data as FinanceRecord;
+}
+
+export async function deleteFinanceRecord(id: string) {
+  const { error } = await supabase()
+    .from("finance_records")
+    .delete()
+    .eq("id", id);
+  if (error) throw error;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -378,6 +428,14 @@ export async function getCurrentProfile() {
     .eq("id", user.id)
     .single();
   return data as Profile | null;
+}
+
+export async function updateProfile(id: string, updates: Partial<Omit<Profile, "id" | "created_at" | "updated_at">>) {
+  const { error } = await supabase()
+    .from("profiles")
+    .update(updates)
+    .eq("id", id);
+  if (error) throw error;
 }
 
 // ═══════════════════════════════════════════════════════════════
