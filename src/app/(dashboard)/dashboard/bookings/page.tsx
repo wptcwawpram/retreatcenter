@@ -1,22 +1,604 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { DataTable, type Column } from "@/components/dashboard/data-table";
 import { FormDialog, type FormField } from "@/components/dashboard/form-dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { NumberStepper } from "@/components/ui/number-stepper";
 import { BOOKING_STATUS_CONFIG } from "@/lib/constants";
-import { getBookings, createBooking, updateBooking, deleteBooking, getGuests } from "@/lib/supabase/queries";
+import { getBookings, updateBooking, deleteBooking, getGuests } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { Search, Loader2, Eye, Edit2, Trash2, AlertCircle } from "lucide-react";
+import {
+  Search, Loader2, Eye, Edit2, Trash2, AlertCircle, CheckCircle,
+  BedDouble, Church, Users, User, ChevronDown,
+} from "lucide-react";
 import type { Booking, Guest } from "@/lib/supabase/types";
 
 type BookingWithGuest = Booking & { guest: Guest };
+
+const ROOM_OPTIONS = [
+  { label: "2 IN 1", price: 150, type: "2_IN_1" },
+  { label: "4 IN 1", price: 200, type: "4_IN_1" },
+  { label: "6 IN 1", price: 270, type: "6_IN_1" },
+  { label: "Suite (Fan)", price: 350, type: "SUITE_FAN" },
+  { label: "Suite (AC)", price: 750, type: "SUITE_AC" },
+  { label: "Holy Family Apartment", price: 750, type: "APARTMENT" },
+];
+
+const HALL_OPTIONS = [
+  { label: "Faith Hall (without AC)", price: 400 },
+  { label: "Faith Hall (with AC)", price: 550 },
+  { label: "Pavilion (with canopy)", price: 900 },
+  { label: "Pavilion (without canopy)", price: 700 },
+  { label: "Kitchen & Dining (55+ persons)", price: 500 },
+  { label: "Kitchen & Dining (30-50 persons)", price: 400 },
+  { label: "Kitchen & Dining (below 20 persons)", price: 250 },
+];
+
+const WEDDING_GROUNDS_PRICE = 4000;
+
+// ─── New Booking Dialog (matches website flow) ────────────────────────
+
+function NewBookingDialog({
+  open,
+  onOpenChange,
+  existingGuests,
+  onSuccess,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  existingGuests: Guest[];
+  onSuccess: () => void;
+}) {
+  // Guest mode
+  const [guestMode, setGuestMode] = useState<"existing" | "new">("new");
+  const [selectedGuestId, setSelectedGuestId] = useState("");
+
+  // Guest info (for new guest)
+  const [guestName, setGuestName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+  const [guestIdType, setGuestIdType] = useState("");
+  const [guestIdNumber, setGuestIdNumber] = useState("");
+
+  // Booking type
+  const [bookingType, setBookingType] = useState<"individual" | "group">("individual");
+  const [source, setSource] = useState<"WALK_IN" | "PHONE" | "WEBSITE" | "AGENT">("WALK_IN");
+
+  // Lodging
+  const [isLodging, setIsLodging] = useState(true);
+  const [selectedRoom, setSelectedRoom] = useState("");
+  const [roomQuantities, setRoomQuantities] = useState<Record<string, number>>({});
+  const [nights, setNights] = useState(1);
+
+  // Hall
+  const [needsHall, setNeedsHall] = useState(false);
+  const [selectedHall, setSelectedHall] = useState("");
+  const [hallDays, setHallDays] = useState(1);
+  const [needsGrounds, setNeedsGrounds] = useState(false);
+
+  // Dates
+  const [checkIn, setCheckIn] = useState("");
+  const [checkOut, setCheckOut] = useState("");
+  const [specialRequests, setSpecialRequests] = useState("");
+
+  // Submission
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  // Breakdowns
+  const [showRoomBreakdown, setShowRoomBreakdown] = useState(false);
+  const [showHallBreakdown, setShowHallBreakdown] = useState(false);
+
+  // Auto-calculate nights from dates
+  useEffect(() => {
+    if (checkIn && checkOut) {
+      const diff = Math.ceil(
+        (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24)
+      );
+      if (diff > 0) setNights(diff);
+    }
+  }, [checkIn, checkOut]);
+
+  // Fill guest fields when selecting existing guest
+  useEffect(() => {
+    if (guestMode === "existing" && selectedGuestId) {
+      const g = existingGuests.find((x) => x.id === selectedGuestId);
+      if (g) {
+        setGuestName(g.full_name);
+        setGuestEmail(g.email || "");
+        setGuestPhone(g.phone);
+        setGuestIdType(g.id_type || "");
+        setGuestIdNumber(g.id_number || "");
+      }
+    }
+  }, [guestMode, selectedGuestId, existingGuests]);
+
+  // Room price calculation
+  const roomBreakdownLines = useMemo(() => {
+    const lines: { label: string; calc: string; amount: number }[] = [];
+    if (!isLodging) return lines;
+    if (bookingType === "individual" && selectedRoom) {
+      const room = ROOM_OPTIONS.find((r) => r.label === selectedRoom);
+      if (room) {
+        lines.push({
+          label: room.label,
+          calc: `GH₵${room.price} × ${nights} night${nights > 1 ? "s" : ""}`,
+          amount: room.price * nights,
+        });
+      }
+    } else if (bookingType === "group") {
+      ROOM_OPTIONS.forEach((room) => {
+        const qty = roomQuantities[room.label] || 0;
+        if (qty > 0) {
+          lines.push({
+            label: `${room.label} × ${qty} room${qty > 1 ? "s" : ""}`,
+            calc: `GH₵${room.price} × ${qty} × ${nights} night${nights > 1 ? "s" : ""}`,
+            amount: room.price * qty * nights,
+          });
+        }
+      });
+    }
+    return lines;
+  }, [isLodging, selectedRoom, nights, bookingType, roomQuantities]);
+
+  const roomPrice = roomBreakdownLines.reduce((s, l) => s + l.amount, 0);
+
+  // Hall price calculation
+  const hallOption = HALL_OPTIONS.find((h) => h.label === selectedHall);
+  const hallBasePrice = needsHall && hallOption ? hallOption.price : 0;
+  const hallTotal = hallBasePrice * hallDays;
+  const groundsPrice = needsGrounds ? WEDDING_GROUNDS_PRICE : 0;
+  const hallPrice = hallTotal + groundsPrice;
+
+  const hallBreakdownLines = useMemo(() => {
+    const lines: { label: string; calc: string; amount: number }[] = [];
+    if (needsHall && hallOption) {
+      lines.push({
+        label: hallOption.label,
+        calc: `GH₵${hallOption.price} × ${hallDays} day${hallDays > 1 ? "s" : ""}`,
+        amount: hallOption.price * hallDays,
+      });
+    }
+    if (needsGrounds) {
+      lines.push({ label: "Wedding Grounds", calc: "Fixed rate", amount: WEDDING_GROUNDS_PRICE });
+    }
+    return lines;
+  }, [needsHall, hallOption, hallDays, needsGrounds]);
+
+  const totalAmount = roomPrice + hallPrice;
+
+  // Reset form
+  const resetForm = useCallback(() => {
+    setGuestMode("new");
+    setSelectedGuestId("");
+    setGuestName(""); setGuestEmail(""); setGuestPhone(""); setGuestIdType(""); setGuestIdNumber("");
+    setBookingType("individual"); setSource("WALK_IN");
+    setIsLodging(true); setSelectedRoom(""); setRoomQuantities({}); setNights(1);
+    setNeedsHall(false); setSelectedHall(""); setHallDays(1); setNeedsGrounds(false);
+    setCheckIn(""); setCheckOut(""); setSpecialRequests("");
+    setError(""); setSuccess("");
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validation
+    if (!guestName || !guestPhone) {
+      setError("Guest name and phone are required.");
+      return;
+    }
+    if (!checkIn || !checkOut) {
+      setError("Check-in and check-out dates are required.");
+      return;
+    }
+    if (totalAmount <= 0) {
+      setError("Please select at least one room or hall.");
+      return;
+    }
+
+    setSubmitting(true);
+    setError("");
+
+    try {
+      // Use the same /api/bookings endpoint as the website
+      const res = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          guest: {
+            full_name: guestName,
+            email: guestEmail || undefined,
+            phone: guestPhone,
+            id_type: guestIdType || undefined,
+            id_number: guestIdNumber || undefined,
+          },
+          booking: {
+            check_in: checkIn,
+            check_out: checkOut,
+            nights,
+            adults: 1,
+            children: 0,
+            total_amount: totalAmount,
+            booking_type: bookingType === "group" ? "GROUP" : "INDIVIDUAL",
+            special_requests: specialRequests || undefined,
+            hall_days: needsHall ? hallDays : 0,
+            hall_amount: hallPrice,
+          },
+          source, // dashboard adds source
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create booking");
+
+      setSuccess(`Booking created! Reference: ${data.booking.reference}`);
+      onSuccess();
+
+      // Close after a moment
+      setTimeout(() => {
+        resetForm();
+        onOpenChange(false);
+      }, 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); onOpenChange(o); }}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>New Booking</DialogTitle>
+          <DialogDescription>Create a booking — same form as the website</DialogDescription>
+        </DialogHeader>
+
+        {success ? (
+          <div className="py-8 text-center">
+            <CheckCircle className="h-12 w-12 text-emerald-500 mx-auto mb-3" />
+            <p className="text-lg font-semibold text-emerald-700">{success}</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* ─── Guest Info ─── */}
+            <div className="space-y-4">
+              <h3 className="font-semibold flex items-center gap-2 text-sm">
+                <User className="h-4 w-4 text-amber-700" /> Guest Information
+              </h3>
+              <div className="flex gap-3 mb-3">
+                {(["new", "existing"] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setGuestMode(mode)}
+                    className={`px-4 py-1.5 rounded-lg text-xs font-semibold border-2 transition-all ${
+                      guestMode === mode
+                        ? "border-amber-500 bg-amber-50 text-amber-900"
+                        : "border-gray-200 text-gray-500 hover:border-amber-300"
+                    }`}
+                  >
+                    {mode === "new" ? "New Guest" : "Existing Guest"}
+                  </button>
+                ))}
+              </div>
+
+              {guestMode === "existing" && (
+                <div className="space-y-2">
+                  <Label>Select Guest</Label>
+                  <select
+                    value={selectedGuestId}
+                    onChange={(e) => setSelectedGuestId(e.target.value)}
+                    className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="">Choose a guest...</option>
+                    {existingGuests.map((g) => (
+                      <option key={g.id} value={g.id}>{g.full_name} ({g.phone})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Name <span className="text-red-500">*</span></Label>
+                  <Input value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Full name" required />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Phone <span className="text-red-500">*</span></Label>
+                  <Input value={guestPhone} onChange={(e) => setGuestPhone(e.target.value)} placeholder="+233 XXX XXX XXX" type="tel" required />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Email</Label>
+                  <Input value={guestEmail} onChange={(e) => setGuestEmail(e.target.value)} placeholder="email@example.com" type="email" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">ID Type</Label>
+                  <select
+                    value={guestIdType}
+                    onChange={(e) => setGuestIdType(e.target.value)}
+                    className="w-full h-8 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="">Select...</option>
+                    <option value="Ghana Card">Ghana Card</option>
+                    <option value="Passport">Passport</option>
+                    <option value="Driver's License">Driver&apos;s License</option>
+                  </select>
+                </div>
+                {guestIdType && (
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label className="text-xs">ID Number</Label>
+                    <Input value={guestIdNumber} onChange={(e) => setGuestIdNumber(e.target.value)} placeholder="ID number" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ─── Booking Type & Source ─── */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-4">
+                <div className="flex gap-2">
+                  {(["individual", "group"] as const).map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setBookingType(type)}
+                      className={`px-4 py-1.5 rounded-lg text-xs font-semibold border-2 transition-all ${
+                        bookingType === type
+                          ? "border-amber-500 bg-amber-50 text-amber-900"
+                          : "border-gray-200 text-gray-500 hover:border-amber-300"
+                      }`}
+                    >
+                      {type === "individual" ? "Individual" : "Group"}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 ml-auto">
+                  <Label className="text-xs text-muted-foreground">Source:</Label>
+                  <select
+                    value={source}
+                    onChange={(e) => setSource(e.target.value as typeof source)}
+                    className="h-7 rounded-md border border-input bg-background px-2 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="WALK_IN">Walk-In</option>
+                    <option value="PHONE">Phone</option>
+                    <option value="WEBSITE">Website</option>
+                    <option value="AGENT">Agent</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* ─── Dates ─── */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Check-in <span className="text-red-500">*</span></Label>
+                <Input type="date" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} required />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Check-out <span className="text-red-500">*</span></Label>
+                <Input type="date" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} required />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Nights</Label>
+                <NumberStepper value={nights} onChange={setNights} min={1} max={90} />
+              </div>
+            </div>
+
+            {/* ─── Lodging / Rooms ─── */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold flex items-center gap-2 text-sm">
+                  <BedDouble className="h-4 w-4 text-amber-700" /> Rooms
+                </h3>
+                <div className="flex gap-2">
+                  {([true, false] as const).map((opt) => (
+                    <button
+                      key={String(opt)}
+                      type="button"
+                      onClick={() => setIsLodging(opt)}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold border-2 transition-all ${
+                        isLodging === opt
+                          ? "border-amber-500 bg-amber-50 text-amber-900"
+                          : "border-gray-200 text-gray-500 hover:border-amber-300"
+                      }`}
+                    >
+                      {opt ? "Yes" : "No rooms"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {isLodging && (
+                <>
+                  {bookingType === "individual" ? (
+                    <select
+                      value={selectedRoom}
+                      onChange={(e) => setSelectedRoom(e.target.value)}
+                      className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                      <option value="">Select a room type</option>
+                      {ROOM_OPTIONS.map((r) => (
+                        <option key={r.label} value={r.label}>
+                          {r.label} — GH₵{r.price}/night
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {ROOM_OPTIONS.map((r) => (
+                        <div key={r.label} className="flex items-center justify-between p-2.5 rounded-lg border border-gray-200 bg-white">
+                          <div>
+                            <p className="text-xs font-medium">{r.label}</p>
+                            <p className="text-[10px] text-gray-400">GH₵{r.price}/night</p>
+                          </div>
+                          <NumberStepper
+                            value={roomQuantities[r.label] || 0}
+                            onChange={(val) => setRoomQuantities((prev) => ({ ...prev, [r.label]: val }))}
+                            min={0}
+                            max={20}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* ─── Hall / Venue ─── */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold flex items-center gap-2 text-sm">
+                  <Church className="h-4 w-4 text-amber-700" /> Hall / Venue
+                </h3>
+                <div className="flex gap-2">
+                  {([true, false] as const).map((opt) => (
+                    <button
+                      key={String(opt)}
+                      type="button"
+                      onClick={() => setNeedsHall(opt)}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold border-2 transition-all ${
+                        needsHall === opt
+                          ? "border-amber-500 bg-amber-50 text-amber-900"
+                          : "border-gray-200 text-gray-500 hover:border-amber-300"
+                      }`}
+                    >
+                      {opt ? "Yes" : "No hall"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {needsHall && (
+                <div className="space-y-3">
+                  <select
+                    value={selectedHall}
+                    onChange={(e) => setSelectedHall(e.target.value)}
+                    className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="">Select a hall</option>
+                    {HALL_OPTIONS.map((h) => (
+                      <option key={h.label} value={h.label}>
+                        {h.label} — GH₵{h.price}/day
+                      </option>
+                    ))}
+                  </select>
+                  <div className="flex items-center gap-3">
+                    <Label className="text-xs whitespace-nowrap">Hall days:</Label>
+                    <NumberStepper value={hallDays} onChange={setHallDays} min={1} max={30} />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="dash-wedding"
+                  checked={needsGrounds}
+                  onChange={(e) => setNeedsGrounds(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                />
+                <Label htmlFor="dash-wedding" className="text-xs cursor-pointer">
+                  Wedding Grounds (GH₵{WEDDING_GROUNDS_PRICE.toLocaleString()})
+                </Label>
+              </div>
+            </div>
+
+            {/* ─── Special Requests ─── */}
+            <div className="space-y-1.5">
+              <Label className="text-xs">Special Requests</Label>
+              <Textarea value={specialRequests} onChange={(e) => setSpecialRequests(e.target.value)} placeholder="Any special requests or notes..." rows={2} />
+            </div>
+
+            {/* ─── Price Summary ─── */}
+            <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-4 space-y-1">
+              <h4 className="font-semibold text-sm mb-2">Price Summary</h4>
+
+              {/* Room line */}
+              <button
+                type="button"
+                onClick={() => roomBreakdownLines.length > 0 && setShowRoomBreakdown(!showRoomBreakdown)}
+                className="flex items-center justify-between w-full py-1.5 text-left"
+              >
+                <span className="text-xs text-gray-600 flex items-center gap-1">
+                  Rooms
+                  {roomBreakdownLines.length > 0 && (
+                    <ChevronDown className={`h-3 w-3 text-amber-600 transition-transform ${showRoomBreakdown ? "rotate-180" : ""}`} />
+                  )}
+                </span>
+                <span className="text-xs font-semibold">GH₵{roomPrice.toFixed(2)}</span>
+              </button>
+              {showRoomBreakdown && roomBreakdownLines.map((line, i) => (
+                <div key={i} className="flex justify-between text-[10px] text-gray-500 pl-4">
+                  <span>{line.label} <span className="text-gray-400">{line.calc}</span></span>
+                  <span>= GH₵{line.amount.toFixed(2)}</span>
+                </div>
+              ))}
+
+              {/* Hall line */}
+              <button
+                type="button"
+                onClick={() => hallBreakdownLines.length > 0 && setShowHallBreakdown(!showHallBreakdown)}
+                className="flex items-center justify-between w-full py-1.5 text-left"
+              >
+                <span className="text-xs text-gray-600 flex items-center gap-1">
+                  Halls / Grounds
+                  {hallBreakdownLines.length > 0 && (
+                    <ChevronDown className={`h-3 w-3 text-amber-600 transition-transform ${showHallBreakdown ? "rotate-180" : ""}`} />
+                  )}
+                </span>
+                <span className="text-xs font-semibold">GH₵{hallPrice.toFixed(2)}</span>
+              </button>
+              {showHallBreakdown && hallBreakdownLines.map((line, i) => (
+                <div key={i} className="flex justify-between text-[10px] text-gray-500 pl-4">
+                  <span>{line.label} <span className="text-gray-400">{line.calc}</span></span>
+                  <span>= GH₵{line.amount.toFixed(2)}</span>
+                </div>
+              ))}
+
+              <div className="flex items-center justify-between pt-2 border-t border-amber-300">
+                <span className="text-sm font-bold">Total</span>
+                <span className="text-base font-bold text-amber-800">GH₵{totalAmount.toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* ─── Error / Submit ─── */}
+            {error && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                {error}
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => { resetForm(); onOpenChange(false); }} disabled={submitting}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={submitting || totalAmount <= 0}>
+                {submitting ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" />Creating...</> : "Create Booking"}
+              </Button>
+            </DialogFooter>
+          </form>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Main Page ──────────────────────────────────────────────────────────
 
 export default function BookingsPage() {
   const { data: bookings, loading, refetch } = useSupabaseQuery(() => getBookings(), []);
@@ -45,19 +627,6 @@ export default function BookingsPage() {
     return true;
   });
 
-  const addFields: FormField[] = [
-    { name: "guest_id", label: "Guest", type: "select", required: true, options: allGuests.map((g) => ({ label: `${g.full_name} (${g.phone})`, value: g.id })), colSpan: 2 },
-    { name: "check_in", label: "Check-in", type: "date", required: true },
-    { name: "check_out", label: "Check-out", type: "date", required: true },
-    { name: "nights", label: "Nights", type: "number", defaultValue: 1, min: 1 },
-    { name: "adults", label: "Adults", type: "number", defaultValue: 1, min: 1 },
-    { name: "children", label: "Children", type: "number", defaultValue: 0, min: 0 },
-    { name: "total_amount", label: "Total Amount (GH₵)", type: "number", required: true, min: 0, step: 0.01 },
-    { name: "booking_type", label: "Type", type: "select", options: [{ label: "Individual", value: "INDIVIDUAL" }, { label: "Group", value: "GROUP" }, { label: "Event", value: "EVENT" }], defaultValue: "INDIVIDUAL" },
-    { name: "source", label: "Source", type: "select", options: [{ label: "Walk-In", value: "WALK_IN" }, { label: "Phone", value: "PHONE" }, { label: "Website", value: "WEBSITE" }, { label: "Agent", value: "AGENT" }], defaultValue: "WALK_IN" },
-    { name: "special_requests", label: "Special Requests", type: "textarea", colSpan: 2 },
-  ];
-
   const editFields: FormField[] = [
     { name: "status", label: "Status", type: "select", required: true, options: Object.entries(BOOKING_STATUS_CONFIG).map(([k, v]) => ({ label: v.label, value: k })) },
     { name: "payment_status", label: "Payment Status", type: "select", options: [{ label: "Unpaid", value: "UNPAID" }, { label: "Partial", value: "PARTIAL" }, { label: "Paid", value: "PAID" }, { label: "Refunded", value: "REFUNDED" }] },
@@ -68,30 +637,6 @@ export default function BookingsPage() {
     { name: "paid_amount", label: "Paid Amount", type: "number", min: 0, step: 0.01 },
     { name: "special_requests", label: "Special Requests", type: "textarea", colSpan: 2 },
   ];
-
-  const handleAdd = async (values: Record<string, unknown>) => {
-    await createBooking({
-      guest_id: values.guest_id as string,
-      room_ids: [],
-      check_in: values.check_in as string,
-      check_out: values.check_out as string,
-      nights: Number(values.nights) || 1,
-      adults: Number(values.adults) || 1,
-      children: Number(values.children) || 0,
-      total_amount: Number(values.total_amount) || 0,
-      paid_amount: 0,
-      balance: Number(values.total_amount) || 0,
-      status: "CONFIRMED",
-      booking_type: (values.booking_type as Booking["booking_type"]) || "INDIVIDUAL",
-      special_requests: (values.special_requests as string) || null,
-      hall_id: null,
-      hall_days: 0,
-      hall_amount: 0,
-      payment_status: "UNPAID",
-      source: (values.source as Booking["source"]) || "WALK_IN",
-    });
-    refetch();
-  };
 
   const handleEdit = async (values: Record<string, unknown>) => {
     if (!editItem) return;
@@ -168,8 +713,13 @@ export default function BookingsPage() {
 
       <DataTable columns={columns} data={filtered} keyExtractor={(b) => b.id} total={filtered.length} emptyMessage="No bookings found" />
 
-      {/* Add Dialog */}
-      <FormDialog open={showAdd} onOpenChange={setShowAdd} title="New Booking" description="Create a new booking from the dashboard" fields={addFields} onSubmit={handleAdd} submitLabel="Create Booking" />
+      {/* New Booking Dialog — full form matching website */}
+      <NewBookingDialog
+        open={showAdd}
+        onOpenChange={setShowAdd}
+        existingGuests={allGuests}
+        onSuccess={refetch}
+      />
 
       {/* Edit Dialog */}
       {editItem && (

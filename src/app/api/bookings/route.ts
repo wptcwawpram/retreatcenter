@@ -13,7 +13,7 @@ function createServiceClient() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { guest, booking } = body;
+    const { guest, booking, source: bookingSource } = body;
 
     if (!guest?.full_name || !guest?.phone || !booking?.check_in || !booking?.check_out) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
         hall_days: booking.hall_days || 0,
         hall_amount: booking.hall_amount || 0,
         payment_status: "UNPAID",
-        source: "WEBSITE",
+        source: bookingSource || "WEBSITE",
       })
       .select()
       .single();
