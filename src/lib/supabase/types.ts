@@ -142,6 +142,7 @@ export interface InventoryItem {
   id: string;
   name: string;
   category: string;
+  location: string;
   quantity: number;
   min_quantity: number;
   unit: string;

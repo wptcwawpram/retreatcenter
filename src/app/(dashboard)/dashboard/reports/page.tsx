@@ -1,138 +1,162 @@
 "use client";
 
+import { useMemo } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StatCard } from "@/components/dashboard/stat-card";
 import { formatCurrency } from "@/lib/format";
-import { BarChart3, TrendingUp, Users, BedDouble } from "lucide-react";
+import { getRooms, getBookings, getGuests, getFinanceRecords } from "@/lib/supabase/queries";
+import { useSupabaseQuery } from "@/hooks/use-supabase-query";
+import { BedDouble, TrendingUp, Users, Wallet, Calendar, BarChart3, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function ReportsPage() {
+  const { data: rooms, loading: loadingRooms } = useSupabaseQuery(() => getRooms(), []);
+  const { data: bookings, loading: loadingBookings } = useSupabaseQuery(() => getBookings(), []);
+  const { data: guests, loading: loadingGuests } = useSupabaseQuery(() => getGuests(), []);
+  const { data: finance, loading: loadingFinance } = useSupabaseQuery(() => getFinanceRecords(), []);
+
+  const loading = loadingRooms || loadingBookings || loadingGuests || loadingFinance;
+
+  const allRooms = rooms || [];
+  const allBookings = bookings || [];
+  const allGuests = guests || [];
+  const allFinance = finance || [];
+
+  // Occupancy
+  const totalRooms = allRooms.length;
+  const occupiedRooms = allRooms.filter((r) => r.status === "OCCUPIED").length;
+  const occupancyPct = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0;
+
+  // Revenue
+  const totalIncome = useMemo(() => allFinance.filter((f) => f.type === "INCOME").reduce((s, f) => s + Number(f.amount), 0), [allFinance]);
+  const totalExpenses = useMemo(() => allFinance.filter((f) => f.type === "EXPENSE").reduce((s, f) => s + Number(f.amount), 0), [allFinance]);
+
+  // Revenue by category
+  const revenueByCategory = useMemo(() => {
+    return Object.entries(
+      allFinance.filter((f) => f.type === "INCOME").reduce((acc, f) => {
+        acc[f.category] = (acc[f.category] || 0) + Number(f.amount);
+        return acc;
+      }, {} as Record<string, number>)
+    ).sort((a, b) => b[1] - a[1]);
+  }, [allFinance]);
+
+  // Booking stats
+  const checkedInCount = allBookings.filter((b) => b.status === "CHECKED_IN").length;
+  const confirmedCount = allBookings.filter((b) => b.status === "CONFIRMED").length;
+
+  // Room status breakdown
+  const statusBreakdown = useMemo(() => {
+    const counts: Record<string, number> = {};
+    allRooms.forEach((r) => { counts[r.status] = (counts[r.status] || 0) + 1; });
+    return counts;
+  }, [allRooms]);
+
+  if (loading) {
+    return (
+      <div className="space-y-5">
+        <PageHeader title="Reports" description="Analytics and insights for your operations" />
+        <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+      </div>
+    );
+  }
+
+  const barColors = ["bg-emerald-400", "bg-blue-400", "bg-amber-400", "bg-purple-400", "bg-red-400"];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <PageHeader title="Reports" description="Analytics and insights for your operations" />
 
-      <Tabs defaultValue="occupancy">
-        <TabsList>
-          <TabsTrigger value="occupancy">Occupancy</TabsTrigger>
-          <TabsTrigger value="revenue">Revenue</TabsTrigger>
-          <TabsTrigger value="bookings">Bookings</TabsTrigger>
-          <TabsTrigger value="guests">Guests</TabsTrigger>
-        </TabsList>
+      {/* Top-level stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard title="Occupancy" value={`${occupancyPct}%`} subtitle={`${occupiedRooms} of ${totalRooms} rooms`} icon={BedDouble} iconClassName="bg-blue-50 text-blue-600" />
+        <StatCard title="Total Revenue" value={formatCurrency(totalIncome)} icon={TrendingUp} iconClassName="bg-emerald-50 text-emerald-600" />
+        <StatCard title="Total Guests" value={allGuests.length} icon={Users} iconClassName="bg-purple-50 text-purple-600" />
+        <StatCard title="Active Bookings" value={checkedInCount + confirmedCount} subtitle={`${checkedInCount} checked in, ${confirmedCount} confirmed`} icon={Calendar} iconClassName="bg-amber-50 text-amber-600" />
+      </div>
 
-        <TabsContent value="occupancy" className="mt-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card><CardContent className="p-6 text-center">
-              <BedDouble className="h-8 w-8 mx-auto mb-2 text-blue-500" />
-              <p className="text-3xl font-bold">57%</p>
-              <p className="text-sm text-muted-foreground">Current Occupancy</p>
-            </CardContent></Card>
-            <Card><CardContent className="p-6 text-center">
-              <TrendingUp className="h-8 w-8 mx-auto mb-2 text-emerald-500" />
-              <p className="text-3xl font-bold">72%</p>
-              <p className="text-sm text-muted-foreground">Avg This Month</p>
-            </CardContent></Card>
-            <Card><CardContent className="p-6 text-center">
-              <BarChart3 className="h-8 w-8 mx-auto mb-2 text-amber-500" />
-              <p className="text-3xl font-bold">85%</p>
-              <p className="text-sm text-muted-foreground">Peak (Weekends)</p>
-            </CardContent></Card>
-          </div>
-
-          {/* Weekly occupancy chart placeholder */}
-          <Card>
-            <CardContent className="p-6">
-              <h3 className="font-semibold mb-4">Weekly Occupancy Trend</h3>
-              <div className="space-y-3">
-                {[
-                  { day: "Mon", pct: 45 }, { day: "Tue", pct: 52 }, { day: "Wed", pct: 58 },
-                  { day: "Thu", pct: 65 }, { day: "Fri", pct: 78 }, { day: "Sat", pct: 85 }, { day: "Sun", pct: 70 },
-                ].map((d) => (
-                  <div key={d.day} className="flex items-center gap-3">
-                    <span className="w-10 text-sm font-medium">{d.day}</span>
-                    <div className="flex-1 h-6 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${d.pct}%` }} />
-                    </div>
-                    <span className="w-12 text-sm font-medium text-right">{d.pct}%</span>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Room Status */}
+        <div className="rounded-xl border border-border/60 bg-card p-5">
+          <h3 className="text-sm font-semibold mb-4">Room Status Breakdown</h3>
+          <div className="space-y-3">
+            {Object.entries(statusBreakdown).map(([status, count]) => {
+              const pct = totalRooms > 0 ? Math.round((count / totalRooms) * 100) : 0;
+              const colors: Record<string, string> = {
+                AVAILABLE: "bg-emerald-400",
+                OCCUPIED: "bg-blue-400",
+                CLEANING: "bg-orange-400",
+                MAINTENANCE: "bg-red-400",
+                RESERVED: "bg-purple-400",
+              };
+              return (
+                <div key={status} className="flex items-center gap-3">
+                  <span className={cn("h-2.5 w-2.5 rounded-full shrink-0", colors[status] ?? "bg-gray-400")} />
+                  <span className="text-xs w-24">{status.replace(/_/g, " ")}</span>
+                  <div className="flex-1 h-2 bg-muted/50 rounded-full overflow-hidden">
+                    <div className={cn("h-full rounded-full transition-all", colors[status] ?? "bg-gray-400")} style={{ width: `${pct}%` }} />
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="revenue" className="mt-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card><CardContent className="p-6 text-center">
-              <p className="text-sm text-muted-foreground mb-1">This Month</p>
-              <p className="text-3xl font-bold text-emerald-600">{formatCurrency(28500)}</p>
-            </CardContent></Card>
-            <Card><CardContent className="p-6 text-center">
-              <p className="text-sm text-muted-foreground mb-1">Last Month</p>
-              <p className="text-3xl font-bold">{formatCurrency(22300)}</p>
-            </CardContent></Card>
-            <Card><CardContent className="p-6 text-center">
-              <p className="text-sm text-muted-foreground mb-1">Growth</p>
-              <p className="text-3xl font-bold text-emerald-600">+27.8%</p>
-            </CardContent></Card>
+                  <span className="text-xs font-semibold w-8 text-right">{count}</span>
+                  <span className="text-[10px] text-muted-foreground w-10 text-right">{pct}%</span>
+                </div>
+              );
+            })}
           </div>
+        </div>
 
-          <Card>
-            <CardContent className="p-6">
-              <h3 className="font-semibold mb-4">Revenue by Source</h3>
-              <div className="space-y-3">
-                {[
-                  { source: "Room Revenue", amount: 18500, pct: 65 },
-                  { source: "Hall/Venue Revenue", amount: 5400, pct: 19 },
-                  { source: "Cafeteria", amount: 3200, pct: 11 },
-                  { source: "Laundry & Other", amount: 1400, pct: 5 },
-                ].map((s) => (
-                  <div key={s.source} className="flex items-center gap-3">
-                    <span className="w-40 text-sm">{s.source}</span>
-                    <div className="flex-1 h-4 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${s.pct}%` }} />
+        {/* Revenue by Source */}
+        <div className="rounded-xl border border-border/60 bg-card p-5">
+          <h3 className="text-sm font-semibold mb-4">Revenue by Source</h3>
+          {revenueByCategory.length > 0 ? (
+            <div className="space-y-3">
+              {revenueByCategory.map(([cat, amount], i) => {
+                const pct = totalIncome > 0 ? Math.round((amount / totalIncome) * 100) : 0;
+                return (
+                  <div key={cat} className="flex items-center gap-3">
+                    <span className="text-xs w-32 text-muted-foreground truncate">{cat}</span>
+                    <div className="flex-1 h-2 bg-muted/50 rounded-full overflow-hidden">
+                      <div className={cn("h-full rounded-full", barColors[i % barColors.length])} style={{ width: `${pct}%` }} />
                     </div>
-                    <span className="w-24 text-sm font-medium text-right">{formatCurrency(s.amount)}</span>
+                    <span className="text-xs font-semibold tabular-nums w-24 text-right">{formatCurrency(amount)}</span>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-8">No income records yet</p>
+          )}
+        </div>
+      </div>
 
-        <TabsContent value="bookings" className="mt-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {[
-              { label: "Total Bookings", value: "42" },
-              { label: "Checked In", value: "8" },
-              { label: "Confirmed", value: "12" },
-              { label: "Cancellation Rate", value: "4.8%" },
-            ].map((s) => (
-              <Card key={s.label}><CardContent className="p-6 text-center">
-                <p className="text-2xl font-bold">{s.value}</p>
-                <p className="text-sm text-muted-foreground">{s.label}</p>
-              </CardContent></Card>
-            ))}
-          </div>
-        </TabsContent>
+      {/* Financial Summary */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <StatCard title="Total Income" value={formatCurrency(totalIncome)} icon={TrendingUp} iconClassName="bg-emerald-50 text-emerald-600" />
+        <StatCard title="Total Expenses" value={formatCurrency(totalExpenses)} icon={Wallet} iconClassName="bg-red-50 text-red-600" />
+        <StatCard
+          title="Net Profit"
+          value={formatCurrency(totalIncome - totalExpenses)}
+          icon={BarChart3}
+          iconClassName={(totalIncome - totalExpenses) >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"}
+        />
+      </div>
 
-        <TabsContent value="guests" className="mt-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card><CardContent className="p-6 text-center">
-              <Users className="h-8 w-8 mx-auto mb-2 text-blue-500" />
-              <p className="text-3xl font-bold">156</p>
-              <p className="text-sm text-muted-foreground">Total Guests</p>
-            </CardContent></Card>
-            <Card><CardContent className="p-6 text-center">
-              <p className="text-3xl font-bold">34%</p>
-              <p className="text-sm text-muted-foreground">Repeat Visitors</p>
-            </CardContent></Card>
-            <Card><CardContent className="p-6 text-center">
-              <p className="text-3xl font-bold">2.4</p>
-              <p className="text-sm text-muted-foreground">Avg Stay (nights)</p>
-            </CardContent></Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+      {/* Booking summary cards */}
+      <div className="rounded-xl border border-border/60 bg-card p-5">
+        <h3 className="text-sm font-semibold mb-4">Booking Summary</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: "Total Bookings", value: allBookings.length },
+            { label: "Checked In", value: checkedInCount },
+            { label: "Confirmed", value: confirmedCount },
+            { label: "Cancelled", value: allBookings.filter((b) => b.status === "CANCELLED").length },
+          ].map((s) => (
+            <div key={s.label} className="text-center py-3">
+              <p className="text-2xl font-bold">{s.value}</p>
+              <p className="text-[11px] text-muted-foreground uppercase tracking-wider mt-1">{s.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

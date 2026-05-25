@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Bell, Menu, Search, User, LogOut, ChevronDown } from "lucide-react";
+import { Bell, Menu, Search, User, LogOut, ChevronDown, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -32,7 +32,6 @@ export function DashboardTopbar() {
       .catch(() => {});
   }, []);
 
-  // Close dropdown on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -56,14 +55,20 @@ export function DashboardTopbar() {
   };
 
   const roleLabel = user?.role ? (USER_ROLE_LABELS[user.role] || user.role) : "";
+  const initials = user?.full_name
+    ?.split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2) || "?";
 
   return (
-    <header className="sticky top-0 z-30 flex items-center gap-4 border-b bg-card px-4 h-16">
+    <header className="sticky top-0 z-30 flex items-center gap-4 border-b border-border/60 bg-card/80 backdrop-blur-xl px-4 lg:px-6 h-14">
       {/* Mobile menu trigger */}
       <Sheet>
         <SheetTrigger
           render={
-            <Button variant="ghost" size="icon" className="lg:hidden">
+            <Button variant="ghost" size="icon-sm" className="lg:hidden">
               <Menu className="h-5 w-5" />
               <span className="sr-only">Toggle menu</span>
             </Button>
@@ -75,65 +80,73 @@ export function DashboardTopbar() {
       </Sheet>
 
       {/* Search */}
-      <div className="flex-1 max-w-md">
+      <div className="flex-1 max-w-sm">
         <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search bookings, rooms, guests..."
-            className="pl-8 h-9 bg-muted/50"
+            placeholder="Search..."
+            className="pl-8 h-8 bg-muted/40 border-transparent text-sm focus-visible:border-border focus-visible:bg-background"
           />
         </div>
       </div>
 
       {/* Right side */}
-      <div className="flex items-center gap-2 ml-auto">
+      <div className="flex items-center gap-1.5 ml-auto">
         {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative">
+        <Button variant="ghost" size="icon-sm" className="relative text-muted-foreground hover:text-foreground">
           <Bell className="h-4 w-4" />
-          <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />
-          <span className="sr-only">Notifications</span>
+          <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-primary ring-2 ring-card" />
         </Button>
 
         {/* User menu */}
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setShowDropdown(!showDropdown)}
-            className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted/50 transition-colors"
+            className="flex items-center gap-2.5 pl-2.5 pr-1.5 py-1 rounded-lg hover:bg-muted/60 transition-colors"
           >
-            <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center">
-              <User className="h-4 w-4 text-amber-700" />
+            <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center text-[11px] font-bold text-primary">
+              {initials}
             </div>
             <div className="hidden md:block text-left">
-              <p className="text-sm font-medium leading-tight">
+              <p className="text-xs font-semibold leading-tight">
                 {user?.full_name || "Loading..."}
               </p>
               {roleLabel && (
-                <p className="text-xs text-muted-foreground leading-tight">{roleLabel}</p>
+                <p className="text-[10px] text-muted-foreground leading-tight">{roleLabel}</p>
               )}
             </div>
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground hidden md:block" />
+            <ChevronDown className={`h-3 w-3 text-muted-foreground hidden md:block transition-transform ${showDropdown ? "rotate-180" : ""}`} />
           </button>
 
           {showDropdown && (
-            <div className="absolute right-0 top-full mt-1 w-56 rounded-lg border bg-card shadow-lg py-1 z-50">
-              <div className="px-3 py-2 border-b">
-                <p className="text-sm font-medium">{user?.full_name}</p>
-                <p className="text-xs text-muted-foreground">{user?.email}</p>
+            <div className="absolute right-0 top-full mt-1.5 w-56 rounded-xl border bg-card shadow-xl shadow-black/5 py-1 z-50 animate-in fade-in-0 zoom-in-95 duration-100">
+              <div className="px-3 py-2.5 border-b">
+                <p className="text-sm font-semibold">{user?.full_name}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{user?.email}</p>
                 {roleLabel && (
-                  <span className="inline-block mt-1 px-2 py-0.5 bg-amber-50 text-amber-700 text-xs rounded-full border border-amber-200">
+                  <span className="inline-block mt-1.5 px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-semibold rounded-md">
                     {roleLabel}
                   </span>
                 )}
               </div>
-              <button
-                onClick={handleLogout}
-                disabled={loggingOut}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
-              >
-                <LogOut className="h-4 w-4" />
-                {loggingOut ? "Signing out..." : "Sign out"}
-              </button>
+              <div className="py-1">
+                <button
+                  onClick={() => { setShowDropdown(false); router.push("/dashboard/settings"); }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+                >
+                  <Settings className="h-3.5 w-3.5 text-muted-foreground" />
+                  Settings
+                </button>
+                <button
+                  onClick={handleLogout}
+                  disabled={loggingOut}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  {loggingOut ? "Signing out..." : "Sign out"}
+                </button>
+              </div>
             </div>
           )}
         </div>

@@ -1,18 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { DataTable, type Column } from "@/components/dashboard/data-table";
 import { FormDialog, type FormField } from "@/components/dashboard/form-dialog";
-import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { getFinanceRecords, createFinanceRecord, deleteFinanceRecord } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight, Loader2, Trash2 } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight, Loader2, Trash2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { FinanceRecord } from "@/lib/supabase/types";
 
 const INCOME_CATEGORIES = ["Room Booking", "Hall Rental", "Event Hosting", "Dining", "Other Income"];
@@ -22,31 +23,32 @@ export default function FinancePage() {
   const { data: finance, loading, refetch } = useSupabaseQuery(() => getFinanceRecords(), []);
   const [typeFilter, setTypeFilter] = useState("ALL");
   const [showAdd, setShowAdd] = useState(false);
-  const [deleting, setDeleting] = useState<string | null>(null);
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this record?")) return;
-    setDeleting(id);
-    try {
-      await deleteFinanceRecord(id);
-      refetch();
-    } catch {
-      alert("Failed to delete record.");
-    } finally {
-      setDeleting(null);
-    }
-  };
-
-  if (loading) {
-    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-amber-500" /></div>;
-  }
+  const [deleteItem, setDeleteItem] = useState<FinanceRecord | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const allRecords = finance || [];
-  const filtered = allRecords.filter((f) => typeFilter === "ALL" || f.type === typeFilter);
 
-  const totalIncome = allRecords.filter((f) => f.type === "INCOME").reduce((s, f) => s + Number(f.amount), 0);
-  const totalExpenses = allRecords.filter((f) => f.type === "EXPENSE").reduce((s, f) => s + Number(f.amount), 0);
+  const filtered = useMemo(() =>
+    allRecords.filter((f) => typeFilter === "ALL" || f.type === typeFilter),
+    [allRecords, typeFilter]
+  );
+
+  const totalIncome = useMemo(() => allRecords.filter((f) => f.type === "INCOME").reduce((s, f) => s + Number(f.amount), 0), [allRecords]);
+  const totalExpenses = useMemo(() => allRecords.filter((f) => f.type === "EXPENSE").reduce((s, f) => s + Number(f.amount), 0), [allRecords]);
   const netIncome = totalIncome - totalExpenses;
+
+  const incomeBreakdown = useMemo(() => {
+    return Object.entries(
+      allRecords.filter((f) => f.type === "INCOME").reduce((acc, f) => {
+        acc[f.category] = (acc[f.category] || 0) + Number(f.amount);
+        return acc;
+      }, {} as Record<string, number>)
+    ).sort((a, b) => b[1] - a[1]);
+  }, [allRecords]);
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  }
 
   const addFields: FormField[] = [
     { name: "type", label: "Type", type: "select", required: true, options: [{ label: "Income", value: "INCOME" }, { label: "Expense", value: "EXPENSE" }] },
@@ -69,65 +71,71 @@ export default function FinancePage() {
     refetch();
   };
 
+  const handleDelete = async () => {
+    if (!deleteItem) return;
+    setDeleting(true);
+    try { await deleteFinanceRecord(deleteItem.id); setDeleteItem(null); refetch(); }
+    finally { setDeleting(false); }
+  };
+
   const columns: Column<FinanceRecord>[] = [
-    { header: "Date", accessor: (f) => <span className="text-sm">{formatDate(f.date)}</span> },
+    { header: "Date", accessor: (f) => <span className="text-xs text-muted-foreground">{formatDate(f.date)}</span> },
     { header: "Type", accessor: (f) => (
-      <Badge className={f.type === "INCOME" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-700 border-red-200"}>
-        {f.type === "INCOME" ? <ArrowUpRight className="h-3 w-3 mr-1" /> : <ArrowDownRight className="h-3 w-3 mr-1" />}
+      <Badge className={cn(
+        "text-[10px] border gap-0.5",
+        f.type === "INCOME" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-700 border-red-200"
+      )}>
+        {f.type === "INCOME" ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
         {f.type}
       </Badge>
     )},
     { header: "Category", accessor: (f) => <span className="font-medium text-sm">{f.category}</span> },
-    { header: "Description", accessor: (f) => <span className="text-sm text-muted-foreground">{f.description}</span> },
+    { header: "Description", accessor: (f) => <span className="text-xs text-muted-foreground line-clamp-1 max-w-[200px] block">{f.description}</span> },
     { header: "Amount", accessor: (f) => (
-      <span className={`font-semibold ${f.type === "INCOME" ? "text-emerald-600" : "text-red-600"}`}>
+      <span className={cn("font-semibold text-sm tabular-nums", f.type === "INCOME" ? "text-emerald-600" : "text-red-600")}>
         {f.type === "INCOME" ? "+" : "-"}{formatCurrency(Number(f.amount))}
       </span>
     )},
     { header: "", accessor: (f) => (
-      <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); handleDelete(f.id); }} disabled={deleting === f.id}>
-        {deleting === f.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5 text-red-500" />}
+      <Button variant="ghost" size="icon-xs" className="text-red-600" onClick={(e) => { e.stopPropagation(); setDeleteItem(f); }}>
+        <Trash2 className="h-3.5 w-3.5" />
       </Button>
     )},
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <PageHeader title="Finance" description="Income, expenses, and financial overview" action={{ label: "Add Record", onClick: () => setShowAdd(true) }} />
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Stat cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <StatCard title="Total Income" value={formatCurrency(totalIncome)} icon={TrendingUp} iconClassName="bg-emerald-50 text-emerald-600" />
         <StatCard title="Total Expenses" value={formatCurrency(totalExpenses)} icon={TrendingDown} iconClassName="bg-red-50 text-red-600" />
         <StatCard title="Net Income" value={formatCurrency(netIncome)} icon={DollarSign} iconClassName={netIncome >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"} />
       </div>
 
-      <Card>
-        <CardContent className="p-6">
-          <h3 className="font-semibold mb-4">Income Breakdown</h3>
-          <div className="space-y-3">
-            {Object.entries(
-              allRecords.filter((f) => f.type === "INCOME").reduce((acc, f) => {
-                acc[f.category] = (acc[f.category] || 0) + Number(f.amount);
-                return acc;
-              }, {} as Record<string, number>)
-            ).sort((a, b) => b[1] - a[1]).map(([cat, amount]) => (
-              <div key={cat} className="flex items-center justify-between">
-                <span className="text-sm">{cat}</span>
-                <div className="flex items-center gap-3">
-                  <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${totalIncome > 0 ? (amount / totalIncome) * 100 : 0}%` }} />
-                  </div>
-                  <span className="text-sm font-medium w-24 text-right">{formatCurrency(amount)}</span>
+      {/* Income breakdown */}
+      {incomeBreakdown.length > 0 && (
+        <div className="rounded-xl border border-border/60 bg-card p-5">
+          <h3 className="text-sm font-semibold mb-4">Income Breakdown</h3>
+          <div className="space-y-2.5">
+            {incomeBreakdown.map(([cat, amount]) => (
+              <div key={cat} className="flex items-center gap-3">
+                <span className="text-xs w-32 text-muted-foreground truncate">{cat}</span>
+                <div className="flex-1 h-2 bg-muted/50 rounded-full overflow-hidden">
+                  <div className="h-full bg-emerald-400 rounded-full transition-all" style={{ width: `${totalIncome > 0 ? (amount / totalIncome) * 100 : 0}%` }} />
                 </div>
+                <span className="text-xs font-semibold tabular-nums w-24 text-right">{formatCurrency(amount)}</span>
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      )}
 
-      <div className="flex gap-3">
+      {/* Filter + table */}
+      <div className="flex gap-2">
         <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v ?? "ALL")}>
-          <SelectTrigger className="w-[160px]"><SelectValue placeholder="Type" /></SelectTrigger>
+          <SelectTrigger className="w-[150px] h-9"><SelectValue placeholder="Type" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">All Records</SelectItem>
             <SelectItem value="INCOME">Income</SelectItem>
@@ -138,7 +146,23 @@ export default function FinancePage() {
 
       <DataTable columns={columns} data={filtered} keyExtractor={(f) => f.id} total={filtered.length} emptyMessage="No records found" />
 
-      <FormDialog open={showAdd} onOpenChange={setShowAdd} title="Add Finance Record" description="Record income or expense" fields={addFields} onSubmit={handleAdd} submitLabel="Add Record" />
+      <FormDialog open={showAdd} onOpenChange={setShowAdd} title="Add Finance Record" fields={addFields} onSubmit={handleAdd} submitLabel="Add Record" />
+
+      <Dialog open={!!deleteItem} onOpenChange={(o) => !o && setDeleteItem(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader><DialogTitle>Delete Record</DialogTitle></DialogHeader>
+          <div className="flex items-start gap-3 text-sm">
+            <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+            <p>Delete this {deleteItem?.type.toLowerCase()} record for <strong>{formatCurrency(Number(deleteItem?.amount))}</strong>?</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteItem(null)} disabled={deleting}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

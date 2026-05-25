@@ -47,12 +47,12 @@ export function DataTable<T>({
 
   if (loading) {
     return (
-      <div className="border rounded-lg">
+      <div className="rounded-xl border border-border/60 bg-card overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="bg-muted/30 hover:bg-muted/30">
               {columns.map((col, i) => (
-                <TableHead key={i}>{col.header}</TableHead>
+                <TableHead key={i} className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground h-9">{col.header}</TableHead>
               ))}
             </TableRow>
           </TableHeader>
@@ -60,8 +60,8 @@ export function DataTable<T>({
             {Array.from({ length: 5 }).map((_, i) => (
               <TableRow key={i}>
                 {columns.map((_, j) => (
-                  <TableCell key={j}>
-                    <Skeleton className="h-4 w-full" />
+                  <TableCell key={j} className="py-3">
+                    <Skeleton className="h-4 w-full rounded" />
                   </TableCell>
                 ))}
               </TableRow>
@@ -74,32 +74,34 @@ export function DataTable<T>({
 
   if (data.length === 0) {
     return (
-      <div className="border rounded-lg">
+      <div className="rounded-xl border border-border/60 bg-card overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="bg-muted/30 hover:bg-muted/30">
               {columns.map((col, i) => (
-                <TableHead key={i}>{col.header}</TableHead>
+                <TableHead key={i} className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground h-9">{col.header}</TableHead>
               ))}
             </TableRow>
           </TableHeader>
         </Table>
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-          <Inbox className="h-10 w-10 mb-3 opacity-40" />
-          <p className="text-sm">{emptyMessage}</p>
+          <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mb-3">
+            <Inbox className="h-6 w-6 opacity-40" />
+          </div>
+          <p className="text-sm font-medium">{emptyMessage}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="border rounded-lg">
+    <div className="space-y-3">
+      <div className="rounded-xl border border-border/60 bg-card overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="bg-muted/30 hover:bg-muted/30">
               {columns.map((col, i) => (
-                <TableHead key={i} className={col.className}>
+                <TableHead key={i} className={`text-[11px] font-semibold uppercase tracking-wider text-muted-foreground h-9 ${col.className || ""}`}>
                   {col.header}
                 </TableHead>
               ))}
@@ -109,11 +111,11 @@ export function DataTable<T>({
             {data.map((row) => (
               <TableRow
                 key={keyExtractor(row)}
-                className={onRowClick ? "cursor-pointer hover:bg-muted/50" : undefined}
+                className={onRowClick ? "cursor-pointer hover:bg-muted/30" : "hover:bg-muted/20"}
                 onClick={() => onRowClick?.(row)}
               >
                 {columns.map((col, i) => (
-                  <TableCell key={i} className={col.className}>
+                  <TableCell key={i} className={`py-2.5 ${col.className || ""}`}>
                     {typeof col.accessor === "function"
                       ? col.accessor(row)
                       : (row[col.accessor] as React.ReactNode)}
@@ -126,29 +128,17 @@ export function DataTable<T>({
       </div>
 
       {total > pageSize && onPageChange && (
-        <div className="flex items-center justify-between px-2">
-          <p className="text-sm text-muted-foreground">
-            Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} of {total}
+        <div className="flex items-center justify-between px-1">
+          <p className="text-xs text-muted-foreground">
+            {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} of {total}
           </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange(page - 1)}
-              disabled={page <= 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
+          <div className="flex items-center gap-1.5">
+            <Button variant="outline" size="icon-xs" onClick={() => onPageChange(page - 1)} disabled={page <= 1}>
+              <ChevronLeft className="h-3.5 w-3.5" />
             </Button>
-            <span className="text-sm font-medium">
-              {page} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange(page + 1)}
-              disabled={page >= totalPages}
-            >
-              <ChevronRight className="h-4 w-4" />
+            <span className="text-xs font-medium px-2">{page}/{totalPages}</span>
+            <Button variant="outline" size="icon-xs" onClick={() => onPageChange(page + 1)} disabled={page >= totalPages}>
+              <ChevronRight className="h-3.5 w-3.5" />
             </Button>
           </div>
         </div>

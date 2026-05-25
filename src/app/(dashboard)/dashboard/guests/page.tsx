@@ -1,16 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { DataTable, type Column } from "@/components/dashboard/data-table";
 import { FormDialog, type FormField } from "@/components/dashboard/form-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { getGuests, createGuest, updateGuest, deleteGuest } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatDate } from "@/lib/format";
-import { Search, Loader2, Edit2, Trash2, AlertCircle } from "lucide-react";
+import { Search, Loader2, Edit2, Trash2, AlertCircle, Users, Phone, Mail } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { Guest } from "@/lib/supabase/types";
 
 const guestFields: FormField[] = [
@@ -32,16 +34,19 @@ export default function GuestsPage() {
   const [deleteItem, setDeleteItem] = useState<Guest | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  if (loading) {
-    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-amber-500" /></div>;
-  }
-
   const allGuests = guests || [];
-  const filtered = allGuests.filter((g) => {
-    if (!search) return true;
+
+  const filtered = useMemo(() => {
+    if (!search) return allGuests;
     const q = search.toLowerCase();
-    return g.full_name.toLowerCase().includes(q) || g.phone.includes(q) || (g.email ?? "").toLowerCase().includes(q);
-  });
+    return allGuests.filter((g) =>
+      g.full_name.toLowerCase().includes(q) || g.phone.includes(q) || (g.email ?? "").toLowerCase().includes(q)
+    );
+  }, [allGuests, search]);
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  }
 
   const handleAdd = async (values: Record<string, unknown>) => {
     await createGuest({
@@ -81,32 +86,68 @@ export default function GuestsPage() {
   };
 
   const columns: Column<Guest>[] = [
-    { header: "Name", accessor: (g) => <span className="font-medium">{g.full_name}</span> },
-    { header: "Phone", accessor: "phone" },
-    { header: "Email", accessor: (g) => <span className="text-xs">{g.email ?? "—"}</span> },
-    { header: "ID Type", accessor: (g) => g.id_type ?? "—" },
-    { header: "Nationality", accessor: "nationality" },
-    { header: "Joined", accessor: (g) => <span className="text-sm">{formatDate(g.created_at)}</span> },
-    { header: "Actions", accessor: (g) => (
-      <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); setEditItem(g); }}><Edit2 className="h-3.5 w-3.5" /></Button>
-        <Button variant="ghost" size="icon-sm" className="text-red-600" onClick={(e) => { e.stopPropagation(); setDeleteItem(g); }}><Trash2 className="h-3.5 w-3.5" /></Button>
+    { header: "Guest", accessor: (g) => (
+      <div className="flex items-center gap-3">
+        <div className="h-8 w-8 rounded-lg bg-primary/8 flex items-center justify-center text-[10px] font-bold text-primary shrink-0">
+          {g.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+        </div>
+        <div>
+          <p className="font-medium text-sm">{g.full_name}</p>
+          <p className="text-[11px] text-muted-foreground">{g.nationality}</p>
+        </div>
+      </div>
+    )},
+    { header: "Contact", accessor: (g) => (
+      <div className="space-y-0.5">
+        <div className="flex items-center gap-1.5 text-xs">
+          <Phone className="h-3 w-3 text-muted-foreground" />
+          {g.phone}
+        </div>
+        {g.email && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Mail className="h-3 w-3" />
+            {g.email}
+          </div>
+        )}
+      </div>
+    )},
+    { header: "ID", accessor: (g) => g.id_type ? (
+      <div>
+        <Badge variant="outline" className="text-[10px]">{g.id_type}</Badge>
+        {g.id_number && <p className="text-[11px] text-muted-foreground mt-0.5">{g.id_number}</p>}
+      </div>
+    ) : <span className="text-muted-foreground text-xs">—</span>
+    },
+    { header: "Registered", accessor: (g) => <span className="text-xs text-muted-foreground">{formatDate(g.created_at)}</span> },
+    { header: "", accessor: (g) => (
+      <div className="flex items-center gap-0.5">
+        <Button variant="ghost" size="icon-xs" onClick={(e) => { e.stopPropagation(); setEditItem(g); }}><Edit2 className="h-3.5 w-3.5" /></Button>
+        <Button variant="ghost" size="icon-xs" className="text-red-600" onClick={(e) => { e.stopPropagation(); setDeleteItem(g); }}><Trash2 className="h-3.5 w-3.5" /></Button>
       </div>
     )},
   ];
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Guest Management" description="View and manage guest records" action={{ label: "Add Guest", onClick: () => setShowAdd(true) }} />
+    <div className="space-y-5">
+      <PageHeader title="Guests" description="View and manage guest records" action={{ label: "Add Guest", onClick: () => setShowAdd(true) }} />
 
+      {/* Summary bar */}
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Users className="h-4 w-4" />
+          <span><strong className="text-foreground">{allGuests.length}</strong> total guests</span>
+        </div>
+      </div>
+
+      {/* Search */}
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search guests..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+        <Input placeholder="Search by name, phone, or email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9" />
       </div>
 
       <DataTable columns={columns} data={filtered} keyExtractor={(g) => g.id} total={filtered.length} emptyMessage="No guests found" />
 
-      <FormDialog open={showAdd} onOpenChange={setShowAdd} title="Add Guest" description="Add a new guest record" fields={guestFields} onSubmit={handleAdd} submitLabel="Add Guest" />
+      <FormDialog open={showAdd} onOpenChange={setShowAdd} title="Add Guest" fields={guestFields} onSubmit={handleAdd} submitLabel="Add Guest" />
 
       {editItem && (
         <FormDialog open={!!editItem} onOpenChange={(o) => !o && setEditItem(null)} title={`Edit ${editItem.full_name}`} fields={guestFields} initialValues={editItem} onSubmit={handleEdit} isEdit />

@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { FormDialog, type FormField } from "@/components/dashboard/form-dialog";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,7 +13,10 @@ import { ROOM_STATUS_CONFIG } from "@/lib/constants";
 import { getRooms, createRoom, updateRoom, deleteRoom } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatCurrency } from "@/lib/format";
-import { BedDouble, LayoutGrid, List, Search, Loader2, Edit2, Trash2, AlertCircle } from "lucide-react";
+import {
+  BedDouble, LayoutGrid, List, Search, Loader2, Edit2, Trash2, AlertCircle,
+  Wind, Tv, Refrigerator, Users,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Room } from "@/lib/supabase/types";
 
@@ -29,11 +31,27 @@ const ROOM_TYPES = [
   { label: "Kitchen", value: "KITCHEN" },
 ];
 
+const STATUS_DOT: Record<string, string> = {
+  AVAILABLE: "bg-emerald-400",
+  OCCUPIED: "bg-blue-400",
+  CLEANING: "bg-orange-400",
+  MAINTENANCE: "bg-red-400",
+  RESERVED: "bg-purple-400",
+};
+
+const STATUS_CARD_BG: Record<string, string> = {
+  AVAILABLE: "border-emerald-200/60 hover:border-emerald-300",
+  OCCUPIED: "border-blue-200/60 hover:border-blue-300",
+  CLEANING: "border-orange-200/60 hover:border-orange-300",
+  MAINTENANCE: "border-red-200/60 hover:border-red-300",
+  RESERVED: "border-purple-200/60 hover:border-purple-300",
+};
+
 const roomFields: FormField[] = [
   { name: "number", label: "Room Number", required: true, placeholder: "e.g. 101" },
   { name: "name", label: "Room Name", placeholder: "e.g. Deluxe Suite" },
   { name: "type", label: "Type", type: "select", required: true, options: ROOM_TYPES },
-  { name: "building", label: "Building", required: true, placeholder: "e.g. Main Block" },
+  { name: "building", label: "Building", required: true, placeholder: "e.g. Faith Block" },
   { name: "floor", label: "Floor", type: "number", defaultValue: 0, min: 0 },
   { name: "capacity", label: "Capacity", type: "number", defaultValue: 2, min: 1 },
   { name: "beds", label: "Beds", type: "number", defaultValue: 1, min: 1 },
@@ -55,24 +73,24 @@ export default function RoomsPage() {
   const [deleteItem, setDeleteItem] = useState<Room | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  if (loading) {
-    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-amber-500" /></div>;
-  }
-
   const allRooms = rooms || [];
-  const buildings = [...new Set(allRooms.map((r) => r.building))];
+  const buildings = useMemo(() => [...new Set(allRooms.map((r) => r.building))], [allRooms]);
 
-  const filtered = allRooms.filter((r) => {
+  const filtered = useMemo(() => allRooms.filter((r) => {
     if (statusFilter !== "ALL" && r.status !== statusFilter) return false;
     if (buildingFilter !== "ALL" && r.building !== buildingFilter) return false;
     if (search && !r.number.toLowerCase().includes(search.toLowerCase()) && !r.name?.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
-  });
+  }), [allRooms, statusFilter, buildingFilter, search]);
 
-  const statusCounts = allRooms.reduce((acc, r) => {
+  const statusCounts = useMemo(() => allRooms.reduce((acc, r) => {
     acc[r.status] = (acc[r.status] || 0) + 1;
     return acc;
-  }, {} as Record<string, number>);
+  }, {} as Record<string, number>), [allRooms]);
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  }
 
   const handleAdd = async (values: Record<string, unknown>) => {
     await createRoom({
@@ -122,99 +140,163 @@ export default function RoomsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Room Management" description="Manage room status, availability, and assignments" action={{ label: "Add Room", onClick: () => setShowAdd(true) }} />
+    <div className="space-y-5">
+      <PageHeader title="Rooms" description="Manage room status, availability, and assignments" action={{ label: "Add Room", onClick: () => setShowAdd(true) }} />
 
-      {/* Status summary */}
-      <div className="flex flex-wrap gap-2">
+      {/* Status pills */}
+      <div className="flex flex-wrap gap-1.5">
+        <button
+          onClick={() => setStatusFilter("ALL")}
+          className={cn(
+            "px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
+            statusFilter === "ALL"
+              ? "bg-primary/10 text-primary border-primary/20 shadow-sm"
+              : "bg-card text-muted-foreground border-border/60 hover:bg-muted/50"
+          )}
+        >
+          All <span className="ml-1 text-[10px] font-bold">{allRooms.length}</span>
+        </button>
         {Object.entries(ROOM_STATUS_CONFIG).map(([key, cfg]) => (
-          <button key={key} onClick={() => setStatusFilter(statusFilter === key ? "ALL" : key)}
-            className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all", statusFilter === key ? "ring-2 ring-primary ring-offset-1" : "", cfg.bgColor, cfg.color)}>
-            {cfg.label} <span className="font-bold">{statusCounts[key] || 0}</span>
+          <button
+            key={key}
+            onClick={() => setStatusFilter(statusFilter === key ? "ALL" : key)}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
+              statusFilter === key
+                ? "bg-primary/10 text-primary border-primary/20 shadow-sm"
+                : "bg-card text-muted-foreground border-border/60 hover:bg-muted/50"
+            )}
+          >
+            <span className={cn("h-2 w-2 rounded-full", STATUS_DOT[key])} />
+            {cfg.label}
+            <span className="text-[10px] font-bold">{statusCounts[key] || 0}</span>
           </button>
         ))}
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      {/* Filters row */}
+      <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search rooms..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          <Input placeholder="Search rooms..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9" />
         </div>
         <Select value={buildingFilter} onValueChange={(v) => setBuildingFilter(v ?? "ALL")}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Building" /></SelectTrigger>
+          <SelectTrigger className="w-[180px] h-9"><SelectValue placeholder="Building" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">All Buildings</SelectItem>
             {buildings.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
           </SelectContent>
         </Select>
-        <div className="flex border rounded-lg overflow-hidden">
-          <Button variant={view === "grid" ? "default" : "ghost"} size="sm" onClick={() => setView("grid")} className="rounded-none"><LayoutGrid className="h-4 w-4" /></Button>
-          <Button variant={view === "table" ? "default" : "ghost"} size="sm" onClick={() => setView("table")} className="rounded-none"><List className="h-4 w-4" /></Button>
+        <div className="flex border border-border/60 rounded-lg overflow-hidden">
+          <Button variant={view === "grid" ? "default" : "ghost"} size="sm" onClick={() => setView("grid")} className="rounded-none h-9 w-9 p-0">
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+          <Button variant={view === "table" ? "default" : "ghost"} size="sm" onClick={() => setView("table")} className="rounded-none h-9 w-9 p-0">
+            <List className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
       {/* Grid View */}
       {view === "grid" ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5">
           {filtered.map((room) => {
             const cfg = ROOM_STATUS_CONFIG[room.status];
             return (
-              <Card key={room.id} className={cn("border-2 hover:shadow-md transition-all cursor-pointer group relative", cfg?.bgColor)} onClick={() => setEditItem(room)}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-lg">{room.number}</span>
-                    <BedDouble className={cn("h-4 w-4", cfg?.color)} />
+              <div
+                key={room.id}
+                onClick={() => setEditItem(room)}
+                className={cn(
+                  "relative rounded-xl border bg-card p-3.5 cursor-pointer group transition-all hover:shadow-md hover:shadow-black/[0.03]",
+                  STATUS_CARD_BG[room.status]
+                )}
+              >
+                {/* Room number + status dot */}
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-bold text-lg tracking-tight">{room.number}</span>
+                  <span className={cn("h-2.5 w-2.5 rounded-full ring-2 ring-white", STATUS_DOT[room.status])} />
+                </div>
+
+                {/* Status label */}
+                <p className={cn("text-[10px] font-semibold uppercase tracking-wider mb-2", cfg?.color)}>{cfg?.label}</p>
+
+                {/* Type */}
+                <p className="text-[11px] text-muted-foreground mb-1.5">{room.type.replace(/_/g, " ")}</p>
+
+                {/* Price */}
+                <p className="text-xs font-semibold tabular-nums">{formatCurrency(Number(room.price_per_night))}<span className="text-muted-foreground font-normal">/night</span></p>
+
+                {/* Amenity icons */}
+                <div className="flex items-center gap-1.5 mt-2">
+                  <div className="flex items-center gap-0.5 text-muted-foreground">
+                    <Users className="h-3 w-3" />
+                    <span className="text-[10px]">{room.capacity}</span>
                   </div>
-                  <StatusBadge status={room.status} config={ROOM_STATUS_CONFIG} className="mb-2" />
-                  <p className="text-xs text-muted-foreground truncate">{room.type.replace(/_/g, " ")}</p>
-                  <p className="text-xs font-medium mt-1">{formatCurrency(Number(room.price_per_night))}/night</p>
-                  <Button variant="ghost" size="icon-sm" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-red-600"
-                    onClick={(e) => { e.stopPropagation(); setDeleteItem(room); }}><Trash2 className="h-3.5 w-3.5" /></Button>
-                </CardContent>
-              </Card>
+                  {room.has_ac && <Wind className="h-3 w-3 text-blue-400" />}
+                  {room.has_tv && <Tv className="h-3 w-3 text-muted-foreground" />}
+                  {room.has_fridge && <Refrigerator className="h-3 w-3 text-muted-foreground" />}
+                </div>
+
+                {/* Delete button */}
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-red-600 transition-opacity"
+                  onClick={(e) => { e.stopPropagation(); setDeleteItem(room); }}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
             );
           })}
+          {filtered.length === 0 && (
+            <div className="col-span-full text-center py-12 text-muted-foreground text-sm">No rooms match your filters</div>
+          )}
         </div>
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-muted/50">
-                  <th className="text-left p-3 font-medium">Room</th>
-                  <th className="text-left p-3 font-medium">Type</th>
-                  <th className="text-left p-3 font-medium">Building</th>
-                  <th className="text-left p-3 font-medium">Floor</th>
-                  <th className="text-left p-3 font-medium">Status</th>
-                  <th className="text-left p-3 font-medium">Price</th>
-                  <th className="text-left p-3 font-medium">Actions</th>
+        /* Table View */
+        <div className="rounded-xl border border-border/60 bg-card overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-muted/30 border-b border-border/60">
+                <th className="text-left p-3 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Room</th>
+                <th className="text-left p-3 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Type</th>
+                <th className="text-left p-3 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Building</th>
+                <th className="text-center p-3 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Floor</th>
+                <th className="text-left p-3 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                <th className="text-right p-3 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Price</th>
+                <th className="text-right p-3 text-[11px] font-medium text-muted-foreground uppercase tracking-wider w-20"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((room) => (
+                <tr key={room.id} className="border-b border-border/40 last:border-0 hover:bg-muted/20 transition-colors">
+                  <td className="p-3">
+                    <span className="font-bold">{room.number}</span>
+                    {room.name && <span className="text-muted-foreground ml-1.5 text-xs">({room.name})</span>}
+                  </td>
+                  <td className="p-3 text-muted-foreground">{room.type.replace(/_/g, " ")}</td>
+                  <td className="p-3">{room.building}</td>
+                  <td className="p-3 text-center">{room.floor}</td>
+                  <td className="p-3"><StatusBadge status={room.status} config={ROOM_STATUS_CONFIG} /></td>
+                  <td className="p-3 text-right font-semibold tabular-nums">{formatCurrency(Number(room.price_per_night))}</td>
+                  <td className="p-3">
+                    <div className="flex items-center justify-end gap-0.5">
+                      <Button variant="ghost" size="icon-xs" onClick={() => setEditItem(room)}><Edit2 className="h-3.5 w-3.5" /></Button>
+                      <Button variant="ghost" size="icon-xs" className="text-red-600" onClick={() => setDeleteItem(room)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {filtered.map((room) => (
-                  <tr key={room.id} className="border-b hover:bg-muted/30">
-                    <td className="p-3 font-bold">{room.number}</td>
-                    <td className="p-3">{room.type.replace(/_/g, " ")}</td>
-                    <td className="p-3">{room.building}</td>
-                    <td className="p-3">{room.floor}</td>
-                    <td className="p-3"><StatusBadge status={room.status} config={ROOM_STATUS_CONFIG} /></td>
-                    <td className="p-3">{formatCurrency(Number(room.price_per_night))}</td>
-                    <td className="p-3">
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon-sm" onClick={() => setEditItem(room)}><Edit2 className="h-3.5 w-3.5" /></Button>
-                        <Button variant="ghost" size="icon-sm" className="text-red-600" onClick={() => setDeleteItem(room)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
+              ))}
+            </tbody>
+          </table>
+          {filtered.length === 0 && (
+            <div className="text-center py-12 text-muted-foreground text-sm">No rooms match your filters</div>
+          )}
+        </div>
       )}
 
-      <FormDialog open={showAdd} onOpenChange={setShowAdd} title="Add Room" description="Add a new room to the system" fields={roomFields} onSubmit={handleAdd} submitLabel="Add Room" />
+      <FormDialog open={showAdd} onOpenChange={setShowAdd} title="Add Room" fields={roomFields} onSubmit={handleAdd} submitLabel="Add Room" />
 
       {editItem && (
         <FormDialog open={!!editItem} onOpenChange={(o) => !o && setEditItem(null)} title={`Edit Room ${editItem.number}`}

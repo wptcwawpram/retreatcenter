@@ -1,28 +1,22 @@
 "use client";
 
 import {
-  CalendarCheck,
-  LogIn,
-  LogOut,
-  DoorOpen,
-  SprayCan,
-  CreditCard,
-  TrendingUp,
-  Percent,
-  Loader2,
+  CalendarCheck, LogIn, LogOut, DoorOpen, SprayCan,
+  CreditCard, TrendingUp, Percent, Loader2, AlertTriangle,
 } from "lucide-react";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { RoomStatusOverview } from "@/components/dashboard/room-status-overview";
 import { RecentBookings } from "@/components/dashboard/recent-bookings";
 import { CURRENCY } from "@/lib/constants";
-import { getDashboardStats, getBookings } from "@/lib/supabase/queries";
+import { getDashboardStats, getBookings, getComplaints } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 
 export default function DashboardPage() {
   const { data: stats, loading: statsLoading } = useSupabaseQuery(() => getDashboardStats(), []);
   const { data: bookings, loading: bookingsLoading } = useSupabaseQuery(() => getBookings(), []);
+  const { data: complaints } = useSupabaseQuery(() => getComplaints(), []);
 
-  const recentBookings = (bookings || []).slice(0, 5).map((b) => ({
+  const recentBookings = (bookings || []).slice(0, 6).map((b) => ({
     id: b.id,
     bookingReference: b.reference,
     guestName: b.guest?.full_name || "Unknown",
@@ -33,10 +27,15 @@ export default function DashboardPage() {
     totalAmount: Number(b.total_amount),
   }));
 
+  const openComplaints = (complaints || []).filter((c) => c.status === "OPEN" || c.status === "IN_PROGRESS").length;
+
   if (statsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">Loading dashboard...</p>
+        </div>
       </div>
     );
   }
@@ -45,34 +44,81 @@ export default function DashboardPage() {
     bookingsToday: 0, expectedCheckIns: 0, expectedCheckOuts: 0, occupancyRate: 0,
     occupiedRooms: 0, totalRooms: 0, availableRooms: 0, dirtyRooms: 0,
     incomeToday: 0, pendingPayments: 0, openComplaints: 0,
-    roomStatusData: [],
+    roomStatusData: [], cleaningRooms: 0, maintenanceRooms: 0,
   };
+
+  const greeting = (() => {
+    const h = new Date().getHours();
+    if (h < 12) return "Good morning";
+    if (h < 17) return "Good afternoon";
+    return "Good evening";
+  })();
 
   return (
     <div className="space-y-6">
+      {/* Greeting */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          Overview of today&apos;s operations at Warriors Prayer Tower Complex
+        <h1 className="text-xl font-bold tracking-tight">{greeting}</h1>
+        <p className="text-[13px] text-muted-foreground mt-0.5">
+          Here&apos;s what&apos;s happening at WPTC today
         </p>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Bookings Today" value={s.bookingsToday} subtitle="Active bookings" icon={CalendarCheck} iconClassName="bg-blue-50 text-blue-600" />
-        <StatCard title="Check-ins Expected" value={s.expectedCheckIns} subtitle="Arriving today" icon={LogIn} iconClassName="bg-emerald-50 text-emerald-600" />
-        <StatCard title="Check-outs Expected" value={s.expectedCheckOuts} subtitle="Departing today" icon={LogOut} iconClassName="bg-amber-50 text-amber-600" />
-        <StatCard title="Occupancy Rate" value={`${s.occupancyRate}%`} subtitle={`${s.occupiedRooms} of ${s.totalRooms} rooms`} icon={Percent} iconClassName="bg-purple-50 text-purple-600" />
+      {/* Primary Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard
+          title="Occupancy"
+          value={`${s.occupancyRate}%`}
+          subtitle={`${s.occupiedRooms} of ${s.totalRooms} rooms`}
+          icon={Percent}
+          iconClassName="bg-primary/10 text-primary"
+        />
+        <StatCard
+          title="Check-ins Today"
+          value={s.expectedCheckIns}
+          subtitle="Expected arrivals"
+          icon={LogIn}
+          iconClassName="bg-emerald-500/10 text-emerald-600"
+        />
+        <StatCard
+          title="Check-outs Today"
+          value={s.expectedCheckOuts}
+          subtitle="Expected departures"
+          icon={LogOut}
+          iconClassName="bg-amber-500/10 text-amber-600"
+        />
+        <StatCard
+          title="Income Today"
+          value={`${CURRENCY.symbol}${s.incomeToday.toLocaleString()}`}
+          subtitle="Collected payments"
+          icon={TrendingUp}
+          iconClassName="bg-emerald-500/10 text-emerald-600"
+        />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Available Rooms" value={s.availableRooms} icon={DoorOpen} iconClassName="bg-emerald-50 text-emerald-600" />
-        <StatCard title="Rooms to Clean" value={s.dirtyRooms} subtitle="Needs attention" icon={SprayCan} iconClassName="bg-orange-50 text-orange-600" />
-        <StatCard title="Income Today" value={`${CURRENCY.symbol}${s.incomeToday.toLocaleString()}`} icon={TrendingUp} iconClassName="bg-emerald-50 text-emerald-600" />
-        <StatCard title="Pending Payments" value={s.pendingPayments} subtitle="Awaiting payment" icon={CreditCard} iconClassName="bg-red-50 text-red-600" />
+      {/* Secondary Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard title="Active Bookings" value={s.bookingsToday} icon={CalendarCheck} iconClassName="bg-blue-500/10 text-blue-600" />
+        <StatCard title="Available Rooms" value={s.availableRooms} icon={DoorOpen} iconClassName="bg-emerald-500/10 text-emerald-600" />
+        <StatCard title="Rooms to Clean" value={s.dirtyRooms} icon={SprayCan} iconClassName="bg-orange-500/10 text-orange-600" />
+        <StatCard title="Pending Payments" value={s.pendingPayments} icon={CreditCard} iconClassName="bg-red-500/10 text-red-600" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Alert banner */}
+      {(openComplaints > 0 || s.dirtyRooms > 2) && (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-800">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <p className="text-sm">
+            {openComplaints > 0 && <span className="font-semibold">{openComplaints} open complaint{openComplaints > 1 ? "s" : ""}</span>}
+            {openComplaints > 0 && s.dirtyRooms > 2 && " and "}
+            {s.dirtyRooms > 2 && <span className="font-semibold">{s.dirtyRooms} rooms need cleaning</span>}
+            {" "}&mdash; needs attention
+          </p>
+        </div>
+      )}
+
+      {/* Bottom section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <RoomStatusOverview data={s.roomStatusData} totalRooms={s.totalRooms} />
         <div className="lg:col-span-2">
           <RecentBookings bookings={recentBookings} />

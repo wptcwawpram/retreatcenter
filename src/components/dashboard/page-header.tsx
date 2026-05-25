@@ -14,18 +14,18 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, description, action, children }: PageHeaderProps) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+        <h1 className="text-xl font-bold tracking-tight">{title}</h1>
         {description && (
-          <p className="text-sm text-muted-foreground mt-1">{description}</p>
+          <p className="text-[13px] text-muted-foreground mt-0.5">{description}</p>
         )}
       </div>
       <div className="flex items-center gap-2">
         {children}
         {action && (
-          <Button onClick={action.onClick} className="gap-1.5">
-            <Plus className="h-4 w-4" />
+          <Button onClick={action.onClick} size="sm" className="gap-1.5 shadow-sm">
+            <Plus className="h-3.5 w-3.5" />
             {action.label}
           </Button>
         )}

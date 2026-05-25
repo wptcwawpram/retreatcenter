@@ -1,28 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { FormDialog, type FormField } from "@/components/dashboard/form-dialog";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { getHousekeepingTasks, createHousekeepingTask, updateHousekeepingStatus, deleteHousekeepingTask, getRooms, getProfiles } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
-import { BedDouble, Clock, User, CheckCircle, Loader2, Trash2, ArrowRight, AlertCircle } from "lucide-react";
+import { BedDouble, Clock, User, CheckCircle, Loader2, Trash2, ArrowRight, AlertCircle, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const STATUS_COLS = [
-  { key: "PENDING", label: "Pending", color: "bg-amber-500", icon: Clock },
-  { key: "IN_PROGRESS", label: "In Progress", color: "bg-blue-500", icon: Loader2 },
-  { key: "COMPLETED", label: "Completed", color: "bg-emerald-500", icon: CheckCircle },
+  { key: "PENDING", label: "Pending", dotColor: "bg-amber-400", headerBg: "bg-amber-50/50", icon: Clock },
+  { key: "IN_PROGRESS", label: "In Progress", dotColor: "bg-blue-400", headerBg: "bg-blue-50/50", icon: Sparkles },
+  { key: "COMPLETED", label: "Completed", dotColor: "bg-emerald-400", headerBg: "bg-emerald-50/50", icon: CheckCircle },
 ] as const;
 
 const PRIORITY_MAP: Record<string, { label: string; color: string }> = {
-  LOW: { label: "Low", color: "bg-gray-50 text-gray-700 border-gray-200" },
+  LOW: { label: "Low", color: "bg-gray-50 text-gray-600 border-gray-200" },
   NORMAL: { label: "Normal", color: "bg-blue-50 text-blue-700 border-blue-200" },
   HIGH: { label: "High", color: "bg-amber-50 text-amber-700 border-amber-200" },
   URGENT: { label: "Urgent", color: "bg-red-50 text-red-700 border-red-200" },
+};
+
+const TYPE_LABELS: Record<string, string> = {
+  CLEANING: "Cleaning",
+  DEEP_CLEAN: "Deep Clean",
+  MAINTENANCE: "Maintenance",
+  INSPECTION: "Inspection",
 };
 
 export default function HousekeepingPage() {
@@ -33,13 +39,19 @@ export default function HousekeepingPage() {
   const [deleteItem, setDeleteItem] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  if (loading) {
-    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-amber-500" /></div>;
-  }
-
   const allTasks = tasks || [];
   const allRooms = rooms || [];
   const allStaff = staff || [];
+
+  const taskCounts = useMemo(() => {
+    const counts: Record<string, number> = { PENDING: 0, IN_PROGRESS: 0, COMPLETED: 0 };
+    allTasks.forEach((t) => { counts[t.status] = (counts[t.status] || 0) + 1; });
+    return counts;
+  }, [allTasks]);
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  }
 
   const addFields: FormField[] = [
     { name: "room_id", label: "Room", type: "select", required: true, options: allRooms.map((r) => ({ label: `${r.number} — ${r.name || r.type.replace(/_/g, " ")}`, value: r.id })), colSpan: 2 },
@@ -85,57 +97,94 @@ export default function HousekeepingPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <PageHeader title="Housekeeping" description="Manage room cleaning tasks and assignments" action={{ label: "New Task", onClick: () => setShowAdd(true) }} />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Kanban columns */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {STATUS_COLS.map((col) => {
           const colTasks = allTasks.filter((t) => t.status === col.key);
+          const Icon = col.icon;
           return (
-            <div key={col.key}>
-              <div className="flex items-center gap-2 mb-4">
-                <div className={cn("w-3 h-3 rounded-full", col.color)} />
-                <h3 className="font-semibold text-sm">{col.label}</h3>
-                <Badge variant="secondary" className="ml-auto">{colTasks.length}</Badge>
+            <div key={col.key} className="space-y-2.5">
+              {/* Column header */}
+              <div className={cn("flex items-center gap-2 px-3 py-2.5 rounded-lg", col.headerBg)}>
+                <span className={cn("h-2.5 w-2.5 rounded-full", col.dotColor)} />
+                <h3 className="font-semibold text-sm flex-1">{col.label}</h3>
+                <span className="text-xs font-bold text-muted-foreground bg-white/60 px-2 py-0.5 rounded-full">
+                  {taskCounts[col.key]}
+                </span>
               </div>
-              <div className="space-y-3">
+
+              {/* Task cards */}
+              <div className="space-y-2">
                 {colTasks.map((task) => {
                   const pri = PRIORITY_MAP[task.priority] ?? PRIORITY_MAP.NORMAL;
                   const next = nextStatus[task.status];
                   return (
-                    <Card key={task.id} className="hover:shadow-md transition-shadow group relative">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <BedDouble className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-bold">{task.room?.number ?? "—"}</span>
-                          </div>
-                          <Badge className={cn("text-xs border", pri.color)}>{pri.label}</Badge>
+                    <div
+                      key={task.id}
+                      className="rounded-xl border border-border/60 bg-card p-3.5 group relative hover:shadow-md hover:shadow-black/[0.03] transition-all"
+                    >
+                      {/* Room + Priority */}
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <BedDouble className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-bold text-sm">{task.room?.number ?? "—"}</span>
                         </div>
-                        <p className="text-xs text-muted-foreground mb-1">{task.type.replace(/_/g, " ")}</p>
-                        {task.notes && <p className="text-sm mb-3">{task.notes}</p>}
-                        {task.assignee?.full_name && (
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
-                            <User className="h-3 w-3" />{task.assignee.full_name}
+                        <Badge className={cn("text-[10px] border", pri.color)}>{pri.label}</Badge>
+                      </div>
+
+                      {/* Type */}
+                      <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium mb-1">
+                        {TYPE_LABELS[task.type] ?? task.type.replace(/_/g, " ")}
+                      </p>
+
+                      {/* Notes */}
+                      {task.notes && (
+                        <p className="text-xs text-foreground/80 mb-2 line-clamp-2">{task.notes}</p>
+                      )}
+
+                      {/* Assignee */}
+                      {task.assignee?.full_name && (
+                        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-2.5">
+                          <div className="h-5 w-5 rounded-full bg-primary/8 flex items-center justify-center text-[8px] font-bold text-primary">
+                            {task.assignee.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+                          </div>
+                          {task.assignee.full_name}
+                        </div>
+                      )}
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-1.5">
+                        {next && (
+                          <Button variant="outline" size="sm" className="flex-1 text-xs h-7 gap-1" onClick={() => handleStatusChange(task.id, next)}>
+                            <ArrowRight className="h-3 w-3" />
+                            {next === "IN_PROGRESS" ? "Start" : "Complete"}
+                          </Button>
+                        )}
+                        {col.key === "COMPLETED" && (
+                          <div className="flex items-center gap-1 text-emerald-600 text-xs flex-1 justify-center">
+                            <CheckCircle className="h-3.5 w-3.5" />
+                            Done
                           </div>
                         )}
-                        <div className="flex items-center gap-2">
-                          {next && (
-                            <Button variant="outline" size="sm" className="flex-1 text-xs h-7" onClick={() => handleStatusChange(task.id, next)}>
-                              <ArrowRight className="h-3 w-3 mr-1" />
-                              {next === "IN_PROGRESS" ? "Start" : "Complete"}
-                            </Button>
-                          )}
-                          <Button variant="ghost" size="icon-sm" className="text-red-600 opacity-0 group-hover:opacity-100" onClick={() => setDeleteItem(task.id)}>
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          className="text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => setDeleteItem(task.id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
                   );
                 })}
                 {colTasks.length === 0 && (
-                  <div className="border-2 border-dashed rounded-lg p-8 text-center text-muted-foreground text-sm">No tasks</div>
+                  <div className="border border-dashed border-border/60 rounded-xl p-6 text-center text-muted-foreground text-xs">
+                    No tasks
+                  </div>
                 )}
               </div>
             </div>
