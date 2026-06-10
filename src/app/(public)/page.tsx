@@ -394,6 +394,78 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ═══════════════════ GROUNDS (real WPTC photos) ═══════════════════ */}
+      <section className="py-20 md:py-28 bg-white overflow-hidden">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Text side */}
+            <FadeIn className="order-2 lg:order-1">
+              <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.25em] uppercase mb-4 text-amber-600">
+                <span className="w-8 h-px bg-current" />
+                Our Environment
+              </span>
+              <h2 className="font-[family-name:var(--font-playfair)] text-3xl md:text-4xl lg:text-5xl font-bold text-stone-900 mb-6 leading-tight">
+                A Peaceful Sanctuary
+                <br />
+                <span className="text-amber-600">in Nature</span>
+              </h2>
+              <p className="text-stone-500 leading-relaxed mb-6">
+                Nestled in the serene outskirts of Kumasi, our retreat centre is surrounded by lush tropical gardens,
+                mature fruit trees, and manicured lawns. The peaceful atmosphere provides the perfect environment
+                for spiritual renewal, reflection, and rest.
+              </p>
+              <div className="space-y-3 mb-8">
+                {["Lush tropical gardens & mature fruit trees", "Manicured lawns & terracotta walkways", "Peaceful, secure compound", "Natural shade & fresh breeze"].map((item) => (
+                  <div key={item} className="flex items-center gap-3 text-sm text-stone-600">
+                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-50 shrink-0">
+                      <CheckCircle className="h-3 w-3 text-amber-500" />
+                    </span>
+                    {item}
+                  </div>
+                ))}
+              </div>
+              <Link href="/gallery">
+                <Button variant="outline" className="border-stone-300 text-stone-700 hover:bg-stone-100 hover:border-stone-400 gap-2 text-sm tracking-wide uppercase font-medium">
+                  View Gallery
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Button>
+              </Link>
+            </FadeIn>
+
+            {/* Photo grid side */}
+            <FadeIn className="order-1 lg:order-2" delay={0.2}>
+              <div className="relative">
+                {/* Main large image */}
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-stone-900/10">
+                  <Image
+                    src="/images/grounds/grounds-1.jpg"
+                    alt="WPTC grounds — walkway through tropical gardens"
+                    width={600}
+                    height={400}
+                    className="w-full h-[300px] md:h-[380px] object-cover"
+                  />
+                </div>
+                {/* Overlapping smaller image */}
+                <div className="absolute -bottom-8 -left-4 md:-left-8 w-48 md:w-64 rounded-2xl overflow-hidden shadow-2xl shadow-stone-900/15 border-4 border-white">
+                  <Image
+                    src="/images/grounds/grounds-2.jpg"
+                    alt="WPTC grounds — palm trees and lush lawn"
+                    width={260}
+                    height={200}
+                    className="w-full h-[140px] md:h-[170px] object-cover"
+                  />
+                </div>
+                {/* Gold accent frame */}
+                <div className="absolute -top-3 -right-3 w-24 h-24 border-t-2 border-r-2 border-amber-400/40 rounded-tr-2xl" />
+                <div className="absolute -bottom-11 right-8 bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 px-5 py-2.5 rounded-xl shadow-lg">
+                  <p className="text-xs font-bold tracking-wide uppercase">Atwima Boko, Kumasi</p>
+                </div>
+              </div>
+            </FadeIn>
+          </div>
+        </div>
+      </section>
+
       {/* ═══════════════════ STATS (dark section) ═══════════════════ */}
       <section className="relative py-20 md:py-28 text-white overflow-hidden bg-stone-950">
         <Image src={IMAGES.lifestyle.prayer} alt="Worship and prayer" fill className="object-cover opacity-20" sizes="100vw" />
