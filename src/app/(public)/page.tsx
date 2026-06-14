@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { motion, useInView } from "framer-motion";
+import { motion, useInView, useScroll, useTransform } from "framer-motion";
 import { useRef, useState, useEffect, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { SITE, SERVICES, ROOMS, AMENITIES, HALLS } from "@/lib/site-data";
@@ -37,12 +37,27 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   BookOpen, Heart, BedDouble, UtensilsCrossed, Shirt, Zap, Car, TreePine, ChefHat, Store, Sofa, Church, Tent,
 };
 
+/* ── spring config ── */
+const SPRING_SMOOTH = { type: "spring" as const, stiffness: 80, damping: 20, mass: 0.8 };
+const SPRING_SNAPPY = { type: "spring" as const, stiffness: 200, damping: 25, mass: 0.5 };
+
 /* ── animation wrappers ── */
 function FadeIn({ children, className, delay = 0, y = 30 }: { children: ReactNode; className?: string; delay?: number; y?: number }) {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-60px" });
+  const isInView = useInView(ref, { once: true, margin: "-80px" });
   return (
-    <motion.div ref={ref} initial={{ opacity: 0, y }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y }} transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }} className={className}>
+    <motion.div ref={ref} initial={{ opacity: 0, y }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y }} transition={{ ...SPRING_SMOOTH, delay }} className={className}>
+      {children}
+    </motion.div>
+  );
+}
+
+function SlideIn({ children, className, delay = 0, direction = "left" }: { children: ReactNode; className?: string; delay?: number; direction?: "left" | "right" }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-80px" });
+  const x = direction === "left" ? -60 : 60;
+  return (
+    <motion.div ref={ref} initial={{ opacity: 0, x }} animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x }} transition={{ ...SPRING_SMOOTH, delay }} className={className}>
       {children}
     </motion.div>
   );
@@ -60,7 +75,7 @@ function StaggerContainer({ children, className, stagger = 0.1 }: { children: Re
 
 function StaggerItem({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <motion.div variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } } }} className={className}>
+    <motion.div variants={{ hidden: { opacity: 0, y: 30, scale: 0.97 }, visible: { opacity: 1, y: 0, scale: 1, transition: { ...SPRING_SMOOTH } } }} className={className}>
       {children}
     </motion.div>
   );
@@ -94,9 +109,9 @@ function SectionHeading({ eyebrow, title, description, light = false }: {
   return (
     <FadeIn className="text-center mb-16">
       <span className={`inline-flex items-center gap-2 text-xs font-semibold tracking-[0.25em] uppercase mb-4 ${light ? "text-amber-400" : "text-amber-600"}`}>
-        <span className="w-8 h-px bg-current" />
+        <motion.span initial={{ width: 0 }} whileInView={{ width: 32 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.2 }} className="h-px bg-current inline-block" />
         {eyebrow}
-        <span className="w-8 h-px bg-current" />
+        <motion.span initial={{ width: 0 }} whileInView={{ width: 32 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.2 }} className="h-px bg-current inline-block" />
       </span>
       <h2 className={`font-[family-name:var(--font-playfair)] text-3xl md:text-4xl lg:text-5xl font-bold mb-5 leading-tight ${light ? "text-white" : "text-stone-900"}`}>
         {title}
@@ -110,18 +125,27 @@ function SectionHeading({ eyebrow, title, description, light = false }: {
 
 /* ── page ── */
 export default function HomePage() {
+  const heroRef = useRef(null);
+  const { scrollYProgress: heroProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
+  const heroImageY = useTransform(heroProgress, [0, 1], [0, 150]);
+  const heroImageScale = useTransform(heroProgress, [0, 1], [1.05, 1.2]);
+  const heroContentY = useTransform(heroProgress, [0, 1], [0, 60]);
+  const heroOpacity = useTransform(heroProgress, [0, 0.8], [1, 0]);
+
   return (
     <>
       {/* ═══════════════════ HERO ═══════════════════ */}
-      <section className="relative overflow-hidden min-h-[100vh] flex items-center text-white">
-        <Image
-          src={IMAGES.hero.home}
-          alt="Warriors Prayer Tower Complex"
-          fill
-          className="object-cover scale-105"
-          priority
-          quality={90}
-        />
+      <section ref={heroRef} className="relative overflow-hidden min-h-[100vh] flex items-center text-white">
+        <motion.div className="absolute inset-0" style={{ y: heroImageY, scale: heroImageScale }}>
+          <Image
+            src={IMAGES.hero.home}
+            alt="Warriors Prayer Tower Complex"
+            fill
+            className="object-cover"
+            priority
+            quality={90}
+          />
+        </motion.div>
         {/* Layered overlays for depth */}
         <div className="absolute inset-0 bg-gradient-to-b from-stone-950/80 via-stone-950/50 to-stone-950/90" />
         <div className="absolute inset-0 bg-gradient-to-r from-stone-950/40 to-transparent" />
@@ -129,21 +153,21 @@ export default function HomePage() {
         {/* Subtle texture overlay */}
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
 
-        <div className="relative container mx-auto px-6 py-24 md:py-32 lg:py-40">
+        <motion.div className="relative container mx-auto px-6 py-24 md:py-32 lg:py-40" style={{ y: heroContentY, opacity: heroOpacity }}>
           <div className="max-w-4xl">
             {/* Gold accent line */}
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: 80 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
+              transition={{ ...SPRING_SMOOTH, delay: 0.3 }}
               className="h-[2px] bg-gradient-to-r from-amber-400 to-amber-500 mb-8"
             />
 
             {/* Eyebrow */}
             <motion.p
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
+              transition={{ ...SPRING_SMOOTH, delay: 0.4 }}
               className="text-xs font-semibold tracking-[0.3em] uppercase text-amber-400 mb-6"
             >
               Daniels&rsquo; Christian Retreat Centre
@@ -151,25 +175,37 @@ export default function HomePage() {
 
             {/* Main heading — Serif */}
             <motion.h1
-              initial={{ opacity: 0, y: 40 }}
+              initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ ...SPRING_SMOOTH, delay: 0.5 }}
               className="font-[family-name:var(--font-playfair)] text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold leading-[0.95] mb-8"
             >
               A Serene
               <br />
-              <span className="bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 bg-clip-text text-transparent">
+              <motion.span
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ ...SPRING_SMOOTH, delay: 0.65 }}
+                className="inline-block bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 bg-clip-text text-transparent"
+              >
                 Retreat
-              </span>
+              </motion.span>
               <br />
-              <span className="text-white/90">Experience</span>
+              <motion.span
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ ...SPRING_SMOOTH, delay: 0.8 }}
+                className="inline-block text-white/90"
+              >
+                Experience
+              </motion.span>
             </motion.h1>
 
             {/* Sub-text */}
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.7 }}
+              transition={{ ...SPRING_SMOOTH, delay: 0.9 }}
               className="text-base md:text-lg text-stone-300 max-w-lg mb-10 leading-relaxed"
             >
               {SITE.heroText}
@@ -179,19 +215,23 @@ export default function HomePage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.9 }}
+              transition={{ ...SPRING_SMOOTH, delay: 1.0 }}
               className="flex flex-col sm:flex-row items-start gap-4"
             >
               <Link href="/booking">
-                <Button size="lg" className="gap-2 min-w-[200px] bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-semibold shadow-2xl shadow-amber-500/20 text-sm h-13 tracking-wide uppercase">
-                  Reserve Your Stay
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
+                <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }} transition={SPRING_SNAPPY}>
+                  <Button size="lg" className="gap-2 min-w-[200px] bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-semibold shadow-2xl shadow-amber-500/20 text-sm h-13 tracking-wide uppercase">
+                    Reserve Your Stay
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </motion.div>
               </Link>
               <Link href="/rooms">
-                <Button size="lg" className="min-w-[200px] bg-transparent border border-white/20 text-white hover:bg-white/10 hover:border-white/40 font-medium text-sm h-13 tracking-wide uppercase backdrop-blur-sm">
-                  Explore Rooms
-                </Button>
+                <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }} transition={SPRING_SNAPPY}>
+                  <Button size="lg" className="min-w-[200px] bg-transparent border border-white/20 text-white hover:bg-white/10 hover:border-white/40 font-medium text-sm h-13 tracking-wide uppercase backdrop-blur-sm">
+                    Explore Rooms
+                  </Button>
+                </motion.div>
               </Link>
             </motion.div>
 
@@ -202,15 +242,21 @@ export default function HomePage() {
               transition={{ duration: 0.8, delay: 1.3 }}
               className="flex flex-wrap items-center gap-6 mt-14 text-xs text-stone-400 tracking-wide"
             >
-              {["Peaceful & Secure", "24/7 Backup Power", "Free Parking", "Conference Halls"].map((text) => (
-                <div key={text} className="flex items-center gap-2">
+              {["Peaceful & Secure", "24/7 Backup Power", "Free Parking", "Conference Halls"].map((text, i) => (
+                <motion.div
+                  key={text}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ ...SPRING_SMOOTH, delay: 1.4 + i * 0.1 }}
+                  className="flex items-center gap-2"
+                >
                   <CheckCircle className="h-3.5 w-3.5 text-amber-500/60" />
                   {text}
-                </div>
+                </motion.div>
               ))}
             </motion.div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Bottom gradient fade */}
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent" />
@@ -270,7 +316,11 @@ export default function HomePage() {
               const Icon = ICON_MAP[service.icon] ?? Church;
               return (
                 <StaggerItem key={service.title}>
-                  <div className="group relative p-7 rounded-2xl border border-stone-100 hover:border-amber-200/60 bg-white hover:bg-gradient-to-b hover:from-amber-50/40 hover:to-white transition-all duration-500 hover:shadow-xl hover:shadow-amber-900/5">
+                  <motion.div
+                    whileHover={{ y: -6, scale: 1.02 }}
+                    transition={SPRING_SNAPPY}
+                    className="group relative p-7 rounded-2xl border border-stone-100 hover:border-amber-200/60 bg-white hover:bg-gradient-to-b hover:from-amber-50/40 hover:to-white transition-colors duration-500 hover:shadow-xl hover:shadow-amber-900/5"
+                  >
                     {/* Gold corner accent */}
                     <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-amber-400/0 group-hover:border-amber-400/40 rounded-tl-2xl transition-all duration-500" />
 
@@ -279,7 +329,7 @@ export default function HomePage() {
                     </div>
                     <h3 className="font-[family-name:var(--font-playfair)] font-semibold text-stone-900 mb-2 text-lg">{service.title}</h3>
                     <p className="text-sm text-stone-500 leading-relaxed">{service.description}</p>
-                  </div>
+                  </motion.div>
                 </StaggerItem>
               );
             })}
@@ -299,7 +349,11 @@ export default function HomePage() {
           <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" stagger={0.12}>
             {ROOMS.map((room) => (
               <StaggerItem key={room.slug}>
-                <div className={`group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-stone-900/10 transition-all duration-500 hover:-translate-y-2 ${room.featured ? "ring-1 ring-amber-400/50" : ""}`}>
+                <motion.div
+                  whileHover={{ y: -8, scale: 1.01 }}
+                  transition={SPRING_SNAPPY}
+                  className={`group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-stone-900/10 transition-shadow duration-500 ${room.featured ? "ring-1 ring-amber-400/50" : ""}`}
+                >
                   {/* Image */}
                   <div className="relative h-56 overflow-hidden">
                     <Image
@@ -372,13 +426,15 @@ export default function HomePage() {
 
                     {/* CTA */}
                     <Link href="/booking">
-                      <Button className="w-full bg-stone-900 hover:bg-stone-800 text-white font-medium gap-2 h-11 text-sm tracking-wide group/btn">
-                        Book This Room
-                        <ArrowRight className="h-3.5 w-3.5 group-hover/btn:translate-x-1 transition-transform" />
-                      </Button>
+                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} transition={SPRING_SNAPPY}>
+                        <Button className="w-full bg-stone-900 hover:bg-stone-800 text-white font-medium gap-2 h-11 text-sm tracking-wide group/btn">
+                          Book This Room
+                          <ArrowRight className="h-3.5 w-3.5 group-hover/btn:translate-x-1 transition-transform" />
+                        </Button>
+                      </motion.div>
                     </Link>
                   </div>
-                </div>
+                </motion.div>
               </StaggerItem>
             ))}
           </StaggerContainer>
@@ -399,7 +455,7 @@ export default function HomePage() {
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Text side */}
-            <FadeIn className="order-2 lg:order-1">
+            <SlideIn direction="left" className="order-2 lg:order-1">
               <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.25em] uppercase mb-4 text-amber-600">
                 <span className="w-8 h-px bg-current" />
                 Our Environment
@@ -425,15 +481,17 @@ export default function HomePage() {
                 ))}
               </div>
               <Link href="/gallery">
-                <Button variant="outline" className="border-stone-300 text-stone-700 hover:bg-stone-100 hover:border-stone-400 gap-2 text-sm tracking-wide uppercase font-medium">
-                  View Gallery
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
+                <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }} transition={SPRING_SNAPPY} className="inline-block">
+                  <Button variant="outline" className="border-stone-300 text-stone-700 hover:bg-stone-100 hover:border-stone-400 gap-2 text-sm tracking-wide uppercase font-medium">
+                    View Gallery
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </motion.div>
               </Link>
-            </FadeIn>
+            </SlideIn>
 
             {/* Photo grid side */}
-            <FadeIn className="order-1 lg:order-2" delay={0.2}>
+            <SlideIn direction="right" className="order-1 lg:order-2" delay={0.2}>
               <div className="relative">
                 {/* Main large image */}
                 <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-stone-900/10">
@@ -461,7 +519,7 @@ export default function HomePage() {
                   <p className="text-xs font-bold tracking-wide uppercase">Atwima Boko, Kumasi</p>
                 </div>
               </div>
-            </FadeIn>
+            </SlideIn>
           </div>
         </div>
       </section>
@@ -549,7 +607,7 @@ export default function HomePage() {
               const venueImages = [IMAGES.venues.faithHall, IMAGES.venues.pavilion, IMAGES.venues.diningHall];
               return (
                 <StaggerItem key={hall.name}>
-                  <div className="group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-stone-900/10 transition-all duration-500 hover:-translate-y-1">
+                  <motion.div whileHover={{ y: -6, scale: 1.01 }} transition={SPRING_SNAPPY} className="group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-stone-900/10 transition-shadow duration-500">
                     <div className="relative h-52 overflow-hidden">
                       <Image
                         src={venueImages[i] ?? venueImages[0]}
@@ -570,7 +628,7 @@ export default function HomePage() {
                       <h3 className="font-[family-name:var(--font-playfair)] text-lg font-bold text-stone-900 mb-2">{hall.name}</h3>
                       <p className="text-sm text-stone-500 leading-relaxed">{hall.description}</p>
                     </div>
-                  </div>
+                  </motion.div>
                 </StaggerItem>
               );
             })}
@@ -634,15 +692,19 @@ export default function HomePage() {
 
           <FadeIn delay={0.3} className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
             <Link href="/booking">
-              <Button size="lg" className="gap-2 min-w-[200px] bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-semibold shadow-2xl shadow-amber-500/20 text-sm h-13 tracking-wide uppercase">
-                Reserve Your Stay
-                <ArrowRight className="h-4 w-4" />
-              </Button>
+              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }} transition={SPRING_SNAPPY}>
+                <Button size="lg" className="gap-2 min-w-[200px] bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-semibold shadow-2xl shadow-amber-500/20 text-sm h-13 tracking-wide uppercase">
+                  Reserve Your Stay
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </motion.div>
             </Link>
             <Link href="/contact">
-              <Button size="lg" className="min-w-[200px] bg-transparent border border-white/20 text-white hover:bg-white/10 hover:border-white/40 font-medium text-sm h-13 tracking-wide uppercase backdrop-blur-sm">
-                Contact Us
-              </Button>
+              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }} transition={SPRING_SNAPPY}>
+                <Button size="lg" className="min-w-[200px] bg-transparent border border-white/20 text-white hover:bg-white/10 hover:border-white/40 font-medium text-sm h-13 tracking-wide uppercase backdrop-blur-sm">
+                  Contact Us
+                </Button>
+              </motion.div>
             </Link>
           </FadeIn>
 
