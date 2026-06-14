@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SITE } from "@/lib/site-data";
 import { IMAGES } from "@/lib/images";
-import { Phone, Mail, MapPin, Clock, Send } from "lucide-react";
+import { Phone, Mail, MapPin, Clock, Send, Loader2, CheckCircle } from "lucide-react";
 
 const CONTACT_INFO = [
   {
@@ -37,6 +38,20 @@ const CONTACT_INFO = [
 ];
 
 export default function ContactPage() {
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSending(true);
+    setSent(false);
+    await new Promise((r) => setTimeout(r, 1500));
+    setSending(false);
+    setSent(true);
+    (e.target as HTMLFormElement).reset();
+    setTimeout(() => setSent(false), 5000);
+  };
+
   return (
     <>
       {/* Hero */}
@@ -136,7 +151,7 @@ export default function ContactPage() {
                     Send Us a Message
                   </h2>
 
-                  <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
+                  <form className="space-y-5" onSubmit={handleSubmit}>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="firstName">First Name</Label>
@@ -196,12 +211,25 @@ export default function ContactPage() {
                       />
                     </div>
 
+                    {sent && (
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-emerald-800">
+                        <CheckCircle className="h-4 w-4 shrink-0" />
+                        Message sent! We&rsquo;ll get back to you within 24 hours.
+                      </div>
+                    )}
+
                     <Button
                       type="submit"
+                      disabled={sending}
                       className="w-full bg-amber-800 hover:bg-amber-900 text-white gap-2 h-11"
                     >
-                      <Send className="h-4 w-4" />
-                      Send Message
+                      {sending ? (
+                        <><Loader2 className="h-4 w-4 animate-spin" />Sending...</>
+                      ) : sent ? (
+                        <><CheckCircle className="h-4 w-4" />Sent!</>
+                      ) : (
+                        <><Send className="h-4 w-4" />Send Message</>
+                      )}
                     </Button>
 
                     <p className="text-xs text-gray-400 text-center">

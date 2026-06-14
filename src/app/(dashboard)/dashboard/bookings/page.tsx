@@ -775,7 +775,7 @@ export default function BookingsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteItem(null)} disabled={deleting}>Cancel</Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}Delete
+              {deleting ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" />Deleting...</> : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>

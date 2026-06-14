@@ -310,7 +310,7 @@ export default function GuestPortalPage() {
                       <div className="flex gap-3">
                         <Button variant="outline" onClick={() => setShowComplaint(false)}>Cancel</Button>
                         <Button onClick={handleSubmitComplaint} disabled={submittingComplaint || !complaintSubject || !complaintDesc}>
-                          {submittingComplaint ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}Submit Complaint
+                          {submittingComplaint ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" />Submitting...</> : "Submit Complaint"}
                         </Button>
                       </div>
                     </div>
