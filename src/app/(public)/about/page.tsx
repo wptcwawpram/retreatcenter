@@ -79,10 +79,10 @@ export default function AboutPage() {
           priority
           quality={85}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-stone-950/80 via-stone-950/50 to-stone-950/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-green-950/80 via-green-950/50 to-green-950/80" />
         <div className="relative container mx-auto px-6 text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SPRING, delay: 0.2 }}>
-            <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.25em] uppercase mb-4 text-amber-400">
+            <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.25em] uppercase mb-4 text-amber-500">
               <span className="w-8 h-px bg-current" />
               About Us
               <span className="w-8 h-px bg-current" />
@@ -91,7 +91,7 @@ export default function AboutPage() {
           <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SPRING, delay: 0.4 }}
             className="font-[family-name:var(--font-playfair)] text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
             About{" "}
-            <span className="bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-green-700 to-green-800 bg-clip-text text-transparent">
               {SITE.shortName}
             </span>
           </motion.h1>
@@ -109,7 +109,7 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center max-w-6xl mx-auto">
             {/* Image side */}
             <SlideIn direction="left">
-              <div className="relative h-[400px] lg:h-[500px] rounded-2xl overflow-hidden shadow-2xl shadow-stone-900/10">
+              <div className="relative h-[400px] lg:h-[500px] rounded-2xl overflow-hidden shadow-2xl shadow-green-900/10">
                 <Image
                   src={IMAGES.lifestyle.fellowship}
                   alt="Fellowship at WPTC"
@@ -117,14 +117,14 @@ export default function AboutPage() {
                   className="object-cover"
                   sizes="(max-width: 1024px) 100vw, 50vw"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-amber-950/20 to-transparent" />
-                <div className="absolute -top-3 -right-3 w-24 h-24 border-t-2 border-r-2 border-amber-400/40 rounded-tr-2xl" />
+                <div className="absolute inset-0 bg-gradient-to-t from-green-950/20 to-transparent" />
+                <div className="absolute -top-3 -right-3 w-24 h-24 border-t-2 border-r-2 border-green-600/40 rounded-tr-2xl" />
               </div>
             </SlideIn>
 
             {/* Text side */}
             <SlideIn direction="right" delay={0.15}>
-              <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.25em] uppercase mb-4 text-amber-600">
+              <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.25em] uppercase mb-4 text-green-700">
                 <span className="w-8 h-px bg-current" />
                 Our Story
               </span>
@@ -160,14 +160,14 @@ export default function AboutPage() {
       </section>
 
       {/* Mission & Vision */}
-      <section className="py-20 md:py-28 bg-stone-50">
+      <section className="py-20 md:py-28 bg-[#faf8f5]">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <FadeIn>
               <Card className="border-0 ring-0 shadow-lg overflow-hidden h-full">
-                <div className="h-1 bg-gradient-to-r from-amber-500 to-amber-600" />
+                <div className="h-1 bg-gradient-to-r from-green-700 to-green-800" />
                 <CardContent className="p-8">
-                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100 text-amber-600 mb-5">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-green-50 to-green-100 text-green-700 mb-5">
                     <Target className="h-6 w-6" />
                   </div>
                   <h3 className="font-[family-name:var(--font-playfair)] text-xl font-bold text-stone-900 mb-4">
@@ -183,9 +183,9 @@ export default function AboutPage() {
             </FadeIn>
             <FadeIn delay={0.15}>
               <Card className="border-0 ring-0 shadow-lg overflow-hidden h-full">
-                <div className="h-1 bg-gradient-to-r from-amber-500 to-amber-600" />
+                <div className="h-1 bg-gradient-to-r from-green-700 to-green-800" />
                 <CardContent className="p-8">
-                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100 text-amber-600 mb-5">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-green-50 to-green-100 text-green-700 mb-5">
                     <Eye className="h-6 w-6" />
                   </div>
                   <h3 className="font-[family-name:var(--font-playfair)] text-xl font-bold text-stone-900 mb-4">
@@ -212,14 +212,14 @@ export default function AboutPage() {
           className="object-cover"
           sizes="100vw"
         />
-        <div className="absolute inset-0 bg-amber-950/40" />
+        <div className="absolute inset-0 bg-green-950/40" />
       </section>
 
       {/* Values */}
       <section className="py-20 md:py-28 bg-white">
         <div className="container mx-auto px-6">
           <FadeIn className="text-center mb-16">
-            <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.25em] uppercase mb-4 text-amber-600">
+            <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.25em] uppercase mb-4 text-green-700">
               <span className="w-8 h-px bg-current" />
               What Guides Us
               <span className="w-8 h-px bg-current" />
@@ -233,7 +233,7 @@ export default function AboutPage() {
             {values.map((v, i) => (
               <FadeIn key={v.title} delay={i * 0.1}>
                 <motion.div whileHover={{ y: -6 }} transition={{ type: "spring", stiffness: 200, damping: 25 }} className="text-center p-6 rounded-2xl border border-transparent hover:border-stone-100 hover:shadow-lg transition-shadow">
-                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100 text-amber-600 mb-5">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-green-50 to-green-100 text-green-700 mb-5">
                     <v.icon className="h-6 w-6" />
                   </div>
                   <h3 className="font-[family-name:var(--font-playfair)] font-semibold text-stone-900 mb-2">{v.title}</h3>

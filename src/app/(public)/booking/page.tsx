@@ -304,15 +304,15 @@ export default function BookingPage() {
           quality={85}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
-        <div className="absolute inset-0 bg-amber-950/30" />
+        <div className="absolute inset-0 bg-green-950/30" />
         <div className="relative container mx-auto px-4 text-center">
-          <Badge variant="outline" className="mb-6 text-amber-200 border-amber-400/30 bg-white/10 px-4 py-1 backdrop-blur-sm">
+          <Badge variant="outline" className="mb-6 text-green-200 border-green-600/30 bg-white/10 px-4 py-1 backdrop-blur-sm">
             <CalendarCheck className="h-3.5 w-3.5 mr-1" />
             Book Your Stay
           </Badge>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
             Warriors Prayer Tower Complex{" "}
-            <span className="bg-gradient-to-r from-amber-200 to-amber-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-amber-500 to-amber-600 bg-clip-text text-transparent">
               Form
             </span>
           </h1>
@@ -324,7 +324,7 @@ export default function BookingPage() {
       </section>
 
       {/* Booking Form */}
-      <section className="py-16 md:py-24 bg-gradient-to-b from-amber-50/30 to-white">
+      <section className="py-16 md:py-24 bg-gradient-to-b from-green-50/30 to-white">
         <div className="container mx-auto px-4">
           {/* ─── Success State ─── */}
           {submitted ? (
@@ -334,17 +334,17 @@ export default function BookingPage() {
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-3">Booking Confirmed!</h2>
               <p className="text-gray-600 mb-2">Your booking reference is:</p>
-              <p className="text-3xl font-bold text-amber-800 font-mono mb-6">{bookingRef}</p>
+              <p className="text-3xl font-bold text-green-800 font-mono mb-6">{bookingRef}</p>
               <p className="text-sm text-gray-500 mb-8">
                 Payment received! A confirmation SMS has been sent to {formData.phone}.
                 Please save your reference number for check-in.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <a href="/">
-                  <Button className="bg-amber-700 hover:bg-amber-800 text-white">Return to Homepage</Button>
+                  <Button className="bg-green-800 hover:bg-green-700 text-white">Return to Homepage</Button>
                 </a>
                 <a href="/booking">
-                  <Button variant="outline" className="border-amber-300 text-amber-800 hover:bg-amber-50">Make Another Booking</Button>
+                  <Button variant="outline" className="border-green-300 text-green-800 hover:bg-green-50">Make Another Booking</Button>
                 </a>
               </div>
             </div>
@@ -355,10 +355,10 @@ export default function BookingPage() {
           >
             {/* ─── Booking Type ─── */}
             <Card className="border-0 ring-0 shadow-lg overflow-hidden">
-              <div className="h-2 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400" />
+              <div className="h-2 bg-gradient-to-r from-green-700 via-green-600 to-amber-600" />
               <CardContent className="p-6 md:p-8">
                 <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <Users className="h-5 w-5 text-amber-700" />
+                  <Users className="h-5 w-5 text-green-700" />
                   Booking Type
                 </h2>
                 <div className="flex gap-4">
@@ -369,8 +369,8 @@ export default function BookingPage() {
                       onClick={() => setBookingType(type)}
                       className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold border-2 transition-all ${
                         bookingType === type
-                          ? "border-amber-500 bg-amber-50 text-amber-900"
-                          : "border-gray-200 text-gray-500 hover:border-amber-300"
+                          ? "border-green-600 bg-green-50 text-green-900"
+                          : "border-gray-200 text-gray-500 hover:border-green-300"
                       }`}
                     >
                       {type === "individual" ? "Individual" : "Group"}
@@ -382,10 +382,10 @@ export default function BookingPage() {
 
             {/* ─── Personal Information ─── */}
             <Card className="border-0 ring-0 shadow-lg overflow-hidden">
-              <div className="h-2 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400" />
+              <div className="h-2 bg-gradient-to-r from-green-700 via-green-600 to-amber-600" />
               <CardContent className="p-6 md:p-8">
                 <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <User className="h-5 w-5 text-amber-700" />
+                  <User className="h-5 w-5 text-green-700" />
                   Personal Information
                 </h2>
 
@@ -394,7 +394,7 @@ export default function BookingPage() {
                     <Label htmlFor="name">
                       {bookingType === "group" ? "Booker Name" : "Name"} <span className="text-red-500">*</span>
                     </Label>
-                    <Input id="name" placeholder="Full name" value={formData.name} onChange={(e) => updateField("name", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="name" placeholder="Full name" value={formData.name} onChange={(e) => updateField("name", e.target.value)} className="border-gray-200 focus-visible:ring-green-600" />
                   </div>
 
                   <div className="space-y-2">
@@ -403,7 +403,7 @@ export default function BookingPage() {
                       id="ageRange"
                       value={formData.ageRange}
                       onChange={(e) => updateField("ageRange", e.target.value)}
-                      className="w-full h-9 rounded-md border border-gray-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full h-9 rounded-md border border-gray-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                     >
                       <option value="">Select age range</option>
                       {AGE_RANGES.map((a) => (
@@ -414,22 +414,22 @@ export default function BookingPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
-                    <Input id="email" type="email" placeholder="your@email.com" value={formData.email} onChange={(e) => updateField("email", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="email" type="email" placeholder="your@email.com" value={formData.email} onChange={(e) => updateField("email", e.target.value)} className="border-gray-200 focus-visible:ring-green-600" />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone / Mobile <span className="text-red-500">*</span></Label>
-                    <Input id="phone" type="tel" placeholder="+233 XXX XXX XXX" value={formData.phone} onChange={(e) => updateField("phone", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="phone" type="tel" placeholder="+233 XXX XXX XXX" value={formData.phone} onChange={(e) => updateField("phone", e.target.value)} className="border-gray-200 focus-visible:ring-green-600" />
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="address">Address</Label>
-                    <Input id="address" placeholder="Your address" value={formData.address} onChange={(e) => updateField("address", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="address" placeholder="Your address" value={formData.address} onChange={(e) => updateField("address", e.target.value)} className="border-gray-200 focus-visible:ring-green-600" />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="denomination">Denomination</Label>
-                    <Input id="denomination" placeholder="e.g. Methodist, Catholic, Pentecostal" value={formData.denomination} onChange={(e) => updateField("denomination", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="denomination" placeholder="e.g. Methodist, Catholic, Pentecostal" value={formData.denomination} onChange={(e) => updateField("denomination", e.target.value)} className="border-gray-200 focus-visible:ring-green-600" />
                   </div>
 
                   <div className="space-y-2">
@@ -438,7 +438,7 @@ export default function BookingPage() {
                       id="relationship"
                       value={formData.relationship}
                       onChange={(e) => updateField("relationship", e.target.value)}
-                      className="w-full h-9 rounded-md border border-gray-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full h-9 rounded-md border border-gray-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                     >
                       <option value="">Select status</option>
                       {RELATIONSHIP_STATUSES.map((s) => (
@@ -452,25 +452,25 @@ export default function BookingPage() {
 
             {/* ─── Emergency Contact ─── */}
             <Card className="border-0 ring-0 shadow-lg overflow-hidden">
-              <div className="h-2 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400" />
+              <div className="h-2 bg-gradient-to-r from-green-700 via-green-600 to-amber-600" />
               <CardContent className="p-6 md:p-8">
                 <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <Heart className="h-5 w-5 text-amber-700" />
+                  <Heart className="h-5 w-5 text-green-700" />
                   Emergency Contact
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                   <div className="space-y-2">
                     <Label htmlFor="emergencyName">Contact Name</Label>
-                    <Input id="emergencyName" placeholder="Emergency contact name" value={formData.emergencyName} onChange={(e) => updateField("emergencyName", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="emergencyName" placeholder="Emergency contact name" value={formData.emergencyName} onChange={(e) => updateField("emergencyName", e.target.value)} className="border-gray-200 focus-visible:ring-green-600" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="emergencyRelationship">Relationship</Label>
-                    <Input id="emergencyRelationship" placeholder="e.g. Spouse, Parent, Sibling" value={formData.emergencyRelationship} onChange={(e) => updateField("emergencyRelationship", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="emergencyRelationship" placeholder="e.g. Spouse, Parent, Sibling" value={formData.emergencyRelationship} onChange={(e) => updateField("emergencyRelationship", e.target.value)} className="border-gray-200 focus-visible:ring-green-600" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="emergencyPhone">Contact Phone</Label>
-                    <Input id="emergencyPhone" type="tel" placeholder="+233 XXX XXX XXX" value={formData.emergencyPhone} onChange={(e) => updateField("emergencyPhone", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="emergencyPhone" type="tel" placeholder="+233 XXX XXX XXX" value={formData.emergencyPhone} onChange={(e) => updateField("emergencyPhone", e.target.value)} className="border-gray-200 focus-visible:ring-green-600" />
                   </div>
                 </div>
               </CardContent>
@@ -478,10 +478,10 @@ export default function BookingPage() {
 
             {/* ─── Identification ─── */}
             <Card className="border-0 ring-0 shadow-lg overflow-hidden">
-              <div className="h-2 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400" />
+              <div className="h-2 bg-gradient-to-r from-green-700 via-green-600 to-amber-600" />
               <CardContent className="p-6 md:p-8">
                 <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-amber-700" />
+                  <Shield className="h-5 w-5 text-green-700" />
                   Identification
                 </h2>
 
@@ -492,7 +492,7 @@ export default function BookingPage() {
                       id="idType"
                       value={formData.idType}
                       onChange={(e) => updateField("idType", e.target.value)}
-                      className="w-full h-9 rounded-md border border-gray-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full h-9 rounded-md border border-gray-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                     >
                       <option value="">Select ID type</option>
                       {ID_TYPES.map((t) => (
@@ -502,7 +502,7 @@ export default function BookingPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="idNumber">ID Card Number</Label>
-                    <Input id="idNumber" placeholder="Enter your ID number" value={formData.idNumber} onChange={(e) => updateField("idNumber", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="idNumber" placeholder="Enter your ID number" value={formData.idNumber} onChange={(e) => updateField("idNumber", e.target.value)} className="border-gray-200 focus-visible:ring-green-600" />
                   </div>
                 </div>
               </CardContent>
@@ -510,10 +510,10 @@ export default function BookingPage() {
 
             {/* ─── Lodging Details ─── */}
             <Card className="border-0 ring-0 shadow-lg overflow-hidden">
-              <div className="h-2 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400" />
+              <div className="h-2 bg-gradient-to-r from-green-700 via-green-600 to-amber-600" />
               <CardContent className="p-6 md:p-8">
                 <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <BedDouble className="h-5 w-5 text-amber-700" />
+                  <BedDouble className="h-5 w-5 text-green-700" />
                   Lodging Details
                 </h2>
 
@@ -528,8 +528,8 @@ export default function BookingPage() {
                         onClick={() => setIsLodging(opt)}
                         className={`px-6 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all ${
                           isLodging === opt
-                            ? "border-amber-500 bg-amber-50 text-amber-900"
-                            : "border-gray-200 text-gray-500 hover:border-amber-300"
+                            ? "border-green-600 bg-green-50 text-green-900"
+                            : "border-gray-200 text-gray-500 hover:border-green-300"
                         }`}
                       >
                         {opt === "yes" ? "Yes" : "No"}
@@ -548,7 +548,7 @@ export default function BookingPage() {
                           id="roomType"
                           value={selectedRoom}
                           onChange={(e) => setSelectedRoom(e.target.value)}
-                          className="w-full h-9 rounded-md border border-gray-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                          className="w-full h-9 rounded-md border border-gray-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                         >
                           <option value="">Select a room</option>
                           {ROOM_OPTIONS.map((r) => (
@@ -597,10 +597,10 @@ export default function BookingPage() {
 
             {/* ─── Hall / Grounds Usage ─── */}
             <Card className="border-0 ring-0 shadow-lg overflow-hidden">
-              <div className="h-2 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400" />
+              <div className="h-2 bg-gradient-to-r from-green-700 via-green-600 to-amber-600" />
               <CardContent className="p-6 md:p-8">
                 <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <Church className="h-5 w-5 text-amber-700" />
+                  <Church className="h-5 w-5 text-green-700" />
                   Hall / Grounds Usage
                 </h2>
 
@@ -614,8 +614,8 @@ export default function BookingPage() {
                         onClick={() => setNeedsHall(opt)}
                         className={`px-6 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all ${
                           needsHall === opt
-                            ? "border-amber-500 bg-amber-50 text-amber-900"
-                            : "border-gray-200 text-gray-500 hover:border-amber-300"
+                            ? "border-green-600 bg-green-50 text-green-900"
+                            : "border-gray-200 text-gray-500 hover:border-green-300"
                         }`}
                       >
                         {opt === "yes" ? "Yes" : "No"}
@@ -632,7 +632,7 @@ export default function BookingPage() {
                         id="hall"
                         value={selectedHall}
                         onChange={(e) => setSelectedHall(e.target.value)}
-                        className="w-full h-9 rounded-md border border-gray-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        className="w-full h-9 rounded-md border border-gray-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                       >
                         <option value="">Choose a hall</option>
                         {HALL_OPTIONS.map((h) => (
@@ -657,7 +657,7 @@ export default function BookingPage() {
                     id="weddingGrounds"
                     checked={needsGrounds}
                     onChange={(e) => setNeedsGrounds(e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                    className="h-4 w-4 rounded border-gray-300 text-green-700 focus:ring-green-500"
                   />
                   <Label htmlFor="weddingGrounds" className="text-sm text-gray-700 cursor-pointer">
                     I need the grounds for a Wedding Ceremony (GH₵{WEDDING_GROUNDS_PRICE.toLocaleString()})
@@ -668,29 +668,29 @@ export default function BookingPage() {
 
             {/* ─── Stay Duration ─── */}
             <Card className="border-0 ring-0 shadow-lg overflow-hidden">
-              <div className="h-2 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400" />
+              <div className="h-2 bg-gradient-to-r from-green-700 via-green-600 to-amber-600" />
               <CardContent className="p-6 md:p-8">
                 <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-amber-700" />
+                  <Clock className="h-5 w-5 text-green-700" />
                   Stay Duration
                 </h2>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="space-y-2">
                     <Label htmlFor="fromDate">From Date <span className="text-red-500">*</span></Label>
-                    <Input id="fromDate" type="date" value={formData.fromDate} onChange={(e) => updateField("fromDate", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="fromDate" type="date" value={formData.fromDate} onChange={(e) => updateField("fromDate", e.target.value)} className="border-gray-200 focus-visible:ring-green-600" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="toDate">To Date <span className="text-red-500">*</span></Label>
-                    <Input id="toDate" type="date" value={formData.toDate} onChange={(e) => updateField("toDate", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="toDate" type="date" value={formData.toDate} onChange={(e) => updateField("toDate", e.target.value)} className="border-gray-200 focus-visible:ring-green-600" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="startTime">Starting Time</Label>
-                    <Input id="startTime" type="time" value={formData.startTime} onChange={(e) => updateField("startTime", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="startTime" type="time" value={formData.startTime} onChange={(e) => updateField("startTime", e.target.value)} className="border-gray-200 focus-visible:ring-green-600" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="endTime">Ending Time</Label>
-                    <Input id="endTime" type="time" value={formData.endTime} onChange={(e) => updateField("endTime", e.target.value)} className="border-gray-200 focus-visible:ring-amber-500" />
+                    <Input id="endTime" type="time" value={formData.endTime} onChange={(e) => updateField("endTime", e.target.value)} className="border-gray-200 focus-visible:ring-green-600" />
                   </div>
                 </div>
               </CardContent>
@@ -698,10 +698,10 @@ export default function BookingPage() {
 
             {/* ─── Payment Summary ─── */}
             <Card className="border-0 ring-0 shadow-lg overflow-hidden">
-              <div className="h-2 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400" />
+              <div className="h-2 bg-gradient-to-r from-green-700 via-green-600 to-amber-600" />
               <CardContent className="p-6 md:p-8">
                 <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-amber-700" />
+                  <CreditCard className="h-5 w-5 text-green-700" />
                   Payment Summary
                 </h2>
 
@@ -716,13 +716,13 @@ export default function BookingPage() {
                       <span className="text-sm text-gray-600 flex items-center gap-1.5">
                         Total Room Amount
                         {roomBreakdownLines.length > 0 && (
-                          <ChevronDown className={`h-3.5 w-3.5 text-amber-600 transition-transform ${showRoomBreakdown ? "rotate-180" : ""}`} />
+                          <ChevronDown className={`h-3.5 w-3.5 text-green-700 transition-transform ${showRoomBreakdown ? "rotate-180" : ""}`} />
                         )}
                       </span>
                       <span className="text-sm font-semibold text-gray-900">GH₵{roomPrice.toFixed(2)}</span>
                     </button>
                     {showRoomBreakdown && roomBreakdownLines.length > 0 && (
-                      <div className="ml-4 py-2 space-y-1.5 border-l-2 border-amber-200 pl-4 my-2">
+                      <div className="ml-4 py-2 space-y-1.5 border-l-2 border-green-200 pl-4 my-2">
                         {roomBreakdownLines.map((line, i) => (
                           <div key={i} className="flex items-center justify-between text-xs">
                             <div>
@@ -746,13 +746,13 @@ export default function BookingPage() {
                       <span className="text-sm text-gray-600 flex items-center gap-1.5">
                         Halls / Grounds Amount
                         {hallBreakdownLines.length > 0 && (
-                          <ChevronDown className={`h-3.5 w-3.5 text-amber-600 transition-transform ${showHallBreakdown ? "rotate-180" : ""}`} />
+                          <ChevronDown className={`h-3.5 w-3.5 text-green-700 transition-transform ${showHallBreakdown ? "rotate-180" : ""}`} />
                         )}
                       </span>
                       <span className="text-sm font-semibold text-gray-900">GH₵{hallPrice.toFixed(2)}</span>
                     </button>
                     {showHallBreakdown && hallBreakdownLines.length > 0 && (
-                      <div className="ml-4 py-2 space-y-1.5 border-l-2 border-amber-200 pl-4 my-2">
+                      <div className="ml-4 py-2 space-y-1.5 border-l-2 border-green-200 pl-4 my-2">
                         {hallBreakdownLines.map((line, i) => (
                           <div key={i} className="flex items-center justify-between text-xs">
                             <div>
@@ -767,13 +767,13 @@ export default function BookingPage() {
                   </div>
 
                   {/* Totals */}
-                  <div className="flex items-center justify-between py-3 border-b-2 border-amber-300">
+                  <div className="flex items-center justify-between py-3 border-b-2 border-green-300">
                     <span className="text-base font-bold text-gray-900">Overall Total</span>
-                    <span className="text-lg font-bold text-amber-800">GH₵{totalAmount.toFixed(2)}</span>
+                    <span className="text-lg font-bold text-green-800">GH₵{totalAmount.toFixed(2)}</span>
                   </div>
                   <div className="flex items-center justify-between py-2">
                     <span className="text-sm text-gray-600">Initial Deposit (30%)</span>
-                    <span className="text-sm font-semibold text-amber-700">GH₵{deposit.toFixed(2)}</span>
+                    <span className="text-sm font-semibold text-green-700">GH₵{deposit.toFixed(2)}</span>
                   </div>
                   <div className="flex items-center justify-between py-2">
                     <span className="text-sm text-gray-600">Balance Due on Arrival</span>
@@ -781,9 +781,9 @@ export default function BookingPage() {
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200 mb-6">
-                  <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-                  <p className="text-sm text-amber-800">
+                <div className="flex items-start gap-3 p-4 rounded-xl bg-green-50 border border-green-200 mb-6">
+                  <AlertCircle className="h-5 w-5 text-green-700 shrink-0 mt-0.5" />
+                  <p className="text-sm text-green-800">
                     A 30% initial deposit is required to confirm your booking. The remaining
                     balance is due upon arrival. Payment processing fees may apply.
                   </p>
@@ -799,7 +799,7 @@ export default function BookingPage() {
                 <Button
                   type="submit"
                   disabled={submitting}
-                  className="w-full bg-amber-700 hover:bg-amber-800 text-white font-bold text-base h-12 shadow-lg shadow-amber-700/20 disabled:opacity-60"
+                  className="w-full bg-green-800 hover:bg-green-700 text-white font-bold text-base h-12 shadow-lg shadow-green-700/20 disabled:opacity-60"
                 >
                   {paymentStep === "processing" ? (
                     <><Loader2 className="h-5 w-5 animate-spin mr-2" />Creating booking...</>

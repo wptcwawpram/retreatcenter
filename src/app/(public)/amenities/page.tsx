@@ -64,10 +64,10 @@ export default function AmenitiesPage() {
           priority
           quality={85}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-stone-950/80 via-stone-950/50 to-stone-950/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-green-950/80 via-green-950/50 to-green-950/80" />
         <div className="relative container mx-auto px-6 text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SPRING, delay: 0.2 }}>
-            <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.25em] uppercase mb-4 text-amber-400">
+            <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.25em] uppercase mb-4 text-amber-500">
               <span className="w-8 h-px bg-current" />
               Facilities
               <span className="w-8 h-px bg-current" />
@@ -76,7 +76,7 @@ export default function AmenitiesPage() {
           <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SPRING, delay: 0.4 }}
             className="font-[family-name:var(--font-playfair)] text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
             Amenities &{" "}
-            <span className="bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-green-500 to-amber-600 bg-clip-text text-transparent">
               Facilities
             </span>
           </motion.h1>
@@ -98,7 +98,7 @@ export default function AmenitiesPage() {
               return (
                 <FadeIn key={amenity.title} delay={i * 0.08}>
                   <motion.div whileHover={{ y: -4, scale: 1.01 }} transition={SPRING_SNAPPY}
-                    className="group flex flex-col sm:flex-row overflow-hidden rounded-2xl border border-stone-100 hover:border-amber-200 shadow-md hover:shadow-xl transition-shadow duration-300"
+                    className="group flex flex-col sm:flex-row overflow-hidden rounded-2xl border border-stone-100 hover:border-green-200 shadow-md hover:shadow-xl transition-shadow duration-300"
                   >
                     {imgSrc && (
                       <div className="relative w-full sm:w-48 h-48 sm:h-auto shrink-0 overflow-hidden">
@@ -112,7 +112,7 @@ export default function AmenitiesPage() {
                       </div>
                     )}
                     <div className="flex items-start gap-4 p-6">
-                      <div className="shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center text-amber-700 group-hover:scale-110 transition-transform">
+                      <div className="shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center text-green-700 group-hover:scale-110 transition-transform">
                         <Icon className="h-5 w-5" />
                       </div>
                       <div>

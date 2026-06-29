@@ -119,15 +119,15 @@ export default function GuestPortalPage() {
       <section className="relative text-white py-16 md:py-20 overflow-hidden">
         <Image src={IMAGES.hero.booking} alt="Guest Portal" fill className="object-cover" priority quality={85} />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
-        <div className="absolute inset-0 bg-amber-950/30" />
+        <div className="absolute inset-0 bg-green-950/30" />
         <div className="relative container mx-auto px-4 text-center">
-          <Badge variant="outline" className="mb-4 text-amber-200 border-amber-400/30 bg-white/10 px-4 py-1 backdrop-blur-sm">
+          <Badge variant="outline" className="mb-4 text-green-200 border-green-400/30 bg-white/10 px-4 py-1 backdrop-blur-sm">
             <CalendarCheck className="h-3.5 w-3.5 mr-1" />
             Guest Portal
           </Badge>
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
             View Your{" "}
-            <span className="bg-gradient-to-r from-amber-200 to-amber-400 bg-clip-text text-transparent">Booking</span>
+            <span className="bg-gradient-to-r from-amber-500 to-amber-600 bg-clip-text text-transparent">Booking</span>
           </h1>
           <p className="text-white/80 max-w-xl mx-auto">
             Check your booking status, view payment history, and lodge any complaints.
@@ -135,15 +135,15 @@ export default function GuestPortalPage() {
         </div>
       </section>
 
-      <section className="py-12 md:py-16 bg-gradient-to-b from-amber-50/30 to-white">
+      <section className="py-12 md:py-16 bg-gradient-to-b from-green-50/30 to-white">
         <div className="container mx-auto px-4">
           {step === "lookup" ? (
             /* ─── Lookup Form ─── */
             <Card className="max-w-md mx-auto border-0 shadow-lg overflow-hidden">
-              <div className="h-2 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400" />
+              <div className="h-2 bg-gradient-to-r from-green-700 via-green-600 to-amber-600" />
               <CardContent className="p-6 md:p-8 space-y-5">
                 <div className="text-center mb-2">
-                  <Search className="h-10 w-10 text-amber-600 mx-auto mb-3" />
+                  <Search className="h-10 w-10 text-green-700 mx-auto mb-3" />
                   <h2 className="text-xl font-bold">Find Your Booking</h2>
                   <p className="text-sm text-muted-foreground mt-1">Enter your booking reference and phone number</p>
                 </div>
@@ -151,12 +151,12 @@ export default function GuestPortalPage() {
                 <div className="space-y-2">
                   <Label htmlFor="ref">Booking Reference</Label>
                   <Input id="ref" placeholder="e.g. WPTC-XXXXXX" value={lookupRef} onChange={(e) => setLookupRef(e.target.value.toUpperCase())}
-                    className="border-gray-200 focus-visible:ring-amber-500 font-mono text-center text-lg tracking-wider" />
+                    className="border-gray-200 focus-visible:ring-green-600 font-mono text-center text-lg tracking-wider" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>
                   <Input id="phone" type="tel" placeholder="+233 XXX XXX XXX" value={lookupPhone} onChange={(e) => setLookupPhone(e.target.value)}
-                    className="border-gray-200 focus-visible:ring-amber-500" />
+                    className="border-gray-200 focus-visible:ring-green-600" />
                 </div>
 
                 {error && (
@@ -165,7 +165,7 @@ export default function GuestPortalPage() {
                   </div>
                 )}
 
-                <Button onClick={handleLookup} disabled={loading} className="w-full bg-amber-700 hover:bg-amber-800 text-white h-11">
+                <Button onClick={handleLookup} disabled={loading} className="w-full bg-green-800 hover:bg-green-700 text-white h-11">
                   {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Looking up...</> : "View My Booking"}
                 </Button>
               </CardContent>
@@ -186,11 +186,11 @@ export default function GuestPortalPage() {
 
               {/* Booking Status Card */}
               <Card className="border-0 shadow-lg overflow-hidden">
-                <div className="h-2 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400" />
+                <div className="h-2 bg-gradient-to-r from-green-700 via-green-600 to-amber-600" />
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-semibold flex items-center gap-2">
-                      <CalendarCheck className="h-5 w-5 text-amber-700" />Booking Details
+                      <CalendarCheck className="h-5 w-5 text-green-700" />Booking Details
                     </h3>
                     {(() => {
                       const s = STATUS_DISPLAY[booking.status];
@@ -209,7 +209,7 @@ export default function GuestPortalPage() {
                     <div><span className="text-muted-foreground block">Type</span><p className="font-medium">{booking.booking_type}</p></div>
                   </div>
                   {booking.special_requests && (
-                    <div className="mt-4 p-3 bg-amber-50 rounded-lg text-sm">
+                    <div className="mt-4 p-3 bg-green-50 rounded-lg text-sm">
                       <span className="text-muted-foreground">Special Requests:</span>
                       <p>{booking.special_requests}</p>
                     </div>

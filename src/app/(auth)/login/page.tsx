@@ -67,16 +67,16 @@ function LoginForm() {
 
       {/* Login card */}
       <div className="relative z-10 mx-4 w-full max-w-md">
-        <div className="rounded-2xl border border-amber-200/20 bg-white/95 p-8 shadow-2xl backdrop-blur-sm">
+        <div className="rounded-2xl border border-green-200/20 bg-white/95 p-8 shadow-2xl backdrop-blur-sm">
           {/* Branding */}
           <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
-              <Church className="h-8 w-8 text-amber-700" />
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+              <Church className="h-8 w-8 text-green-700" />
             </div>
             <h1 className="text-2xl font-bold tracking-tight text-gray-900">
               Warriors Prayer Tower Complex
             </h1>
-            <p className="mt-1 text-sm font-medium text-amber-700">
+            <p className="mt-1 text-sm font-medium text-green-700">
               Staff Portal
             </p>
           </div>
@@ -102,7 +102,7 @@ function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                className="h-11 border-gray-300 focus:border-amber-500 focus:ring-amber-500"
+                className="h-11 border-gray-300 focus:border-green-600 focus:ring-green-600"
               />
             </div>
 
@@ -119,7 +119,7 @@ function LoginForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                  className="h-11 border-gray-300 pr-10 focus:border-amber-500 focus:ring-amber-500"
+                  className="h-11 border-gray-300 pr-10 focus:border-green-600 focus:ring-green-600"
                 />
                 <button
                   type="button"
@@ -139,7 +139,7 @@ function LoginForm() {
             <Button
               type="submit"
               disabled={loading}
-              className="h-11 w-full bg-amber-600 text-white hover:bg-amber-700 focus:ring-amber-500"
+              className="h-11 w-full bg-green-800 text-white hover:bg-green-700 focus:ring-green-600"
             >
               {loading ? (
                 <>
@@ -167,7 +167,7 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+          <Loader2 className="h-8 w-8 animate-spin text-green-600" />
         </div>
       }
     >

@@ -89,10 +89,10 @@ export default function ContactPage() {
           priority
           quality={85}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-stone-950/80 via-stone-950/50 to-stone-950/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-green-950/80 via-green-950/50 to-green-950/80" />
         <div className="relative container mx-auto px-6 text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SPRING, delay: 0.2 }}>
-            <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.25em] uppercase mb-4 text-amber-400">
+            <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.25em] uppercase mb-4 text-amber-500">
               <span className="w-8 h-px bg-current" />
               Get in Touch
               <span className="w-8 h-px bg-current" />
@@ -101,7 +101,7 @@ export default function ContactPage() {
           <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SPRING, delay: 0.4 }}
             className="font-[family-name:var(--font-playfair)] text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
             Contact{" "}
-            <span className="bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-green-700 to-green-800 bg-clip-text text-transparent">
               Us
             </span>
           </motion.h1>
@@ -131,7 +131,7 @@ export default function ContactPage() {
               <div className="space-y-5">
                 {CONTACT_INFO.map((item) => (
                   <div key={item.label} className="flex items-start gap-4">
-                    <div className="shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center text-amber-700">
+                    <div className="shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center text-green-700">
                       <item.icon className="h-4 w-4" />
                     </div>
                     <div>
@@ -141,7 +141,7 @@ export default function ContactPage() {
                       {item.href ? (
                         <a
                           href={item.href}
-                          className="text-sm text-stone-700 hover:text-amber-700 transition-colors"
+                          className="text-sm text-stone-700 hover:text-green-700 transition-colors"
                         >
                           {item.value}
                         </a>
@@ -161,12 +161,12 @@ export default function ContactPage() {
                   className="object-cover"
                   sizes="(max-width: 1024px) 100vw, 40vw"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-stone-950/70 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-green-950/70 to-transparent" />
                 <div className="absolute bottom-4 left-4">
                   <p className="text-sm font-semibold text-white">
                     {SITE.address}
                   </p>
-                  <p className="text-xs text-amber-300/80">Ghana, West Africa</p>
+                  <p className="text-xs text-green-300/80">Ghana, West Africa</p>
                 </div>
               </div>
             </SlideIn>
@@ -174,7 +174,7 @@ export default function ContactPage() {
             {/* Contact Form */}
             <SlideIn direction="right" delay={0.15} className="lg:col-span-3">
               <Card className="border-0 ring-0 shadow-lg overflow-hidden">
-                <div className="h-1 bg-gradient-to-r from-amber-500 to-amber-600" />
+                <div className="h-1 bg-gradient-to-r from-green-700 to-green-800" />
                 <CardContent className="p-6 md:p-8">
                   <h2 className="font-[family-name:var(--font-playfair)] text-xl font-bold text-stone-900 mb-6">
                     Send Us a Message
@@ -187,7 +187,7 @@ export default function ContactPage() {
                         <Input
                           id="firstName"
                           placeholder="Your first name"
-                          className="border-stone-200 focus-visible:ring-amber-500"
+                          className="border-stone-200 focus-visible:ring-green-600"
                         />
                       </div>
                       <div className="space-y-2">
@@ -195,7 +195,7 @@ export default function ContactPage() {
                         <Input
                           id="lastName"
                           placeholder="Your last name"
-                          className="border-stone-200 focus-visible:ring-amber-500"
+                          className="border-stone-200 focus-visible:ring-green-600"
                         />
                       </div>
                     </div>
@@ -207,7 +207,7 @@ export default function ContactPage() {
                           id="email"
                           type="email"
                           placeholder="your@email.com"
-                          className="border-stone-200 focus-visible:ring-amber-500"
+                          className="border-stone-200 focus-visible:ring-green-600"
                         />
                       </div>
                       <div className="space-y-2">
@@ -216,7 +216,7 @@ export default function ContactPage() {
                           id="phone"
                           type="tel"
                           placeholder="+233 XXX XXX XXX"
-                          className="border-stone-200 focus-visible:ring-amber-500"
+                          className="border-stone-200 focus-visible:ring-green-600"
                         />
                       </div>
                     </div>
@@ -226,7 +226,7 @@ export default function ContactPage() {
                       <Input
                         id="subject"
                         placeholder="What is this about?"
-                        className="border-stone-200 focus-visible:ring-amber-500"
+                        className="border-stone-200 focus-visible:ring-green-600"
                       />
                     </div>
 
@@ -236,7 +236,7 @@ export default function ContactPage() {
                         id="message"
                         placeholder="Tell us about your retreat plans, group size, preferred dates, or any questions..."
                         rows={5}
-                        className="border-stone-200 focus-visible:ring-amber-500 resize-none"
+                        className="border-stone-200 focus-visible:ring-green-600 resize-none"
                       />
                     </div>
 
@@ -251,7 +251,7 @@ export default function ContactPage() {
                       <Button
                         type="submit"
                         disabled={sending}
-                        className="w-full bg-stone-900 hover:bg-stone-800 text-white gap-2 h-11"
+                        className="w-full bg-green-900 hover:bg-green-800 text-white gap-2 h-11"
                       >
                         {sending ? (
                           <><Loader2 className="h-4 w-4 animate-spin" />Sending...</>

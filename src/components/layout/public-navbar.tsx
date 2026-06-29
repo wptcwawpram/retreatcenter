@@ -39,20 +39,20 @@ export function PublicNavbar() {
   return (
     <>
       {/* ── Top contact bar ── */}
-      <div className="hidden lg:block bg-stone-950 text-stone-400 text-[11px] py-2 border-b border-white/5">
+      <div className="hidden lg:block bg-green-950 text-stone-400 text-[11px] py-2 border-b border-white/5">
         <div className="container mx-auto flex items-center justify-between px-6">
           <div className="flex items-center gap-6">
-            <a href={`tel:${SITE.phone.replace(/\s/g, "")}`} className="flex items-center gap-1.5 hover:text-amber-400 transition-colors duration-300">
-              <Phone className="h-3 w-3 text-amber-500/60" />
+            <a href={`tel:${SITE.phone.replace(/\s/g, "")}`} className="flex items-center gap-1.5 hover:text-amber-500 transition-colors duration-300">
+              <Phone className="h-3 w-3 text-amber-600/60" />
               {SITE.phone}
             </a>
-            <a href={`mailto:${SITE.email}`} className="flex items-center gap-1.5 hover:text-amber-400 transition-colors duration-300">
-              <Mail className="h-3 w-3 text-amber-500/60" />
+            <a href={`mailto:${SITE.email}`} className="flex items-center gap-1.5 hover:text-amber-500 transition-colors duration-300">
+              <Mail className="h-3 w-3 text-amber-600/60" />
               {SITE.email}
             </a>
           </div>
           <div className="flex items-center gap-1.5 text-stone-500">
-            <MapPin className="h-3 w-3 text-amber-500/60" />
+            <MapPin className="h-3 w-3 text-amber-600/60" />
             {SITE.address}
           </div>
         </div>
@@ -62,7 +62,7 @@ export function PublicNavbar() {
       <motion.header
         initial={false}
         animate={{
-          backgroundColor: scrolled ? "rgba(28, 25, 23, 0.97)" : isHome ? "rgba(28, 25, 23, 0)" : "rgba(28, 25, 23, 1)",
+          backgroundColor: scrolled ? "rgba(10, 32, 18, 0.97)" : isHome ? "rgba(10, 32, 18, 0)" : "rgba(10, 32, 18, 1)",
           backdropFilter: scrolled ? "blur(20px)" : "blur(0px)",
         }}
         transition={{ duration: 0.4, ease: "easeInOut" }}
@@ -78,9 +78,9 @@ export function PublicNavbar() {
               <motion.div
                 whileHover={{ rotate: 50, scale: 1.05 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="w-10 h-10 rotate-45 rounded-[4px] bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 shadow-lg shadow-amber-500/25"
+                className="w-10 h-10 rotate-45 rounded-[4px] bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 shadow-lg shadow-amber-600/25"
               />
-              <span className="absolute inset-0 flex items-center justify-center text-stone-950 font-bold text-xs tracking-widest pointer-events-none">
+              <span className="absolute inset-0 flex items-center justify-center text-green-950 font-bold text-xs tracking-widest pointer-events-none">
                 W
               </span>
             </div>
@@ -88,7 +88,7 @@ export function PublicNavbar() {
               <h1 className="font-[family-name:var(--font-playfair)] text-lg font-bold tracking-wide text-white leading-tight">
                 {SITE.shortName}
               </h1>
-              <p className="text-[9px] text-amber-500/50 tracking-[0.2em] uppercase font-medium">
+              <p className="text-[9px] text-amber-600/50 tracking-[0.2em] uppercase font-medium">
                 Retreat Centre
               </p>
             </div>
@@ -104,13 +104,13 @@ export function PublicNavbar() {
               >
                 <span className={cn(
                   "transition-colors duration-300",
-                  pathname === link.href ? "text-amber-400" : "text-stone-400 group-hover:text-white"
+                  pathname === link.href ? "text-amber-500" : "text-stone-400 group-hover:text-white"
                 )}>
                   {link.label}
                 </span>
                 {/* Animated underline */}
                 <motion.span
-                  className="absolute bottom-0 left-4 right-4 h-[2px] bg-amber-400 origin-left"
+                  className="absolute bottom-0 left-4 right-4 h-[2px] bg-amber-500 origin-left"
                   initial={false}
                   animate={{ scaleX: pathname === link.href ? 1 : 0 }}
                   transition={{ duration: 0.3, ease: "easeInOut" }}
@@ -135,7 +135,7 @@ export function PublicNavbar() {
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Button
                   size="sm"
-                  className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-semibold shadow-lg shadow-amber-500/20 hover:shadow-amber-400/30 transition-all duration-300 gap-1.5 px-5"
+                  className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-green-950 font-semibold shadow-lg shadow-amber-600/20 hover:shadow-amber-500/30 transition-all duration-300 gap-1.5 px-5"
                 >
                   Book Now
                   <ChevronRight className="h-3.5 w-3.5" />
@@ -173,7 +173,7 @@ export function PublicNavbar() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-40 bg-stone-950/98 backdrop-blur-xl"
+            className="fixed inset-0 z-40 bg-green-950/98 backdrop-blur-xl"
           >
             <div className="flex flex-col items-center justify-center min-h-screen px-8 py-20">
               <nav className="flex flex-col items-center gap-2 w-full max-w-sm">
@@ -192,7 +192,7 @@ export function PublicNavbar() {
                       className={cn(
                         "block text-center py-3.5 text-lg font-medium tracking-wide transition-colors rounded-xl",
                         pathname === link.href
-                          ? "text-amber-400 bg-amber-400/5"
+                          ? "text-amber-500 bg-amber-500/5"
                           : "text-stone-300 hover:text-white hover:bg-white/5"
                       )}
                     >
@@ -215,7 +215,7 @@ export function PublicNavbar() {
                     </Button>
                   </Link>
                   <Link href="/booking" onClick={() => setMobileOpen(false)}>
-                    <Button className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 font-semibold shadow-lg h-12 mt-2">
+                    <Button className="w-full bg-gradient-to-r from-amber-600 to-amber-700 text-green-950 font-semibold shadow-lg h-12 mt-2">
                       Book Now
                     </Button>
                   </Link>
@@ -227,11 +227,11 @@ export function PublicNavbar() {
                   transition={{ delay: 0.5 }}
                   className="flex flex-col items-center gap-2 pt-8 text-xs text-stone-500"
                 >
-                  <a href={`tel:${SITE.phone.replace(/\s/g, "")}`} className="flex items-center gap-2 hover:text-amber-400 transition-colors">
-                    <Phone className="h-3 w-3 text-amber-500/40" />{SITE.phone}
+                  <a href={`tel:${SITE.phone.replace(/\s/g, "")}`} className="flex items-center gap-2 hover:text-amber-500 transition-colors">
+                    <Phone className="h-3 w-3 text-amber-600/40" />{SITE.phone}
                   </a>
-                  <a href={`mailto:${SITE.email}`} className="flex items-center gap-2 hover:text-amber-400 transition-colors">
-                    <Mail className="h-3 w-3 text-amber-500/40" />{SITE.email}
+                  <a href={`mailto:${SITE.email}`} className="flex items-center gap-2 hover:text-amber-500 transition-colors">
+                    <Mail className="h-3 w-3 text-amber-600/40" />{SITE.email}
                   </a>
                 </motion.div>
               </nav>

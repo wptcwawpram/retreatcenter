@@ -47,7 +47,7 @@ function PaymentCallbackContent() {
           animate={{ opacity: 1, scale: 1 }}
           className="flex flex-col items-center gap-6"
         >
-          <Loader2 className="h-16 w-16 animate-spin text-amber-500" />
+          <Loader2 className="h-16 w-16 animate-spin text-green-600" />
           <div className="text-center">
             <h2 className="text-2xl font-bold text-stone-800">
               Verifying Payment
@@ -114,7 +114,7 @@ function PaymentCallbackContent() {
               <>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-stone-500">Booking Ref</span>
-                  <span className="font-mono text-sm font-bold text-amber-700">
+                  <span className="font-mono text-sm font-bold text-green-700">
                     {paymentData.booking_reference}
                   </span>
                 </div>
@@ -143,7 +143,7 @@ function PaymentCallbackContent() {
             className="mt-8"
           >
             <Link href="/">
-              <Button className="w-full bg-amber-600 text-white hover:bg-amber-700">
+              <Button className="w-full bg-green-800 text-white hover:bg-green-700">
                 Return to Home
               </Button>
             </Link>
@@ -218,7 +218,7 @@ function PaymentCallbackContent() {
           className="mt-8 flex flex-col gap-3"
         >
           <Link href="/booking">
-            <Button className="w-full bg-amber-600 text-white hover:bg-amber-700">
+            <Button className="w-full bg-green-800 text-white hover:bg-green-700">
               Try Again
             </Button>
           </Link>
@@ -238,7 +238,7 @@ export default function PaymentCallbackPage() {
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+          <Loader2 className="h-8 w-8 animate-spin text-green-600" />
         </div>
       }
     >

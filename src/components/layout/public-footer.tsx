@@ -4,9 +4,9 @@ import { SITE, NAV_LINKS, SERVICES } from "@/lib/site-data";
 
 export function PublicFooter() {
   return (
-    <footer className="bg-stone-950 text-stone-400 relative overflow-hidden">
+    <footer className="bg-green-950 text-stone-400 relative overflow-hidden">
       {/* Decorative gold line */}
-      <div className="h-px bg-gradient-to-r from-transparent via-amber-500/40 to-transparent" />
+      <div className="h-px bg-gradient-to-r from-transparent via-amber-600/40 to-transparent" />
 
       {/* Main footer */}
       <div className="container mx-auto px-6 pt-20 pb-14">
@@ -15,8 +15,8 @@ export function PublicFooter() {
           <div className="lg:col-span-4">
             <div className="flex items-center gap-3 mb-6">
               <div className="relative">
-                <div className="w-10 h-10 rotate-45 rounded-[3px] bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600" />
-                <span className="absolute inset-0 flex items-center justify-center text-stone-950 font-bold text-xs tracking-widest">
+                <div className="w-10 h-10 rotate-45 rounded-[3px] bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700" />
+                <span className="absolute inset-0 flex items-center justify-center text-green-950 font-bold text-xs tracking-widest">
                   W
                 </span>
               </div>
@@ -24,7 +24,7 @@ export function PublicFooter() {
                 <h3 className="font-[family-name:var(--font-playfair)] text-lg font-bold text-white">
                   {SITE.shortName}
                 </h3>
-                <p className="text-[9px] text-amber-500/50 tracking-[0.2em] uppercase">
+                <p className="text-[9px] text-amber-600/50 tracking-[0.2em] uppercase">
                   Retreat Centre
                 </p>
               </div>
@@ -34,7 +34,7 @@ export function PublicFooter() {
               conference facilities, and spiritual retreat programs.
             </p>
             {/* Gold separator */}
-            <div className="w-12 h-px bg-gradient-to-r from-amber-500/60 to-transparent" />
+            <div className="w-12 h-px bg-gradient-to-r from-amber-600/60 to-transparent" />
           </div>
 
           {/* Quick Links */}
@@ -47,10 +47,10 @@ export function PublicFooter() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-stone-500 hover:text-amber-400 transition-colors inline-flex items-center gap-1 group"
+                    className="text-sm text-stone-500 hover:text-amber-500 transition-colors inline-flex items-center gap-1 group"
                   >
                     <span className="w-0 group-hover:w-3 overflow-hidden transition-all duration-300">
-                      <ArrowUpRight className="h-3 w-3 text-amber-500" />
+                      <ArrowUpRight className="h-3 w-3 text-amber-600" />
                     </span>
                     {link.label}
                   </Link>
@@ -59,7 +59,7 @@ export function PublicFooter() {
               <li>
                 <Link
                   href="/booking"
-                  className="text-sm text-amber-500 hover:text-amber-400 transition-colors font-medium"
+                  className="text-sm text-amber-600 hover:text-amber-500 transition-colors font-medium"
                 >
                   Book Now
                 </Link>
@@ -78,7 +78,7 @@ export function PublicFooter() {
                   key={service.title}
                   className="text-sm text-stone-500 flex items-center gap-2"
                 >
-                  <span className="w-1 h-1 rounded-full bg-amber-500/40 shrink-0" />
+                  <span className="w-1 h-1 rounded-full bg-amber-600/40 shrink-0" />
                   {service.title}
                 </li>
               ))}
@@ -94,10 +94,10 @@ export function PublicFooter() {
               <li>
                 <a
                   href={`tel:${SITE.phone.replace(/\s/g, "")}`}
-                  className="flex items-center gap-3 text-sm text-stone-500 hover:text-amber-400 transition-colors group"
+                  className="flex items-center gap-3 text-sm text-stone-500 hover:text-amber-500 transition-colors group"
                 >
-                  <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-white/[0.03] border border-white/[0.06] group-hover:border-amber-500/20 group-hover:bg-amber-500/5 transition-all">
-                    <Phone className="h-3.5 w-3.5 text-amber-500/60" />
+                  <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-white/[0.03] border border-white/[0.06] group-hover:border-amber-600/20 group-hover:bg-amber-600/5 transition-all">
+                    <Phone className="h-3.5 w-3.5 text-amber-600/60" />
                   </div>
                   {SITE.phone}
                 </a>
@@ -105,17 +105,17 @@ export function PublicFooter() {
               <li>
                 <a
                   href={`mailto:${SITE.email}`}
-                  className="flex items-center gap-3 text-sm text-stone-500 hover:text-amber-400 transition-colors group"
+                  className="flex items-center gap-3 text-sm text-stone-500 hover:text-amber-500 transition-colors group"
                 >
-                  <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-white/[0.03] border border-white/[0.06] group-hover:border-amber-500/20 group-hover:bg-amber-500/5 transition-all">
-                    <Mail className="h-3.5 w-3.5 text-amber-500/60" />
+                  <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-white/[0.03] border border-white/[0.06] group-hover:border-amber-600/20 group-hover:bg-amber-600/5 transition-all">
+                    <Mail className="h-3.5 w-3.5 text-amber-600/60" />
                   </div>
                   {SITE.email}
                 </a>
               </li>
               <li className="flex items-start gap-3 text-sm text-stone-500">
                 <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-white/[0.03] border border-white/[0.06] shrink-0 mt-0.5">
-                  <MapPin className="h-3.5 w-3.5 text-amber-500/60" />
+                  <MapPin className="h-3.5 w-3.5 text-amber-600/60" />
                 </div>
                 <span className="leading-relaxed">{SITE.fullAddress}</span>
               </li>
