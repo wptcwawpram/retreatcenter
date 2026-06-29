@@ -149,15 +149,11 @@ export const PAYMENT_STATUS_CONFIG: Record<
 // ─── Complaint Categories ───────────────────────────────────────────────────
 
 export const COMPLAINT_CATEGORY_LABELS: Record<string, string> = {
-  ELECTRICAL: "Electrical",
-  PLUMBING: "Plumbing",
-  FURNITURE: "Furniture",
-  MATTRESS: "Mattress",
-  INTERNET: "Internet/WiFi",
-  CLEANING: "Cleaning",
-  WATER: "Water Supply",
-  DOORS_LOCKS: "Doors & Locks",
-  AC_FANS: "AC & Fans",
+  NOISE: "Noise",
+  CLEANLINESS: "Cleanliness",
+  MAINTENANCE: "Maintenance",
+  SERVICE: "Service",
+  FOOD: "Food",
   OTHER: "Other",
 };
 

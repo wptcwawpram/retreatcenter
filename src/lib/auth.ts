@@ -1,71 +1,55 @@
-// Auth helpers — provider TBD (Clerk removed)
-// Placeholder functions maintain the same API so dashboard code doesn't break
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-import type { UserRole } from "@/generated/prisma/client";
+export type AppRole = "admin" | "receptionist" | "housekeeping" | "manager";
 
-/**
- * Get the current authenticated user.
- * TODO: Replace with real auth provider
- */
+const ROLE_HIERARCHY: Record<string, number> = {
+  admin: 100,
+  manager: 70,
+  receptionist: 40,
+  housekeeping: 30,
+};
+
 export async function getCurrentUser() {
-  return null;
+  const supabase = await createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  return {
+    id: user.id,
+    email: user.email ?? "",
+    full_name: profile?.full_name || user.user_metadata?.full_name || user.email?.split("@")[0] || "Staff",
+    role: (profile?.role as AppRole) || "receptionist",
+    phone: profile?.phone || null,
+    avatar_url: profile?.avatar_url || null,
+    is_active: profile?.is_active ?? true,
+  };
 }
 
-/**
- * Check if the current user has one of the required roles.
- */
-export async function requireRole(...roles: UserRole[]) {
+export async function requireRole(...roles: AppRole[]) {
   const user = await getCurrentUser();
   if (!user) return null;
+  if (!roles.includes(user.role)) return null;
   return user;
 }
 
-/**
- * Check if the current user has at least staff-level access.
- */
 export async function requireStaff() {
-  return requireRole(
-    "SUPER_ADMIN",
-    "ADMIN",
-    "MANAGER",
-    "RECEPTIONIST",
-    "HOUSEKEEPER",
-    "ACCOUNTANT",
-    "MAINTENANCE"
-  );
+  return requireRole("admin", "manager", "receptionist", "housekeeping");
 }
 
-/**
- * Check if the current user has admin-level access.
- */
 export async function requireAdmin() {
-  return requireRole("SUPER_ADMIN", "ADMIN");
+  return requireRole("admin");
 }
 
-/**
- * Check if the current user has management-level access.
- */
 export async function requireManager() {
-  return requireRole("SUPER_ADMIN", "ADMIN", "MANAGER");
+  return requireRole("admin", "manager");
 }
 
-/**
- * Role hierarchy check
- */
-const ROLE_HIERARCHY: Record<UserRole, number> = {
-  SUPER_ADMIN: 100,
-  ADMIN: 90,
-  MANAGER: 70,
-  ACCOUNTANT: 50,
-  RECEPTIONIST: 40,
-  HOUSEKEEPER: 30,
-  MAINTENANCE: 30,
-  GUEST: 10,
-};
-
-export function hasHigherOrEqualRole(
-  userRole: UserRole,
-  requiredRole: UserRole
-): boolean {
-  return ROLE_HIERARCHY[userRole] >= ROLE_HIERARCHY[requiredRole];
+export function hasHigherOrEqualRole(userRole: string, requiredRole: string): boolean {
+  return (ROLE_HIERARCHY[userRole] ?? 0) >= (ROLE_HIERARCHY[requiredRole] ?? 0);
 }

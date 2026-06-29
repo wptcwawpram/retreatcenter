@@ -1,5 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { motion, useInView } from "framer-motion";
+import { useRef, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +16,19 @@ import {
   ArrowRight,
   CheckCircle,
 } from "lucide-react";
+
+const SPRING = { type: "spring" as const, stiffness: 80, damping: 20, mass: 0.8 };
+const SPRING_SNAPPY = { type: "spring" as const, stiffness: 200, damping: 25, mass: 0.5 };
+
+function FadeIn({ children, className, delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-80px" });
+  return (
+    <motion.div ref={ref} initial={{ opacity: 0, y: 30 }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }} transition={{ ...SPRING, delay }} className={className}>
+      {children}
+    </motion.div>
+  );
+}
 
 export default function RoomsPage() {
   return (
@@ -26,38 +43,44 @@ export default function RoomsPage() {
           priority
           quality={85}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
-        <div className="absolute inset-0 bg-amber-950/30" />
-        <div className="relative container mx-auto px-4 text-center">
-          <Badge variant="outline" className="mb-6 text-amber-200 border-amber-400/30 bg-white/10 px-4 py-1 backdrop-blur-sm">
-            Accommodation
-          </Badge>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+        <div className="absolute inset-0 bg-gradient-to-b from-stone-950/80 via-stone-950/50 to-stone-950/80" />
+        <div className="relative container mx-auto px-6 text-center">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SPRING, delay: 0.2 }}>
+            <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.25em] uppercase mb-4 text-amber-400">
+              <span className="w-8 h-px bg-current" />
+              Accommodation
+              <span className="w-8 h-px bg-current" />
+            </span>
+          </motion.div>
+          <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SPRING, delay: 0.4 }}
+            className="font-[family-name:var(--font-playfair)] text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
             Our{" "}
-            <span className="bg-gradient-to-r from-amber-200 to-amber-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent">
               Rooms & Suites
             </span>
-          </h1>
-          <p className="text-lg text-white/80 max-w-2xl mx-auto">
+          </motion.h1>
+          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SPRING, delay: 0.6 }}
+            className="text-base md:text-lg text-stone-300 max-w-2xl mx-auto leading-relaxed">
             From affordable shared rooms to premium executive suites &mdash; we have
             the perfect accommodation for every guest and budget.
-          </p>
+          </motion.p>
         </div>
       </section>
 
       {/* Rooms Grid */}
       <section className="py-20 md:py-28 bg-white">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {ROOMS.map((room) => (
-              <Card
-                key={room.slug}
-                className={`group overflow-hidden border-0 ring-0 shadow-md hover:shadow-2xl hover:shadow-amber-900/10 transition-all duration-300 ${
-                  room.featured
-                    ? "ring-2 ring-amber-400 relative"
-                    : "hover:ring-1 hover:ring-amber-200"
-                }`}
-              >
+            {ROOMS.map((room, i) => (
+              <FadeIn key={room.slug} delay={i * 0.1}>
+                <motion.div whileHover={{ y: -6, scale: 1.01 }} transition={SPRING_SNAPPY}>
+                  <Card
+                    className={`group overflow-hidden border-0 ring-0 shadow-md hover:shadow-2xl hover:shadow-stone-900/10 transition-shadow duration-300 ${
+                      room.featured
+                        ? "ring-2 ring-amber-400 relative"
+                        : "hover:ring-1 hover:ring-amber-200"
+                    }`}
+                  >
                 {room.featured && (
                   <div className="absolute top-4 right-4 z-10">
                     <Badge className="bg-amber-500 text-white border-0 gap-1">
@@ -86,11 +109,11 @@ export default function RoomsPage() {
                 </div>
 
                 <CardContent className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-amber-800 transition-colors">
+                  <h3 className="font-[family-name:var(--font-playfair)] text-xl font-bold text-stone-900 mb-2 group-hover:text-amber-700 transition-colors">
                     {room.name}
                   </h3>
 
-                  <div className="flex items-center gap-4 mb-4 text-sm text-gray-500">
+                  <div className="flex items-center gap-4 mb-4 text-sm text-stone-500">
                     <span className="flex items-center gap-1.5">
                       <BedDouble className="h-4 w-4 text-amber-600" />
                       {room.beds} Beds
@@ -101,14 +124,14 @@ export default function RoomsPage() {
                     </span>
                   </div>
 
-                  <p className="text-sm text-gray-500 leading-relaxed mb-5">
+                  <p className="text-sm text-stone-500 leading-relaxed mb-5">
                     {room.description}
                   </p>
 
                   {/* all amenities */}
                   <div className="space-y-2 mb-6">
                     {room.amenities.map((a) => (
-                      <div key={a} className="flex items-center gap-2 text-sm text-gray-600">
+                      <div key={a} className="flex items-center gap-2 text-sm text-stone-600">
                         <CheckCircle className="h-4 w-4 text-amber-500 shrink-0" />
                         {a}
                       </div>
@@ -117,82 +140,96 @@ export default function RoomsPage() {
 
                   <div className="pt-4 border-t">
                     <Link href="/booking" className="block">
-                      <Button className="w-full bg-amber-800 hover:bg-amber-900 text-white gap-1.5">
-                        Book Now
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
+                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} transition={SPRING_SNAPPY}>
+                        <Button className="w-full bg-stone-900 hover:bg-stone-800 text-white gap-1.5">
+                          Book Now
+                          <ArrowRight className="h-4 w-4" />
+                        </Button>
+                      </motion.div>
                     </Link>
                   </div>
                 </CardContent>
-              </Card>
+                  </Card>
+                </motion.div>
+              </FadeIn>
             ))}
           </div>
         </div>
       </section>
 
       {/* Additional Rooms & Facilities */}
-      <section className="py-20 md:py-28 bg-gradient-to-b from-white to-amber-50/50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <Badge variant="outline" className="mb-4 text-amber-800 border-amber-300 bg-amber-50 px-4 py-1">
+      <section className="py-20 md:py-28 bg-stone-50">
+        <div className="container mx-auto px-6">
+          <FadeIn className="text-center mb-16">
+            <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.25em] uppercase mb-4 text-amber-600">
+              <span className="w-8 h-px bg-current" />
               More Options
-            </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              <span className="w-8 h-px bg-current" />
+            </span>
+            <h2 className="font-[family-name:var(--font-playfair)] text-3xl md:text-4xl font-bold text-stone-900 mb-4">
               Additional Rooms & Facilities
             </h2>
-            <p className="text-gray-500 max-w-xl mx-auto text-lg">
+            <p className="text-stone-500 max-w-xl mx-auto text-base leading-relaxed">
               Extra accommodation and facility options available for your stay.
             </p>
-          </div>
+          </FadeIn>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
-            {ADDITIONAL_ROOMS.map((room) => (
-              <Card key={room.name} className="group border-0 ring-0 shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden">
-                <div className="h-2 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400" />
+            {ADDITIONAL_ROOMS.map((room, i) => (
+              <FadeIn key={room.name} delay={i * 0.08}>
+                <motion.div whileHover={{ y: -4 }} transition={SPRING_SNAPPY}>
+                  <Card className="group border-0 ring-0 shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden h-full">
+                    <div className="h-1 bg-gradient-to-r from-amber-500 to-amber-600" />
                 <CardContent className="p-5">
-                  <h3 className="font-bold text-gray-900 mb-3 group-hover:text-amber-800 transition-colors">
+                  <h3 className="font-[family-name:var(--font-playfair)] font-bold text-stone-900 mb-3 group-hover:text-amber-700 transition-colors">
                     {room.name}
                   </h3>
-                  <div className="space-y-2 text-sm text-gray-500 mb-4">
+                  <div className="space-y-2 text-sm text-stone-500 mb-4">
                     {room.beds > 0 && (
                       <div className="flex items-center gap-1.5">
-                        <BedDouble className="h-4 w-4 text-amber-600" />
+                        <BedDouble className="h-4 w-4 text-amber-500" />
                         {room.beds} Beds
                       </div>
                     )}
                     <div className="flex items-center gap-1.5">
-                      <Users className="h-4 w-4 text-amber-600" />
+                      <Users className="h-4 w-4 text-amber-500" />
                       {room.capacity === 50 ? "Up to 50" : `Up to ${room.capacity}`} {room.capacity === 1 ? "user" : "guests"}
                     </div>
                   </div>
                   <div className="pt-3 border-t">
-                    <span className="text-xl font-bold text-amber-800">GH₵{room.price}</span>
-                    <span className="text-sm text-gray-400 ml-1">/ night</span>
+                    <span className="text-xl font-bold text-stone-900">GH₵{room.price}</span>
+                    <span className="text-sm text-stone-400 ml-1">/ night</span>
                   </div>
                 </CardContent>
-              </Card>
+                  </Card>
+                </motion.div>
+              </FadeIn>
             ))}
           </div>
         </div>
       </section>
 
       {/* Halls */}
-      <section className="py-20 md:py-28 bg-gradient-to-b from-amber-50/50 to-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <Badge variant="outline" className="mb-4 text-amber-800 border-amber-300 bg-amber-50 px-4 py-1">
+      <section className="py-20 md:py-28 bg-white">
+        <div className="container mx-auto px-6">
+          <FadeIn className="text-center mb-16">
+            <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.25em] uppercase mb-4 text-amber-600">
+              <span className="w-8 h-px bg-current" />
               Event Venues
-            </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              <span className="w-8 h-px bg-current" />
+            </span>
+            <h2 className="font-[family-name:var(--font-playfair)] text-3xl md:text-4xl font-bold text-stone-900 mb-4">
               Conference & Event Halls
             </h2>
-          </div>
+          </FadeIn>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {HALLS.map((hall, i) => {
               const venueImages = [IMAGES.venues.faithHall, IMAGES.venues.pavilion, IMAGES.venues.diningHall];
               return (
-                <Card key={hall.name} className="group border-0 ring-0 shadow-md overflow-hidden hover:shadow-xl transition-all duration-300">
+                <FadeIn key={hall.name} delay={i * 0.12}>
+                  <motion.div whileHover={{ y: -6 }} transition={SPRING_SNAPPY}>
+                    <Card className="group border-0 ring-0 shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
                   {/* Venue image */}
                   <div className="relative h-48 overflow-hidden">
                     <Image
@@ -209,12 +246,14 @@ export default function RoomsPage() {
                     </Badge>
                   </div>
                   <CardContent className="p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">{hall.name}</h3>
-                    <p className="text-sm text-gray-500 leading-relaxed">
+                    <h3 className="font-[family-name:var(--font-playfair)] text-lg font-bold text-stone-900 mb-2">{hall.name}</h3>
+                    <p className="text-sm text-stone-500 leading-relaxed">
                       {hall.description}
                     </p>
                   </CardContent>
-                </Card>
+                    </Card>
+                  </motion.div>
+                </FadeIn>
               );
             })}
           </div>
