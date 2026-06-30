@@ -86,10 +86,10 @@ export function PublicNavbar() {
             </div>
             <div>
               <h1 className="font-[family-name:var(--font-playfair)] text-lg font-bold tracking-wide text-white leading-tight">
-                {SITE.shortName}
+                WARRIORS
               </h1>
-              <p className="text-[9px] text-amber-600/50 tracking-[0.2em] uppercase font-medium">
-                Retreat Centre
+              <p className="text-[9px] text-stone-400 tracking-[0.15em] uppercase font-medium">
+                Prayer Tower Complex
               </p>
             </div>
           </Link>
@@ -135,7 +135,7 @@ export function PublicNavbar() {
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Button
                   size="sm"
-                  className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-green-950 font-semibold shadow-lg shadow-amber-600/20 hover:shadow-amber-500/30 transition-all duration-300 gap-1.5 px-5"
+                  className="bg-green-700 hover:bg-green-600 text-white font-semibold shadow-lg shadow-green-800/20 transition-all duration-300 gap-1.5 px-5"
                 >
                   Book Now
                   <ChevronRight className="h-3.5 w-3.5" />
@@ -215,7 +215,7 @@ export function PublicNavbar() {
                     </Button>
                   </Link>
                   <Link href="/booking" onClick={() => setMobileOpen(false)}>
-                    <Button className="w-full bg-gradient-to-r from-amber-600 to-amber-700 text-green-950 font-semibold shadow-lg h-12 mt-2">
+                    <Button className="w-full bg-green-700 hover:bg-green-600 text-white font-semibold shadow-lg h-12 mt-2">
                       Book Now
                     </Button>
                   </Link>
