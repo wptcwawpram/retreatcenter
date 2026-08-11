@@ -21,6 +21,16 @@ function FadeIn({ children, className, delay = 0 }: { children: ReactNode; class
   );
 }
 
+function SectionLabel({ label }: { label: string }) {
+  return (
+    <div className="flex items-center justify-center gap-4 mb-4">
+      <span className="h-px w-8 bg-gold/40" />
+      <span className="text-[11px] font-semibold tracking-[0.25em] uppercase text-gold">{label}</span>
+      <span className="h-px w-8 bg-gold/40" />
+    </div>
+  );
+}
+
 const TABS = ["All Packages", "Personal Retreat", "Church Retreat", "Conference"] as const;
 
 const PACKAGES = [
@@ -80,29 +90,38 @@ export default function PackagesPage() {
 
   return (
     <>
-      {/* Header */}
-      <section className="pt-32 pb-10 bg-[#faf8f5]">
-        <div className="container mx-auto px-6 text-center">
-          <h1 className="font-[family-name:var(--font-playfair)] text-3xl md:text-4xl lg:text-5xl font-bold text-stone-900 mb-3">
-            Retreat Packages
-          </h1>
-          <p className="text-stone-500">Specially curated packages for your retreat, conference or spiritual programs.</p>
+      {/* Hero */}
+      <section className="relative text-white py-28 md:py-36 overflow-hidden">
+        <Image src={IMAGES.hero.packages} alt="Retreat Packages" fill className="object-cover" priority quality={85} />
+        <div className="absolute inset-0 bg-gradient-to-b from-charcoal/80 via-charcoal/50 to-charcoal/80" />
+        <div className="relative container mx-auto px-6 text-center">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SPRING, delay: 0.2 }}>
+            <SectionLabel label="Packages" />
+          </motion.div>
+          <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SPRING, delay: 0.4 }}
+            className="font-[family-name:var(--font-playfair)] text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+            Retreat{" "}
+            <span className="bg-gradient-to-r from-gold to-gold-dark bg-clip-text text-transparent">Packages</span>
+          </motion.h1>
+          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SPRING, delay: 0.6 }}
+            className="text-base md:text-lg text-neutral-300 max-w-2xl mx-auto leading-relaxed">
+            Specially curated packages for your retreat, conference or spiritual programs.
+          </motion.p>
         </div>
       </section>
 
-      {/* Tabs + Package Cards */}
-      <section className="py-12 md:py-16 bg-[#faf8f5]">
+      {/* Tabs + Cards */}
+      <section className="py-16 md:py-24 bg-ivory">
         <div className="container mx-auto px-6">
-          {/* Filter Tabs */}
-          <div className="flex flex-wrap justify-center gap-2 mb-10">
+          <div className="flex flex-wrap justify-center gap-2 mb-12">
             {TABS.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${
+                className={`px-5 py-2.5 rounded-full text-[12px] font-semibold tracking-wide transition-all duration-300 ${
                   activeTab === tab
-                    ? "bg-green-800 text-white"
-                    : "bg-white text-stone-600 hover:bg-stone-100 border border-stone-200"
+                    ? "bg-charcoal text-white shadow-lg shadow-charcoal/20"
+                    : "bg-white text-neutral-500 hover:text-charcoal border border-neutral-200 hover:border-neutral-300"
                 }`}
               >
                 {tab}
@@ -110,35 +129,32 @@ export default function PackagesPage() {
             ))}
           </div>
 
-          {/* Package Cards */}
-          <div className="space-y-5 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
             {filtered.map((pkg, i) => (
               <FadeIn key={pkg.name} delay={i * 0.08}>
-                <div className="group flex flex-col md:flex-row bg-white rounded-xl border border-stone-100 shadow-sm hover:shadow-lg transition-shadow overflow-hidden">
-                  <div className="relative md:w-[280px] h-52 md:h-auto shrink-0 overflow-hidden">
-                    <Image src={pkg.image} alt={pkg.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 768px) 100vw, 280px" />
+                <div className="group bg-white rounded-xl border border-neutral-100 shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden">
+                  <div className="relative h-52 overflow-hidden">
+                    <Image src={pkg.image} alt={pkg.name} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-width: 768px) 100vw, 50vw" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                    <div className="absolute bottom-3 right-3">
+                      <span className="bg-white/90 backdrop-blur-sm text-charcoal text-sm font-bold px-3 py-1.5 rounded-lg">
+                        {pkg.price}<span className="text-neutral-400 text-xs font-normal"> {pkg.priceSuffix}</span>
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex-1 p-5 md:p-6 flex flex-col justify-between">
-                    <div>
-                      <h3 className="font-[family-name:var(--font-playfair)] text-lg font-bold text-stone-900 mb-2">{pkg.name}</h3>
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-stone-400 mb-3">
-                        <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{pkg.guests}</span>
-                        {pkg.duration && <span className="flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />{pkg.duration}</span>}
-                        {pkg.board && <span className="flex items-center gap-1"><UtensilsCrossed className="h-3.5 w-3.5" />{pkg.board}</span>}
-                      </div>
-                      <p className="text-sm text-stone-500 leading-relaxed">{pkg.description}</p>
+                  <div className="p-5">
+                    <h3 className="font-[family-name:var(--font-playfair)] text-lg font-bold text-charcoal mb-2">{pkg.name}</h3>
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-400 mb-3">
+                      <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{pkg.guests}</span>
+                      {pkg.duration && <span className="flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />{pkg.duration}</span>}
+                      {pkg.board && <span className="flex items-center gap-1"><UtensilsCrossed className="h-3.5 w-3.5" />{pkg.board}</span>}
                     </div>
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-stone-100">
-                      <div>
-                        <span className="text-xl font-bold text-stone-900">{pkg.price}</span>
-                        <span className="text-xs text-stone-400 ml-1">{pkg.priceSuffix}</span>
-                      </div>
-                      <Link href="/contact">
-                        <span className="text-sm font-medium text-green-700 hover:text-green-600 flex items-center gap-1 transition-colors">
-                          View Details <ArrowRight className="h-3.5 w-3.5" />
-                        </span>
-                      </Link>
-                    </div>
+                    <p className="text-sm text-neutral-500 leading-relaxed mb-4">{pkg.description}</p>
+                    <Link href="/contact">
+                      <span className="inline-flex items-center gap-1 text-sm font-semibold text-charcoal hover:text-gold transition-colors group/link">
+                        View Details <ArrowRight className="h-3.5 w-3.5 group-hover/link:translate-x-1 transition-transform" />
+                      </span>
+                    </Link>
                   </div>
                 </div>
               </FadeIn>
@@ -148,22 +164,22 @@ export default function PackagesPage() {
       </section>
 
       {/* Custom Package CTA */}
-      <section className="py-14 bg-white">
+      <section className="py-16 bg-white">
         <div className="container mx-auto px-6">
           <FadeIn>
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6 max-w-3xl mx-auto bg-green-950 text-white rounded-xl p-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 max-w-3xl mx-auto bg-charcoal text-white rounded-xl p-8">
               <div>
                 <h3 className="font-[family-name:var(--font-playfair)] text-lg font-bold mb-1">Need a Custom Package?</h3>
-                <p className="text-green-200/70 text-sm">We can tailor a package to match your group size, budget, and requirements.</p>
+                <p className="text-neutral-400 text-sm">We can tailor a package to match your group size, budget, and requirements.</p>
               </div>
               <div className="flex gap-3 shrink-0">
                 <Link href="/contact">
-                  <Button className="bg-white text-green-900 hover:bg-green-50 text-sm h-10 px-5">
+                  <Button className="bg-gold hover:bg-gold-dark text-charcoal text-sm h-10 px-5 font-semibold">
                     Contact Us <ArrowRight className="h-3.5 w-3.5 ml-1" />
                   </Button>
                 </Link>
                 <a href={`tel:${SITE.phone.replace(/\s/g, "")}`}>
-                  <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 text-sm h-10 px-5">
+                  <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 text-sm h-10 px-5">
                     <Phone className="h-3.5 w-3.5 mr-1" /> Call Us
                   </Button>
                 </a>
