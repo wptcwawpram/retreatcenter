@@ -135,4 +135,17 @@
   html {
     @apply font-sans;
   }
+  select option {
+    background: oklch(0.14 0.015 60);
+    color: oklch(0.92 0.01 80);
+  }
+  input[type="date"],
+  input[type="time"],
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    color-scheme: dark;
+  }
+  a {
+    color: inherit;
+  }
 }

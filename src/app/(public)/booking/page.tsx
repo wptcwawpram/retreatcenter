@@ -11,7 +11,7 @@ import { IMAGES } from "@/lib/images";
 import {
   CalendarCheck,
   User,
-  Heart,
+  Phone,
   Shield,
   BedDouble,
   Clock,
@@ -22,6 +22,8 @@ import {
   ChevronDown,
   Loader2,
   CheckCircle,
+  UtensilsCrossed,
+  TreePine,
 } from "lucide-react";
 
 declare global {
@@ -64,6 +66,9 @@ const HALL_OPTIONS = [
   { label: "Faith Hall (with AC)", price: 550 },
   { label: "Pavilion (with canopy)", price: 900 },
   { label: "Pavilion (without canopy)", price: 700 },
+];
+
+const KITCHEN_OPTIONS = [
   { label: "Kitchen & Dining (55+ persons)", price: 500 },
   { label: "Kitchen & Dining (30-50 persons)", price: 400 },
   { label: "Kitchen & Dining (below 20 persons)", price: 250 },
@@ -74,6 +79,29 @@ const WEDDING_GROUNDS_PRICE = 4000;
 const inputClass = "bg-luxury border-gold/15 text-warm-white placeholder:text-warm-muted/40 focus-visible:ring-gold/30";
 const selectClass = "w-full h-9 rounded-md border border-gold/15 bg-luxury px-3 text-sm text-warm-white focus:outline-none focus:ring-2 focus:ring-gold/30";
 const labelClass = "text-warm-muted text-xs tracking-wide";
+const checkboxCardClass = (checked: boolean) =>
+  `flex items-center gap-3 p-3.5 border cursor-pointer transition-all duration-200 select-none ${
+    checked
+      ? "border-gold/40 bg-gold/8"
+      : "border-gold/10 bg-luxury hover:border-gold/20"
+  }`;
+
+function todayStr() {
+  const d = new Date();
+  return d.toISOString().split("T")[0];
+}
+
+function addDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split("T")[0];
+}
+
+function daysBetween(a: string, b: string): number {
+  const da = new Date(a);
+  const db = new Date(b);
+  return Math.max(1, Math.round((db.getTime() - da.getTime()) / (1000 * 60 * 60 * 24)));
+}
 
 function SectionCard({ icon: Icon, title, children }: { icon: React.ComponentType<{ className?: string }>; title: string; children: React.ReactNode }) {
   return (
@@ -95,9 +123,11 @@ export default function BookingPage() {
   const [isLodging, setIsLodging] = useState<"yes" | "no" | "">("");
   const [selectedRoom, setSelectedRoom] = useState("");
   const [nights, setNights] = useState(1);
-  const [needsHall, setNeedsHall] = useState<"yes" | "no" | "">("");
-  const [selectedHall, setSelectedHall] = useState("");
+
+  const [selectedHalls, setSelectedHalls] = useState<Record<string, boolean>>({});
   const [hallDays, setHallDays] = useState(1);
+  const [selectedKitchen, setSelectedKitchen] = useState("");
+  const [kitchenDays, setKitchenDays] = useState(1);
   const [needsGrounds, setNeedsGrounds] = useState(false);
 
   const [roomQuantities, setRoomQuantities] = useState<Record<string, number>>({});
@@ -108,7 +138,7 @@ export default function BookingPage() {
   const [formData, setFormData] = useState({
     name: "", email: "", phone: "", address: "",
     denomination: "", ageRange: "", relationship: "",
-    emergencyName: "", emergencyRelationship: "", emergencyPhone: "",
+    altContactName: "", altContactRelationship: "", altContactPhone: "",
     idType: "", idNumber: "",
     fromDate: "", toDate: "", startTime: "", endTime: "",
     specialRequests: "",
@@ -129,8 +159,32 @@ export default function BookingPage() {
     document.head.appendChild(script);
   }, []);
 
+  const today = todayStr();
+
+  useEffect(() => {
+    if (formData.fromDate && nights > 0) {
+      const computed = addDays(formData.fromDate, nights);
+      if (computed !== formData.toDate) {
+        setFormData((prev) => ({ ...prev, toDate: computed }));
+      }
+    }
+  }, [formData.fromDate, nights]);
+
+  useEffect(() => {
+    if (formData.fromDate && formData.toDate) {
+      const computed = daysBetween(formData.fromDate, formData.toDate);
+      if (computed !== nights && computed >= 1) {
+        setNights(computed);
+      }
+    }
+  }, [formData.toDate]);
+
   const updateField = (field: string, value: string) =>
     setFormData((prev) => ({ ...prev, [field]: value }));
+
+  const toggleHall = (label: string) => {
+    setSelectedHalls((prev) => ({ ...prev, [label]: !prev[label] }));
+  };
 
   const handleSubmit = async () => {
     if (!formData.name || !formData.phone || !formData.email) {
@@ -167,7 +221,7 @@ export default function BookingPage() {
             total_amount: totalAmount,
             booking_type: bookingType === "group" ? "GROUP" : "INDIVIDUAL",
             special_requests: formData.specialRequests || undefined,
-            hall_days: needsHall === "yes" ? hallDays : 0,
+            hall_days: activeHalls.length > 0 ? hallDays : 0,
             hall_amount: hallPrice,
           },
         }),
@@ -263,26 +317,34 @@ export default function BookingPage() {
 
   const roomPrice = roomBreakdownLines.reduce((s, l) => s + l.amount, 0);
 
-  const hallOption = HALL_OPTIONS.find((h) => h.label === selectedHall);
-  const hallBasePrice = needsHall === "yes" && hallOption ? hallOption.price : 0;
-  const hallTotal = hallBasePrice * hallDays;
+  const activeHalls = HALL_OPTIONS.filter((h) => selectedHalls[h.label]);
+  const hallsTotal = activeHalls.reduce((s, h) => s + h.price, 0) * hallDays;
+  const kitchenOption = KITCHEN_OPTIONS.find((k) => k.label === selectedKitchen);
+  const kitchenTotal = kitchenOption ? kitchenOption.price * kitchenDays : 0;
   const groundsPrice = needsGrounds ? WEDDING_GROUNDS_PRICE : 0;
-  const hallPrice = hallTotal + groundsPrice;
+  const hallPrice = hallsTotal + kitchenTotal + groundsPrice;
 
   const hallBreakdownLines = useMemo(() => {
     const lines: { label: string; calc: string; amount: number }[] = [];
-    if (needsHall === "yes" && hallOption) {
+    activeHalls.forEach((h) => {
       lines.push({
-        label: hallOption.label,
-        calc: `GH₵${hallOption.price} × ${hallDays} day${hallDays > 1 ? "s" : ""}`,
-        amount: hallOption.price * hallDays,
+        label: h.label,
+        calc: `GH₵${h.price} × ${hallDays} day${hallDays > 1 ? "s" : ""}`,
+        amount: h.price * hallDays,
+      });
+    });
+    if (kitchenOption) {
+      lines.push({
+        label: kitchenOption.label,
+        calc: `GH₵${kitchenOption.price} × ${kitchenDays} day${kitchenDays > 1 ? "s" : ""}`,
+        amount: kitchenOption.price * kitchenDays,
       });
     }
     if (needsGrounds) {
       lines.push({ label: "Wedding Grounds", calc: "Fixed rate", amount: WEDDING_GROUNDS_PRICE });
     }
     return lines;
-  }, [needsHall, hallOption, hallDays, needsGrounds]);
+  }, [activeHalls, hallDays, kitchenOption, kitchenDays, needsGrounds]);
 
   const totalAmount = roomPrice + hallPrice;
   const deposit = Math.ceil(totalAmount * 0.3);
@@ -365,7 +427,7 @@ export default function BookingPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="space-y-2">
                   <Label htmlFor="name" className={labelClass}>
-                    {bookingType === "group" ? "Booker Name" : "Name"} <span className="text-red-400">*</span>
+                    {bookingType === "group" ? "Booker Name" : "Full Name"} <span className="text-red-400">*</span>
                   </Label>
                   <Input id="name" placeholder="Full name" value={formData.name} onChange={(e) => updateField("name", e.target.value)} className={inputClass} />
                 </div>
@@ -392,30 +454,35 @@ export default function BookingPage() {
                   <Label htmlFor="denomination" className={labelClass}>Denomination</Label>
                   <Input id="denomination" placeholder="e.g. Methodist, Catholic, Pentecostal" value={formData.denomination} onChange={(e) => updateField("denomination", e.target.value)} className={inputClass} />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="relationship" className={labelClass}>Relationship Status</Label>
-                  <select id="relationship" value={formData.relationship} onChange={(e) => updateField("relationship", e.target.value)} className={selectClass}>
-                    <option value="">Select status</option>
-                    {RELATIONSHIP_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
+                {bookingType === "individual" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="relationship" className={labelClass}>Relationship Status</Label>
+                    <select id="relationship" value={formData.relationship} onChange={(e) => updateField("relationship", e.target.value)} className={selectClass}>
+                      <option value="">Select status</option>
+                      {RELATIONSHIP_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                )}
               </div>
             </SectionCard>
 
-            {/* Emergency Contact */}
-            <SectionCard icon={Heart} title="Emergency Contact">
+            {/* Secondary Contact */}
+            <SectionCard icon={Phone} title="Secondary Contact">
+              <p className="text-xs text-warm-muted/60 mb-4 -mt-3">
+                Someone we can reach in case the primary contact is unavailable.
+              </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div className="space-y-2">
-                  <Label htmlFor="emergencyName" className={labelClass}>Contact Name</Label>
-                  <Input id="emergencyName" placeholder="Emergency contact name" value={formData.emergencyName} onChange={(e) => updateField("emergencyName", e.target.value)} className={inputClass} />
+                  <Label htmlFor="altContactName" className={labelClass}>Contact Name</Label>
+                  <Input id="altContactName" placeholder="Full name" value={formData.altContactName} onChange={(e) => updateField("altContactName", e.target.value)} className={inputClass} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="emergencyRelationship" className={labelClass}>Relationship</Label>
-                  <Input id="emergencyRelationship" placeholder="e.g. Spouse, Parent, Sibling" value={formData.emergencyRelationship} onChange={(e) => updateField("emergencyRelationship", e.target.value)} className={inputClass} />
+                  <Label htmlFor="altContactRelationship" className={labelClass}>Relationship</Label>
+                  <Input id="altContactRelationship" placeholder="e.g. Spouse, Friend, Colleague" value={formData.altContactRelationship} onChange={(e) => updateField("altContactRelationship", e.target.value)} className={inputClass} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="emergencyPhone" className={labelClass}>Contact Phone</Label>
-                  <Input id="emergencyPhone" type="tel" placeholder="+233 XXX XXX XXX" value={formData.emergencyPhone} onChange={(e) => updateField("emergencyPhone", e.target.value)} className={inputClass} />
+                  <Label htmlFor="altContactPhone" className={labelClass}>Phone Number</Label>
+                  <Input id="altContactPhone" type="tel" placeholder="+233 XXX XXX XXX" value={formData.altContactPhone} onChange={(e) => updateField("altContactPhone", e.target.value)} className={inputClass} />
                 </div>
               </div>
             </SectionCard>
@@ -433,6 +500,45 @@ export default function BookingPage() {
                 <div className="space-y-2">
                   <Label htmlFor="idNumber" className={labelClass}>ID Card Number</Label>
                   <Input id="idNumber" placeholder="Enter your ID number" value={formData.idNumber} onChange={(e) => updateField("idNumber", e.target.value)} className={inputClass} />
+                </div>
+              </div>
+            </SectionCard>
+
+            {/* Stay Duration — moved before Lodging so nights drives the date range */}
+            <SectionCard icon={Clock} title="Stay Duration">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="space-y-2">
+                  <Label htmlFor="fromDate" className={labelClass}>Check-in Date <span className="text-red-400">*</span></Label>
+                  <Input id="fromDate" type="date" min={today} value={formData.fromDate} onChange={(e) => updateField("fromDate", e.target.value)} className={inputClass} />
+                </div>
+                <div className="space-y-2">
+                  <Label className={labelClass}>Number of Nights</Label>
+                  <NumberStepper
+                    value={nights}
+                    onChange={(val) => {
+                      setNights(val);
+                      if (formData.fromDate) {
+                        setFormData((prev) => ({ ...prev, toDate: addDays(prev.fromDate, val) }));
+                      }
+                    }}
+                    min={1}
+                    max={90}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="toDate" className={labelClass}>Check-out Date <span className="text-red-400">*</span></Label>
+                  <Input
+                    id="toDate"
+                    type="date"
+                    min={formData.fromDate ? addDays(formData.fromDate, 1) : today}
+                    value={formData.toDate}
+                    onChange={(e) => updateField("toDate", e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="startTime" className={labelClass}>Arrival Time</Label>
+                  <Input id="startTime" type="time" value={formData.startTime} onChange={(e) => updateField("startTime", e.target.value)} className={inputClass} />
                 </div>
               </div>
             </SectionCard>
@@ -483,79 +589,99 @@ export default function BookingPage() {
                       </div>
                     </div>
                   )}
-
-                  <div className="space-y-2">
-                    <Label className={labelClass}>Number of Nights</Label>
-                    <NumberStepper value={nights} onChange={setNights} min={1} max={90} />
-                  </div>
                 </div>
               )}
             </SectionCard>
 
-            {/* Hall / Grounds Usage */}
-            <SectionCard icon={Church} title="Hall / Grounds Usage">
-              <div className="mb-6">
-                <Label className={labelClass + " mb-3 block"}>Will you be using any halls?</Label>
-                <div className="flex gap-3">
-                  {(["yes", "no"] as const).map((opt) => (
-                    <button key={opt} type="button" onClick={() => setNeedsHall(opt)} className={toggleBtnClass(needsHall === opt) + " px-8"}>
-                      {opt === "yes" ? "Yes" : "No"}
-                    </button>
-                  ))}
-                </div>
+            {/* Hall Usage — multi-select */}
+            <SectionCard icon={Church} title="Hall Usage">
+              <p className="text-xs text-warm-muted/60 mb-4 -mt-3">
+                Select one or more halls you need. Each hall is charged per day of use.
+              </p>
+              <div className="space-y-2 mb-5">
+                {HALL_OPTIONS.map((h) => (
+                  <label key={h.label} className={checkboxCardClass(!!selectedHalls[h.label])}>
+                    <input
+                      type="checkbox"
+                      checked={!!selectedHalls[h.label]}
+                      onChange={() => toggleHall(h.label)}
+                      className="h-4 w-4 rounded border-gold/30 bg-luxury text-gold focus:ring-gold/30 shrink-0"
+                    />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-warm-white">{h.label}</p>
+                      <p className="text-xs text-warm-muted">GH₵{h.price}/day</p>
+                    </div>
+                  </label>
+                ))}
               </div>
 
-              {needsHall === "yes" && (
-                <div className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="hall" className={labelClass}>Select Hall / Venue</Label>
-                    <select id="hall" value={selectedHall} onChange={(e) => setSelectedHall(e.target.value)} className={selectClass}>
-                      <option value="">Choose a hall</option>
-                      {HALL_OPTIONS.map((h) => (
-                        <option key={h.label} value={h.label}>{h.label} — GH₵{h.price}/day</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className={labelClass}>Duration of Hall Usage (days)</Label>
-                    <NumberStepper value={hallDays} onChange={setHallDays} min={1} max={30} />
-                  </div>
+              {activeHalls.length > 0 && (
+                <div className="space-y-2 mb-6">
+                  <Label className={labelClass}>Days of Hall Usage</Label>
+                  <NumberStepper value={hallDays} onChange={setHallDays} min={1} max={30} />
                 </div>
               )}
+            </SectionCard>
 
-              <div className="mt-6 flex items-center gap-3">
+            {/* Kitchen & Dining — single select */}
+            <SectionCard icon={UtensilsCrossed} title="Kitchen & Dining">
+              <p className="text-xs text-warm-muted/60 mb-4 -mt-3">
+                Select one kitchen option based on your group size.
+              </p>
+              <div className="space-y-2 mb-5">
+                {KITCHEN_OPTIONS.map((k) => (
+                  <label key={k.label} className={checkboxCardClass(selectedKitchen === k.label)}>
+                    <input
+                      type="radio"
+                      name="kitchen"
+                      checked={selectedKitchen === k.label}
+                      onChange={() => setSelectedKitchen(selectedKitchen === k.label ? "" : k.label)}
+                      className="h-4 w-4 border-gold/30 bg-luxury text-gold focus:ring-gold/30 shrink-0"
+                    />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-warm-white">{k.label}</p>
+                      <p className="text-xs text-warm-muted">GH₵{k.price}/day</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+
+              {selectedKitchen && (
+                <div className="space-y-2 mb-6">
+                  <Label className={labelClass}>Days of Kitchen Usage</Label>
+                  <NumberStepper value={kitchenDays} onChange={setKitchenDays} min={1} max={30} />
+                </div>
+              )}
+            </SectionCard>
+
+            {/* Wedding Grounds */}
+            <SectionCard icon={TreePine} title="Grounds Usage">
+              <label className={checkboxCardClass(needsGrounds)}>
                 <input
                   type="checkbox"
-                  id="weddingGrounds"
                   checked={needsGrounds}
                   onChange={(e) => setNeedsGrounds(e.target.checked)}
-                  className="h-4 w-4 rounded border-gold/30 bg-luxury text-gold focus:ring-gold/30"
+                  className="h-4 w-4 rounded border-gold/30 bg-luxury text-gold focus:ring-gold/30 shrink-0"
                 />
-                <Label htmlFor="weddingGrounds" className="text-sm text-warm-muted cursor-pointer">
-                  I need the grounds for a Wedding Ceremony (GH₵{WEDDING_GROUNDS_PRICE.toLocaleString()})
-                </Label>
-              </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-warm-white">Wedding Grounds</p>
+                  <p className="text-xs text-warm-muted">GH₵{WEDDING_GROUNDS_PRICE.toLocaleString()} — flat rate</p>
+                </div>
+              </label>
             </SectionCard>
 
-            {/* Stay Duration */}
-            <SectionCard icon={Clock} title="Stay Duration">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div className="space-y-2">
-                  <Label htmlFor="fromDate" className={labelClass}>From Date <span className="text-red-400">*</span></Label>
-                  <Input id="fromDate" type="date" value={formData.fromDate} onChange={(e) => updateField("fromDate", e.target.value)} className={inputClass} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="toDate" className={labelClass}>To Date <span className="text-red-400">*</span></Label>
-                  <Input id="toDate" type="date" value={formData.toDate} onChange={(e) => updateField("toDate", e.target.value)} className={inputClass} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="startTime" className={labelClass}>Starting Time</Label>
-                  <Input id="startTime" type="time" value={formData.startTime} onChange={(e) => updateField("startTime", e.target.value)} className={inputClass} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="endTime" className={labelClass}>Ending Time</Label>
-                  <Input id="endTime" type="time" value={formData.endTime} onChange={(e) => updateField("endTime", e.target.value)} className={inputClass} />
-                </div>
+            {/* Special Requests */}
+            <SectionCard icon={CalendarCheck} title="Special Requests">
+              <div className="space-y-2">
+                <Label htmlFor="specialRequests" className={labelClass}>Any special requirements or notes?</Label>
+                <textarea
+                  id="specialRequests"
+                  rows={3}
+                  value={formData.specialRequests}
+                  onChange={(e) => updateField("specialRequests", e.target.value)}
+                  placeholder="Dietary needs, accessibility requirements, event details..."
+                  className={`w-full rounded-md px-3 py-2 text-sm resize-none ${inputClass}`}
+                />
               </div>
             </SectionCard>
 
@@ -592,7 +718,7 @@ export default function BookingPage() {
                   )}
                 </div>
 
-                {/* Hall Amount */}
+                {/* Hall / Kitchen / Grounds Amount */}
                 <div>
                   <button
                     type="button"
@@ -600,7 +726,7 @@ export default function BookingPage() {
                     className="flex items-center justify-between w-full py-3 border-b border-dashed border-gold/10 group"
                   >
                     <span className="text-sm text-warm-muted flex items-center gap-1.5">
-                      Halls / Grounds Amount
+                      Halls / Kitchen / Grounds
                       {hallBreakdownLines.length > 0 && (
                         <ChevronDown className={`h-3.5 w-3.5 text-gold/50 transition-transform ${showHallBreakdown ? "rotate-180" : ""}`} />
                       )}

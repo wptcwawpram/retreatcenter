@@ -1,19 +1,16 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { IMAGES } from "@/lib/images";
 import {
   ImageIcon,
   Loader2,
   Check,
   RotateCcw,
-  ExternalLink,
   ChevronDown,
   ChevronRight,
-  Save,
+  Upload,
 } from "lucide-react";
 
 type ImageValue = string | string[] | Record<string, string | string[]>;
@@ -62,10 +59,110 @@ function prettifyKey(path: string): string {
   return last.replace(/([A-Z])/g, " $1").replace(/[-_]/g, " ").trim();
 }
 
+function ImageCard({
+  path,
+  currentUrl,
+  isOverridden,
+  onUpload,
+  onReset,
+  saving,
+  saved,
+}: {
+  path: string;
+  currentUrl: string;
+  isOverridden: boolean;
+  onUpload: (path: string, file: File) => void;
+  onReset: (path: string) => void;
+  saving: boolean;
+  saved: boolean;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium capitalize">{prettifyKey(path)}</span>
+          {isOverridden && (
+            <span className="text-[10px] bg-sidebar-primary/15 text-sidebar-primary px-1.5 py-0.5 rounded font-medium">
+              Custom
+            </span>
+          )}
+        </div>
+        <span className="text-[10px] text-muted-foreground font-mono">{path}</span>
+      </div>
+
+      <div className="flex gap-3">
+        <div className="relative w-36 h-24 rounded overflow-hidden border border-border/50 bg-muted/20 shrink-0 group">
+          {currentUrl && (
+            <Image
+              src={currentUrl}
+              alt={prettifyKey(path)}
+              fill
+              className="object-cover"
+              unoptimized
+            />
+          )}
+          <div
+            onClick={() => fileRef.current?.click()}
+            className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer flex items-center justify-center"
+          >
+            <Upload className="h-5 w-5 text-white" />
+          </div>
+        </div>
+
+        <div className="flex-1 space-y-2">
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onUpload(path, file);
+              e.target.value = "";
+            }}
+          />
+
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={saving}
+            className="w-full flex items-center justify-center gap-2 h-10 rounded-md border border-dashed border-sidebar-primary/30 text-sidebar-primary text-sm hover:bg-sidebar-primary/5 transition-colors disabled:opacity-50"
+          >
+            {saving ? (
+              <><Loader2 className="h-4 w-4 animate-spin" />Uploading...</>
+            ) : saved ? (
+              <><Check className="h-4 w-4" />Uploaded!</>
+            ) : (
+              <><Upload className="h-4 w-4" />Upload New Image</>
+            )}
+          </button>
+
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] text-muted-foreground truncate flex-1">
+              {isOverridden ? "Custom image" : "Default (Unsplash)"}
+            </span>
+            {isOverridden && (
+              <button
+                onClick={() => onReset(path)}
+                disabled={saving}
+                className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 shrink-0"
+              >
+                <RotateCcw className="h-3 w-3" />Reset
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SiteImagesPage() {
   const [defaults] = useState(() => flattenImages(IMAGES as unknown as Record<string, ImageValue>));
   const [overrides, setOverrides] = useState<Record<string, string>>({});
-  const [editValues, setEditValues] = useState<Record<string, string>>({});
+  const [currentUrls, setCurrentUrls] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
@@ -82,9 +179,9 @@ export default function SiteImagesPage() {
       for (const [path] of Object.entries(defaults)) {
         merged[path] = data.overrides?.[path] || defaults[path];
       }
-      setEditValues(merged);
+      setCurrentUrls(merged);
     } catch {
-      setEditValues({ ...defaults });
+      setCurrentUrls({ ...defaults });
     } finally {
       setLoading(false);
     }
@@ -92,24 +189,31 @@ export default function SiteImagesPage() {
 
   useEffect(() => { fetchImages(); }, [fetchImages]);
 
-  const handleSave = async (path: string) => {
-    const url = editValues[path];
-    if (!url || url === defaults[path] && !overrides[path]) return;
-
+  const handleUpload = async (path: string, file: File) => {
     setSaving((p) => ({ ...p, [path]: true }));
     setError("");
     try {
-      const res = await fetch("/api/site-images", {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("path", path);
+
+      const res = await fetch("/api/site-images/upload", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path, url }),
+        body: formData,
       });
-      if (!res.ok) throw new Error("Failed to save");
-      setOverrides((p) => ({ ...p, [path]: url }));
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Upload failed");
+      }
+
+      const data = await res.json();
+      setOverrides((p) => ({ ...p, [path]: data.url }));
+      setCurrentUrls((p) => ({ ...p, [path]: data.url }));
       setSaved((p) => ({ ...p, [path]: true }));
-      setTimeout(() => setSaved((p) => ({ ...p, [path]: false })), 2000);
-    } catch {
-      setError(`Failed to save ${path}`);
+      setTimeout(() => setSaved((p) => ({ ...p, [path]: false })), 2500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : `Failed to upload ${path}`);
     } finally {
       setSaving((p) => ({ ...p, [path]: false }));
     }
@@ -121,7 +225,7 @@ export default function SiteImagesPage() {
       const res = await fetch(`/api/site-images?path=${encodeURIComponent(path)}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to reset");
       setOverrides((p) => { const n = { ...p }; delete n[path]; return n; });
-      setEditValues((p) => ({ ...p, [path]: defaults[path] }));
+      setCurrentUrls((p) => ({ ...p, [path]: defaults[path] }));
       setSaved((p) => ({ ...p, [path]: true }));
       setTimeout(() => setSaved((p) => ({ ...p, [path]: false })), 2000);
     } catch {
@@ -150,13 +254,14 @@ export default function SiteImagesPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Site Images</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Manage all images displayed on the public website. Paste image URLs to replace the defaults.
+          Upload images to replace the defaults on the public website. Accepted formats: JPEG, PNG, WebP, GIF (max 5MB).
         </p>
       </div>
 
       {error && (
         <div className="p-3 border border-red-500/30 bg-red-500/10 text-sm text-red-400 rounded-md">
           {error}
+          <button onClick={() => setError("")} className="ml-2 text-red-300 hover:text-red-200">×</button>
         </div>
       )}
 
@@ -190,82 +295,18 @@ export default function SiteImagesPage() {
 
               {isExpanded && (
                 <div className="border-t border-border/50 divide-y divide-border/30">
-                  {Object.entries(images).map(([path]) => {
-                    const currentUrl = editValues[path] || defaults[path];
-                    const isOverridden = !!overrides[path];
-                    const hasChanges = editValues[path] !== (overrides[path] || defaults[path]);
-
-                    return (
-                      <div key={path} className="p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium capitalize">{prettifyKey(path)}</span>
-                            {isOverridden && (
-                              <span className="text-[10px] bg-sidebar-primary/15 text-sidebar-primary px-1.5 py-0.5 rounded font-medium">
-                                Custom
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-[10px] text-muted-foreground font-mono">{path}</span>
-                        </div>
-
-                        <div className="flex gap-3">
-                          <div className="relative w-32 h-20 rounded overflow-hidden border border-border/50 bg-muted/20 shrink-0">
-                            {currentUrl && (
-                              <Image
-                                src={currentUrl}
-                                alt={prettifyKey(path)}
-                                fill
-                                className="object-cover"
-                                unoptimized
-                              />
-                            )}
-                          </div>
-
-                          <div className="flex-1 space-y-2">
-                            <div className="flex gap-2">
-                              <Input
-                                value={editValues[path] || ""}
-                                onChange={(e) => setEditValues((p) => ({ ...p, [path]: e.target.value }))}
-                                placeholder="Paste image URL..."
-                                className="text-xs h-9 font-mono"
-                              />
-                              <Button
-                                size="sm"
-                                onClick={() => handleSave(path)}
-                                disabled={saving[path] || !hasChanges}
-                                className="h-9 px-3 bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90 shrink-0"
-                              >
-                                {saving[path] ? (
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                ) : saved[path] ? (
-                                  <Check className="h-3.5 w-3.5" />
-                                ) : (
-                                  <Save className="h-3.5 w-3.5" />
-                                )}
-                              </Button>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {currentUrl && (
-                                <a href={currentUrl} target="_blank" rel="noopener noreferrer" className="text-[11px] text-sidebar-primary hover:underline flex items-center gap-1">
-                                  <ExternalLink className="h-3 w-3" />Preview
-                                </a>
-                              )}
-                              {isOverridden && (
-                                <button
-                                  onClick={() => handleReset(path)}
-                                  disabled={saving[path]}
-                                  className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1"
-                                >
-                                  <RotateCcw className="h-3 w-3" />Reset to default
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {Object.entries(images).map(([path]) => (
+                    <ImageCard
+                      key={path}
+                      path={path}
+                      currentUrl={currentUrls[path] || defaults[path]}
+                      isOverridden={!!overrides[path]}
+                      onUpload={handleUpload}
+                      onReset={handleReset}
+                      saving={!!saving[path]}
+                      saved={!!saved[path]}
+                    />
+                  ))}
                 </div>
               )}
             </div>
