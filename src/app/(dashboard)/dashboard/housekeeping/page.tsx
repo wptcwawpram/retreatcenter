@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 const STATUS_COLS = [
   { key: "PENDING", label: "Pending", dotColor: "bg-amber-400", headerBg: "bg-amber-50/50", icon: Clock },
   { key: "IN_PROGRESS", label: "In Progress", dotColor: "bg-blue-400", headerBg: "bg-blue-50/50", icon: Sparkles },
-  { key: "COMPLETED", label: "Completed", dotColor: "bg-emerald-400", headerBg: "bg-emerald-50/50", icon: CheckCircle },
+  { key: "COMPLETED", label: "Completed", dotColor: "bg-teal-400", headerBg: "bg-teal-500/10", icon: CheckCircle },
 ] as const;
 
 const PRIORITY_MAP: Record<string, { label: string; color: string }> = {
@@ -164,7 +164,7 @@ export default function HousekeepingPage() {
                           </Button>
                         )}
                         {col.key === "COMPLETED" && (
-                          <div className="flex items-center gap-1 text-emerald-600 text-xs flex-1 justify-center">
+                          <div className="flex items-center gap-1 text-teal-500 text-xs flex-1 justify-center">
                             <CheckCircle className="h-3.5 w-3.5" />
                             Done
                           </div>

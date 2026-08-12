@@ -21,6 +21,7 @@ import {
   Settings,
   ChevronLeft,
   Church,
+  ImageIcon,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -67,6 +68,7 @@ const navGroups = [
   {
     label: "",
     items: [
+      { label: "Site Images", href: "/dashboard/images", icon: ImageIcon },
       { label: "Settings", href: "/dashboard/settings", icon: Settings },
     ],
   },

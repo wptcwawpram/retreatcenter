@@ -160,7 +160,7 @@ export default function InventoryPage() {
           <AlertTriangle className="h-3 w-3" /> Low Stock
         </Badge>
       ) : (
-        <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 border text-[11px]">In Stock</Badge>
+        <Badge className="bg-teal-500/10 text-teal-400 border-teal-500/20 border text-[11px]">In Stock</Badge>
       )
     )},
     { header: "", accessor: (i) => (

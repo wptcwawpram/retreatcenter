@@ -20,7 +20,7 @@ type ComplaintRow = Complaint & { guest: { full_name: string } | null };
 const STATUS_CFG: Record<string, { label: string; color: string; bgColor: string; dotColor: string }> = {
   OPEN: { label: "Open", color: "text-amber-700", bgColor: "bg-amber-50 border-amber-200", dotColor: "bg-amber-400" },
   IN_PROGRESS: { label: "In Progress", color: "text-blue-700", bgColor: "bg-blue-50 border-blue-200", dotColor: "bg-blue-400" },
-  RESOLVED: { label: "Resolved", color: "text-emerald-700", bgColor: "bg-emerald-50 border-emerald-200", dotColor: "bg-emerald-400" },
+  RESOLVED: { label: "Resolved", color: "text-teal-400", bgColor: "bg-teal-500/10 border-teal-500/20", dotColor: "bg-teal-400" },
   CLOSED: { label: "Closed", color: "text-gray-700", bgColor: "bg-gray-50 border-gray-200", dotColor: "bg-gray-400" },
 };
 

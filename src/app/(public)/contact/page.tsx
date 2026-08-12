@@ -147,7 +147,7 @@ export default function ContactPage() {
                     </div>
 
                     {sent && (
-                      <div className="flex items-center gap-2 p-3 border border-emerald-500/30 bg-emerald-500/10 text-sm text-emerald-400">
+                      <div className="flex items-center gap-2 p-3 border border-gold/30 bg-gold/10 text-sm text-gold">
                         <CheckCircle className="h-4 w-4 shrink-0" />
                         Message sent! We&rsquo;ll get back to you within 24 hours.
                       </div>

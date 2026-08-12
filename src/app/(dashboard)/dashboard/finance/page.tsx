@@ -83,7 +83,7 @@ export default function FinancePage() {
     { header: "Type", accessor: (f) => (
       <Badge className={cn(
         "text-[10px] border gap-0.5",
-        f.type === "INCOME" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-700 border-red-200"
+        f.type === "INCOME" ? "bg-teal-500/10 text-teal-400 border-teal-500/20" : "bg-red-50 text-red-700 border-red-200"
       )}>
         {f.type === "INCOME" ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
         {f.type}
@@ -92,7 +92,7 @@ export default function FinancePage() {
     { header: "Category", accessor: (f) => <span className="font-medium text-sm">{f.category}</span> },
     { header: "Description", accessor: (f) => <span className="text-xs text-muted-foreground line-clamp-1 max-w-[200px] block">{f.description}</span> },
     { header: "Amount", accessor: (f) => (
-      <span className={cn("font-semibold text-sm tabular-nums", f.type === "INCOME" ? "text-emerald-600" : "text-red-600")}>
+      <span className={cn("font-semibold text-sm tabular-nums", f.type === "INCOME" ? "text-teal-500" : "text-red-600")}>
         {f.type === "INCOME" ? "+" : "-"}{formatCurrency(Number(f.amount))}
       </span>
     )},
@@ -109,9 +109,9 @@ export default function FinancePage() {
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <StatCard title="Total Income" value={formatCurrency(totalIncome)} icon={TrendingUp} iconClassName="bg-emerald-50 text-emerald-600" />
+        <StatCard title="Total Income" value={formatCurrency(totalIncome)} icon={TrendingUp} iconClassName="bg-teal-500/10 text-teal-500" />
         <StatCard title="Total Expenses" value={formatCurrency(totalExpenses)} icon={TrendingDown} iconClassName="bg-red-50 text-red-600" />
-        <StatCard title="Net Income" value={formatCurrency(netIncome)} icon={DollarSign} iconClassName={netIncome >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"} />
+        <StatCard title="Net Income" value={formatCurrency(netIncome)} icon={DollarSign} iconClassName={netIncome >= 0 ? "bg-teal-500/10 text-teal-500" : "bg-red-50 text-red-600"} />
       </div>
 
       {/* Income breakdown */}
@@ -123,7 +123,7 @@ export default function FinancePage() {
               <div key={cat} className="flex items-center gap-3">
                 <span className="text-xs w-32 text-muted-foreground truncate">{cat}</span>
                 <div className="flex-1 h-2 bg-muted/50 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-400 rounded-full transition-all" style={{ width: `${totalIncome > 0 ? (amount / totalIncome) * 100 : 0}%` }} />
+                  <div className="h-full bg-teal-400 rounded-full transition-all" style={{ width: `${totalIncome > 0 ? (amount / totalIncome) * 100 : 0}%` }} />
                 </div>
                 <span className="text-xs font-semibold tabular-nums w-24 text-right">{formatCurrency(amount)}</span>
               </div>

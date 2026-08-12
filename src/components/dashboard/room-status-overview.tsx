@@ -14,7 +14,7 @@ interface RoomStatusOverviewProps {
 }
 
 const statusColors: Record<string, string> = {
-  AVAILABLE: "bg-emerald-500",
+  AVAILABLE: "bg-teal-500",
   OCCUPIED: "bg-blue-500",
   CLEANING: "bg-orange-400",
   MAINTENANCE: "bg-red-500",
@@ -22,7 +22,7 @@ const statusColors: Record<string, string> = {
 };
 
 const statusDotColors: Record<string, string> = {
-  AVAILABLE: "bg-emerald-400",
+  AVAILABLE: "bg-teal-400",
   OCCUPIED: "bg-blue-400",
   CLEANING: "bg-orange-400",
   MAINTENANCE: "bg-red-400",

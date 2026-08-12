@@ -53,7 +53,6 @@ function LoginForm() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center">
-      {/* Background image */}
       <div className="absolute inset-0 z-0">
         <Image
           src={IMAGES.hero.home}
@@ -62,36 +61,32 @@ function LoginForm() {
           className="object-cover"
           priority
         />
-        <div className="absolute inset-0 bg-black/60" />
+        <div className="absolute inset-0 bg-black/65" />
       </div>
 
-      {/* Login card */}
       <div className="relative z-10 mx-4 w-full max-w-md">
-        <div className="rounded-2xl border border-green-200/20 bg-white/95 p-8 shadow-2xl backdrop-blur-sm">
-          {/* Branding */}
+        <div className="border border-gold/15 bg-luxury-card/95 p-8 backdrop-blur-md">
           <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-              <Church className="h-8 w-8 text-green-700" />
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center border border-gold/30">
+              <Church className="h-7 w-7 text-gold" />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+            <h1 className="font-[family-name:var(--font-playfair)] text-xl font-bold tracking-tight text-warm-white">
               Warriors Prayer Tower Complex
             </h1>
-            <p className="mt-1 text-sm font-medium text-green-700">
+            <p className="mt-1 text-[11px] text-gold/60 tracking-[0.15em] uppercase">
               Staff Portal
             </p>
           </div>
 
-          {/* Error message */}
           {error && (
-            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="mb-6 border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
               {error}
             </div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-700">
+              <Label htmlFor="email" className="text-warm-muted text-xs tracking-wide">
                 Email address
               </Label>
               <Input
@@ -102,12 +97,12 @@ function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                className="h-11 border-gray-300 focus:border-green-600 focus:ring-green-600"
+                className="h-11 bg-luxury border-gold/15 text-warm-white placeholder:text-warm-muted/40 focus-visible:ring-gold/30"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-700">
+              <Label htmlFor="password" className="text-warm-muted text-xs tracking-wide">
                 Password
               </Label>
               <div className="relative">
@@ -119,12 +114,12 @@ function LoginForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                  className="h-11 border-gray-300 pr-10 focus:border-green-600 focus:ring-green-600"
+                  className="h-11 bg-luxury border-gold/15 text-warm-white pr-10 placeholder:text-warm-muted/40 focus-visible:ring-gold/30"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-warm-muted/50 hover:text-warm-white"
                   tabIndex={-1}
                 >
                   {showPassword ? (
@@ -139,7 +134,7 @@ function LoginForm() {
             <Button
               type="submit"
               disabled={loading}
-              className="h-11 w-full bg-green-800 text-white hover:bg-green-700 focus:ring-green-600"
+              className="h-11 w-full bg-gold text-luxury hover:bg-gold-bright font-semibold text-[11px] tracking-[0.1em] uppercase"
             >
               {loading ? (
                 <>
@@ -152,8 +147,7 @@ function LoginForm() {
             </Button>
           </form>
 
-          {/* Footer */}
-          <p className="mt-6 text-center text-xs text-gray-500">
+          <p className="mt-6 text-center text-xs text-warm-muted/50">
             Access restricted to authorized WPTC staff only.
           </p>
         </div>
@@ -166,8 +160,8 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-green-600" />
+        <div className="flex min-h-screen items-center justify-center bg-luxury">
+          <Loader2 className="h-8 w-8 animate-spin text-gold" />
         </div>
       }
     >

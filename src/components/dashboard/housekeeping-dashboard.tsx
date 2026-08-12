@@ -74,7 +74,7 @@ export function HousekeepingDashboard({ greeting }: { greeting: string }) {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard title="Pending Tasks" value={pending.length} subtitle="Awaiting action" icon={Clock} iconClassName="bg-amber-500/10 text-amber-600" />
         <StatCard title="In Progress" value={inProgress.length} subtitle="Being cleaned" icon={Sparkles} iconClassName="bg-blue-500/10 text-blue-600" />
-        <StatCard title="Completed Today" value={completedToday.length} subtitle="Finished tasks" icon={CheckCircle} iconClassName="bg-emerald-500/10 text-emerald-600" />
+        <StatCard title="Completed Today" value={completedToday.length} subtitle="Finished tasks" icon={CheckCircle} iconClassName="bg-teal-500/10 text-teal-500" />
         <StatCard title="Rooms to Clean" value={s.dirtyRooms} subtitle={`${s.cleaningRooms} in cleaning`} icon={SprayCan} iconClassName="bg-orange-500/10 text-orange-600" />
       </div>
 
@@ -133,7 +133,7 @@ export function HousekeepingDashboard({ greeting }: { greeting: string }) {
                   </div>
                   <p className="text-[11px] text-muted-foreground">{TYPE_LABELS[task.type] ?? task.type}</p>
                 </div>
-                <Button variant="outline" size="sm" className="text-xs h-7 gap-1 shrink-0 text-emerald-600 border-emerald-200 hover:bg-emerald-50" onClick={() => handleAdvance(task.id, "COMPLETED")}>
+                <Button variant="outline" size="sm" className="text-xs h-7 gap-1 shrink-0 text-teal-500 border-teal-500/20 hover:bg-teal-500/10" onClick={() => handleAdvance(task.id, "COMPLETED")}>
                   <CheckCircle className="h-3 w-3" />Done
                 </Button>
               </div>

@@ -62,7 +62,7 @@ export function ReceptionDashboard({ greeting }: { greeting: string }) {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard title="Check-ins Today" value={s.expectedCheckIns} subtitle="Expected arrivals" icon={LogIn} iconClassName="bg-emerald-500/10 text-emerald-600" />
+        <StatCard title="Check-ins Today" value={s.expectedCheckIns} subtitle="Expected arrivals" icon={LogIn} iconClassName="bg-teal-500/10 text-teal-500" />
         <StatCard title="Check-outs Today" value={s.expectedCheckOuts} subtitle="Expected departures" icon={LogOut} iconClassName="bg-amber-500/10 text-amber-600" />
         <StatCard title="Available Rooms" value={s.availableRooms} subtitle={`of ${s.totalRooms} total`} icon={DoorOpen} iconClassName="bg-blue-500/10 text-blue-600" />
         <StatCard title="Occupancy" value={`${s.occupancyRate}%`} subtitle={`${s.occupiedRooms} occupied`} icon={Percent} iconClassName="bg-primary/10 text-primary" />

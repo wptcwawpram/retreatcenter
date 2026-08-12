@@ -93,14 +93,14 @@ function AdminDashboard({ greeting }: { greeting: string }) {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard title="Occupancy" value={`${s.occupancyRate}%`} subtitle={`${s.occupiedRooms} of ${s.totalRooms} rooms`} icon={Percent} iconClassName="bg-primary/10 text-primary" />
-        <StatCard title="Check-ins Today" value={s.expectedCheckIns} subtitle="Expected arrivals" icon={LogIn} iconClassName="bg-emerald-500/10 text-emerald-600" />
+        <StatCard title="Check-ins Today" value={s.expectedCheckIns} subtitle="Expected arrivals" icon={LogIn} iconClassName="bg-primary/10 text-primary" />
         <StatCard title="Check-outs Today" value={s.expectedCheckOuts} subtitle="Expected departures" icon={LogOut} iconClassName="bg-amber-500/10 text-amber-600" />
-        <StatCard title="Income Today" value={`${CURRENCY.symbol}${s.incomeToday.toLocaleString()}`} subtitle="Collected payments" icon={TrendingUp} iconClassName="bg-emerald-500/10 text-emerald-600" />
+        <StatCard title="Income Today" value={`${CURRENCY.symbol}${s.incomeToday.toLocaleString()}`} subtitle="Collected payments" icon={TrendingUp} iconClassName="bg-teal-500/10 text-teal-500" />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard title="Active Bookings" value={s.bookingsToday} icon={CalendarCheck} iconClassName="bg-blue-500/10 text-blue-600" />
-        <StatCard title="Available Rooms" value={s.availableRooms} icon={DoorOpen} iconClassName="bg-emerald-500/10 text-emerald-600" />
+        <StatCard title="Available Rooms" value={s.availableRooms} icon={DoorOpen} iconClassName="bg-teal-500/10 text-teal-500" />
         <StatCard title="Rooms to Clean" value={s.dirtyRooms} icon={SprayCan} iconClassName="bg-orange-500/10 text-orange-600" />
         <StatCard title="Pending Payments" value={s.pendingPayments} icon={CreditCard} iconClassName="bg-red-500/10 text-red-600" />
       </div>

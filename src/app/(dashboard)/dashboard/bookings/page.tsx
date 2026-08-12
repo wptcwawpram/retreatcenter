@@ -268,8 +268,8 @@ function NewBookingDialog({
 
         {success ? (
           <div className="py-8 text-center">
-            <CheckCircle className="h-12 w-12 text-emerald-500 mx-auto mb-3" />
-            <p className="text-lg font-semibold text-emerald-700">{success}</p>
+            <CheckCircle className="h-12 w-12 text-teal-500 mx-auto mb-3" />
+            <p className="text-lg font-semibold text-teal-400">{success}</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -679,7 +679,7 @@ export default function BookingsPage() {
     { header: "Total", accessor: (b) => <span className="font-semibold">{formatCurrency(Number(b.total_amount))}</span> },
     { header: "Paid", accessor: (b) => {
       const isPaid = Number(b.paid_amount) >= Number(b.total_amount);
-      return <span className={isPaid ? "text-emerald-600" : "text-amber-600"}>{formatCurrency(Number(b.paid_amount))}</span>;
+      return <span className={isPaid ? "text-teal-500" : "text-amber-600"}>{formatCurrency(Number(b.paid_amount))}</span>;
     }},
     { header: "Status", accessor: (b) => <StatusBadge status={b.status} config={BOOKING_STATUS_CONFIG} /> },
     { header: "Actions", accessor: (b) => (
@@ -748,7 +748,7 @@ export default function BookingsPage() {
                 <div><span className="text-muted-foreground">Nights:</span><p>{viewItem.nights}</p></div>
                 <div><span className="text-muted-foreground">Type:</span><p>{viewItem.booking_type}</p></div>
                 <div><span className="text-muted-foreground">Total:</span><p className="font-bold">{formatCurrency(Number(viewItem.total_amount))}</p></div>
-                <div><span className="text-muted-foreground">Paid:</span><p className="font-bold text-emerald-600">{formatCurrency(Number(viewItem.paid_amount))}</p></div>
+                <div><span className="text-muted-foreground">Paid:</span><p className="font-bold text-teal-500">{formatCurrency(Number(viewItem.paid_amount))}</p></div>
                 <div><span className="text-muted-foreground">Balance:</span><p className="font-bold text-amber-600">{formatCurrency(Number(viewItem.balance))}</p></div>
                 <div><span className="text-muted-foreground">Source:</span><p>{viewItem.source}</p></div>
               </div>

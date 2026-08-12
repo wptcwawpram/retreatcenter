@@ -80,10 +80,10 @@ export function FinanceDashboard({ greeting }: { greeting: string }) {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard title="Income Today" value={`${CURRENCY.symbol}${s.incomeToday.toLocaleString()}`} subtitle="Collected today" icon={TrendingUp} iconClassName="bg-emerald-500/10 text-emerald-600" />
-        <StatCard title="Total Income" value={formatCurrency(totalIncome)} subtitle="All recorded income" icon={ArrowUpRight} iconClassName="bg-emerald-500/10 text-emerald-600" />
+        <StatCard title="Income Today" value={`${CURRENCY.symbol}${s.incomeToday.toLocaleString()}`} subtitle="Collected today" icon={TrendingUp} iconClassName="bg-teal-500/10 text-teal-500" />
+        <StatCard title="Total Income" value={formatCurrency(totalIncome)} subtitle="All recorded income" icon={ArrowUpRight} iconClassName="bg-teal-500/10 text-teal-500" />
         <StatCard title="Total Expenses" value={formatCurrency(totalExpenses)} subtitle="All recorded expenses" icon={TrendingDown} iconClassName="bg-red-500/10 text-red-600" />
-        <StatCard title="Net Income" value={formatCurrency(netIncome)} subtitle={netIncome >= 0 ? "Profit" : "Loss"} icon={DollarSign} iconClassName={netIncome >= 0 ? "bg-emerald-500/10 text-emerald-600" : "bg-red-500/10 text-red-600"} />
+        <StatCard title="Net Income" value={formatCurrency(netIncome)} subtitle={netIncome >= 0 ? "Profit" : "Loss"} icon={DollarSign} iconClassName={netIncome >= 0 ? "bg-teal-500/10 text-teal-500" : "bg-red-500/10 text-red-600"} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -96,7 +96,7 @@ export function FinanceDashboard({ greeting }: { greeting: string }) {
                 <div key={cat} className="flex items-center gap-3">
                   <span className="text-xs w-28 text-muted-foreground truncate">{cat}</span>
                   <div className="flex-1 h-2 bg-muted/50 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-400 rounded-full transition-all" style={{ width: `${totalIncome > 0 ? (amount / totalIncome) * 100 : 0}%` }} />
+                    <div className="h-full bg-teal-400 rounded-full transition-all" style={{ width: `${totalIncome > 0 ? (amount / totalIncome) * 100 : 0}%` }} />
                   </div>
                   <span className="text-xs font-semibold tabular-nums w-24 text-right">{formatCurrency(amount)}</span>
                 </div>
@@ -121,10 +121,10 @@ export function FinanceDashboard({ greeting }: { greeting: string }) {
                 <div key={record.id} className="flex items-center gap-3 py-2.5 px-2 -mx-2 rounded-lg hover:bg-muted/30 transition-colors">
                   <div className={cn(
                     "h-8 w-8 rounded-lg flex items-center justify-center shrink-0",
-                    record.type === "INCOME" ? "bg-emerald-500/10" : "bg-red-500/10"
+                    record.type === "INCOME" ? "bg-teal-500/10" : "bg-red-500/10"
                   )}>
                     {record.type === "INCOME"
-                      ? <ArrowUpRight className="h-4 w-4 text-emerald-600" />
+                      ? <ArrowUpRight className="h-4 w-4 text-teal-500" />
                       : <ArrowDownRight className="h-4 w-4 text-red-600" />
                     }
                   </div>
@@ -133,12 +133,12 @@ export function FinanceDashboard({ greeting }: { greeting: string }) {
                       <p className="text-sm font-medium truncate">{record.category}</p>
                       <Badge className={cn(
                         "text-[10px] border",
-                        record.type === "INCOME" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-700 border-red-200"
+                        record.type === "INCOME" ? "bg-teal-500/10 text-teal-400 border-teal-500/20" : "bg-red-50 text-red-700 border-red-200"
                       )}>{record.type}</Badge>
                     </div>
                     <p className="text-[11px] text-muted-foreground truncate">{record.description} &middot; {formatDate(record.date)}</p>
                   </div>
-                  <span className={cn("text-sm font-semibold tabular-nums shrink-0", record.type === "INCOME" ? "text-emerald-600" : "text-red-600")}>
+                  <span className={cn("text-sm font-semibold tabular-nums shrink-0", record.type === "INCOME" ? "text-teal-500" : "text-red-600")}>
                     {record.type === "INCOME" ? "+" : "-"}{formatCurrency(Number(record.amount))}
                   </span>
                 </div>
@@ -164,7 +164,7 @@ export function FinanceDashboard({ greeting }: { greeting: string }) {
               <div key={p.id} className="p-3 rounded-lg border border-border/40 hover:bg-muted/20 transition-colors">
                 <div className="flex items-center justify-between mb-1">
                   <Badge className={cn("text-[10px] border",
-                    p.status === "COMPLETED" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                    p.status === "COMPLETED" ? "bg-teal-500/10 text-teal-400 border-teal-500/20" :
                     p.status === "PENDING" ? "bg-amber-50 text-amber-700 border-amber-200" :
                     "bg-red-50 text-red-700 border-red-200"
                   )}>{p.status}</Badge>

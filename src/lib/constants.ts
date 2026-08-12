@@ -24,8 +24,8 @@ export const ROOM_STATUS_CONFIG: Record<
 > = {
   AVAILABLE: {
     label: "Available",
-    color: "text-emerald-700",
-    bgColor: "bg-emerald-50 border-emerald-200",
+    color: "text-teal-400",
+    bgColor: "bg-teal-500/10 border-teal-500/20",
   },
   OCCUPIED: {
     label: "Occupied",
@@ -77,8 +77,8 @@ export const BOOKING_STATUS_CONFIG: Record<
   },
   CHECKED_IN: {
     label: "Checked In",
-    color: "text-emerald-700",
-    bgColor: "bg-emerald-50 border-emerald-200",
+    color: "text-teal-400",
+    bgColor: "bg-teal-500/10 border-teal-500/20",
   },
   CHECKED_OUT: {
     label: "Checked Out",
@@ -126,8 +126,8 @@ export const PAYMENT_STATUS_CONFIG: Record<
   },
   COMPLETED: {
     label: "Completed",
-    color: "text-emerald-700",
-    bgColor: "bg-emerald-50 border-emerald-200",
+    color: "text-teal-400",
+    bgColor: "bg-teal-500/10 border-teal-500/20",
   },
   FAILED: {
     label: "Failed",

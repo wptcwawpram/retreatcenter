@@ -18,7 +18,7 @@ const ROLE_COLORS: Record<string, string> = {
   admin: "bg-purple-50 text-purple-700 border-purple-200",
   manager: "bg-blue-50 text-blue-700 border-blue-200",
   receptionist: "bg-amber-50 text-amber-700 border-amber-200",
-  housekeeping: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  housekeeping: "bg-teal-500/10 text-teal-400 border-teal-500/20",
 };
 
 const editFields: FormField[] = [
@@ -83,8 +83,8 @@ export default function EmployeesPage() {
     },
     { header: "Status", accessor: (e) => (
       <div className="flex items-center gap-1.5">
-        <span className={cn("h-2 w-2 rounded-full", e.is_active ? "bg-emerald-400" : "bg-gray-300")} />
-        <span className={cn("text-xs font-medium", e.is_active ? "text-emerald-700" : "text-muted-foreground")}>
+        <span className={cn("h-2 w-2 rounded-full", e.is_active ? "bg-teal-400" : "bg-gray-300")} />
+        <span className={cn("text-xs font-medium", e.is_active ? "text-teal-400" : "text-muted-foreground")}>
           {e.is_active ? "Active" : "Inactive"}
         </span>
       </div>
@@ -104,7 +104,7 @@ export default function EmployeesPage() {
       <div className="flex items-center gap-4 text-sm text-muted-foreground">
         <span><strong className="text-foreground">{allEmployees.length}</strong> total staff</span>
         <span className="h-1 w-1 rounded-full bg-border" />
-        <span><strong className="text-emerald-600">{activeCount}</strong> active</span>
+        <span><strong className="text-teal-500">{activeCount}</strong> active</span>
         {allEmployees.length - activeCount > 0 && (
           <>
             <span className="h-1 w-1 rounded-full bg-border" />

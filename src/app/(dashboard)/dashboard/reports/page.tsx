@@ -61,7 +61,7 @@ export default function ReportsPage() {
     );
   }
 
-  const barColors = ["bg-emerald-400", "bg-blue-400", "bg-amber-400", "bg-purple-400", "bg-red-400"];
+  const barColors = ["bg-teal-400", "bg-blue-400", "bg-amber-400", "bg-purple-400", "bg-red-400"];
 
   return (
     <div className="space-y-5">
@@ -70,7 +70,7 @@ export default function ReportsPage() {
       {/* Top-level stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard title="Occupancy" value={`${occupancyPct}%`} subtitle={`${occupiedRooms} of ${totalRooms} rooms`} icon={BedDouble} iconClassName="bg-blue-50 text-blue-600" />
-        <StatCard title="Total Revenue" value={formatCurrency(totalIncome)} icon={TrendingUp} iconClassName="bg-emerald-50 text-emerald-600" />
+        <StatCard title="Total Revenue" value={formatCurrency(totalIncome)} icon={TrendingUp} iconClassName="bg-teal-500/10 text-teal-500" />
         <StatCard title="Total Guests" value={allGuests.length} icon={Users} iconClassName="bg-purple-50 text-purple-600" />
         <StatCard title="Active Bookings" value={checkedInCount + confirmedCount} subtitle={`${checkedInCount} checked in, ${confirmedCount} confirmed`} icon={Calendar} iconClassName="bg-amber-50 text-amber-600" />
       </div>
@@ -83,7 +83,7 @@ export default function ReportsPage() {
             {Object.entries(statusBreakdown).map(([status, count]) => {
               const pct = totalRooms > 0 ? Math.round((count / totalRooms) * 100) : 0;
               const colors: Record<string, string> = {
-                AVAILABLE: "bg-emerald-400",
+                AVAILABLE: "bg-teal-400",
                 OCCUPIED: "bg-blue-400",
                 CLEANING: "bg-orange-400",
                 MAINTENANCE: "bg-red-400",
@@ -130,13 +130,13 @@ export default function ReportsPage() {
 
       {/* Financial Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <StatCard title="Total Income" value={formatCurrency(totalIncome)} icon={TrendingUp} iconClassName="bg-emerald-50 text-emerald-600" />
+        <StatCard title="Total Income" value={formatCurrency(totalIncome)} icon={TrendingUp} iconClassName="bg-teal-500/10 text-teal-500" />
         <StatCard title="Total Expenses" value={formatCurrency(totalExpenses)} icon={Wallet} iconClassName="bg-red-50 text-red-600" />
         <StatCard
           title="Net Profit"
           value={formatCurrency(totalIncome - totalExpenses)}
           icon={BarChart3}
-          iconClassName={(totalIncome - totalExpenses) >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"}
+          iconClassName={(totalIncome - totalExpenses) >= 0 ? "bg-teal-500/10 text-teal-500" : "bg-red-50 text-red-600"}
         />
       </div>
 

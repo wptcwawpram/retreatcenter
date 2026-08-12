@@ -18,7 +18,7 @@ type EventRow = Event & { venue: { name: string } | null };
 
 const EVENT_STATUS: Record<string, { label: string; color: string; bgColor: string; dotColor: string }> = {
   UPCOMING: { label: "Upcoming", color: "text-blue-700", bgColor: "bg-blue-50 border-blue-200", dotColor: "bg-blue-400" },
-  IN_PROGRESS: { label: "In Progress", color: "text-emerald-700", bgColor: "bg-emerald-50 border-emerald-200", dotColor: "bg-emerald-400" },
+  IN_PROGRESS: { label: "In Progress", color: "text-teal-400", bgColor: "bg-teal-500/10 border-teal-500/20", dotColor: "bg-teal-400" },
   COMPLETED: { label: "Completed", color: "text-gray-700", bgColor: "bg-gray-50 border-gray-200", dotColor: "bg-gray-400" },
   CANCELLED: { label: "Cancelled", color: "text-red-700", bgColor: "bg-red-50 border-red-200", dotColor: "bg-red-400" },
 };

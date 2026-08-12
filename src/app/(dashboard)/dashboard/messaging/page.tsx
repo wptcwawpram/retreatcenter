@@ -113,8 +113,8 @@ export default function MessagingPage() {
     )},
     { header: "Status", accessor: (m) => (
       <div className="flex items-center gap-1.5">
-        <span className={cn("h-2 w-2 rounded-full", m.status === "SENT" ? "bg-emerald-400" : "bg-red-400")} />
-        <span className={cn("text-xs font-medium", m.status === "SENT" ? "text-emerald-700" : "text-red-700")}>{m.status}</span>
+        <span className={cn("h-2 w-2 rounded-full", m.status === "SENT" ? "bg-teal-400" : "bg-red-400")} />
+        <span className={cn("text-xs font-medium", m.status === "SENT" ? "text-teal-400" : "text-red-700")}>{m.status}</span>
       </div>
     )},
   ];
@@ -172,7 +172,7 @@ export default function MessagingPage() {
             {sendResult && (
               <div className={cn(
                 "flex items-start gap-2 p-3 rounded-lg border text-sm",
-                sendResult.success ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-red-50 border-red-200 text-red-800"
+                sendResult.success ? "bg-teal-500/10 border-teal-500/20 text-teal-400" : "bg-red-50 border-red-200 text-red-800"
               )}>
                 {sendResult.success ? <CheckCircle className="h-4 w-4 shrink-0 mt-0.5" /> : <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />}
                 {sendResult.message}

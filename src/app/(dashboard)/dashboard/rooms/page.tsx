@@ -32,7 +32,7 @@ const ROOM_TYPES = [
 ];
 
 const STATUS_DOT: Record<string, string> = {
-  AVAILABLE: "bg-emerald-400",
+  AVAILABLE: "bg-teal-400",
   OCCUPIED: "bg-blue-400",
   CLEANING: "bg-orange-400",
   MAINTENANCE: "bg-red-400",
@@ -40,7 +40,7 @@ const STATUS_DOT: Record<string, string> = {
 };
 
 const STATUS_CARD_BG: Record<string, string> = {
-  AVAILABLE: "border-emerald-200/60 hover:border-emerald-300",
+  AVAILABLE: "border-teal-500/15 hover:border-teal-500/30",
   OCCUPIED: "border-blue-200/60 hover:border-blue-300",
   CLEANING: "border-orange-200/60 hover:border-orange-300",
   MAINTENANCE: "border-red-200/60 hover:border-red-300",

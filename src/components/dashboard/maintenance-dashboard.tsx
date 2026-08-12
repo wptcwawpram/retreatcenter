@@ -69,7 +69,7 @@ export function MaintenanceDashboard({ greeting }: { greeting: string }) {
         <StatCard title="Rooms Under Maintenance" value={s.maintenanceRooms} subtitle={`of ${s.totalRooms} rooms`} icon={Wrench} iconClassName="bg-red-500/10 text-red-600" />
         <StatCard title="Pending Requests" value={pendingMaintenance.length} subtitle="Awaiting action" icon={Clock} iconClassName="bg-amber-500/10 text-amber-600" />
         <StatCard title="In Progress" value={inProgressMaintenance.length} subtitle="Being worked on" icon={Settings} iconClassName="bg-blue-500/10 text-blue-600" />
-        <StatCard title="Completed" value={completedMaintenance.length} subtitle="Total resolved" icon={CheckCircle} iconClassName="bg-emerald-500/10 text-emerald-600" />
+        <StatCard title="Completed" value={completedMaintenance.length} subtitle="Total resolved" icon={CheckCircle} iconClassName="bg-teal-500/10 text-teal-500" />
       </div>
 
       {urgentTasks.length > 0 && (
@@ -130,7 +130,7 @@ export function MaintenanceDashboard({ greeting }: { greeting: string }) {
                   </div>
                   {task.notes && <p className="text-[11px] text-muted-foreground line-clamp-1">{task.notes}</p>}
                 </div>
-                <Button variant="outline" size="sm" className="text-xs h-7 gap-1 shrink-0 text-emerald-600 border-emerald-200 hover:bg-emerald-50" onClick={() => handleAdvance(task.id, "COMPLETED")}>
+                <Button variant="outline" size="sm" className="text-xs h-7 gap-1 shrink-0 text-teal-500 border-teal-500/20 hover:bg-teal-500/10" onClick={() => handleAdvance(task.id, "COMPLETED")}>
                   <CheckCircle className="h-3 w-3" />Done
                 </Button>
               </div>

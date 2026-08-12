@@ -9,9 +9,9 @@ const UTILITY_CARDS = [
   {
     title: "Power Supply",
     icon: Zap,
-    iconBg: "bg-emerald-50 text-emerald-600",
+    iconBg: "bg-teal-500/10 text-teal-500",
     status: "Active — ECG",
-    statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    statusColor: "bg-teal-500/10 text-teal-400 border-teal-500/20",
     details: [
       { label: "Last outage", value: "14 May, 2:30 PM" },
       { label: "Duration", value: "3 hours" },
@@ -35,7 +35,7 @@ const UTILITY_CARDS = [
     icon: Droplets,
     iconBg: "bg-blue-50 text-blue-600",
     status: "Normal",
-    statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    statusColor: "bg-teal-500/10 text-teal-400 border-teal-500/20",
     details: [
       { label: "Tank level", value: "80%", bold: true },
       { label: "Last refill", value: "16 May" },
@@ -45,11 +45,11 @@ const UTILITY_CARDS = [
 ];
 
 const LOGS = [
-  { date: "18 May", time: "08:00", event: "ECG power stable", type: "Power", dotColor: "bg-emerald-400" },
+  { date: "18 May", time: "08:00", event: "ECG power stable", type: "Power", dotColor: "bg-teal-400" },
   { date: "17 May", time: "22:15", event: "Generator stopped — ECG restored", type: "Generator", dotColor: "bg-amber-400" },
   { date: "17 May", time: "19:00", event: "Generator started — ECG outage", type: "Generator", dotColor: "bg-amber-400" },
   { date: "16 May", time: "10:00", event: "Water tank refilled to 100%", type: "Water", dotColor: "bg-blue-400" },
-  { date: "14 May", time: "17:30", event: "ECG power restored", type: "Power", dotColor: "bg-emerald-400" },
+  { date: "14 May", time: "17:30", event: "ECG power restored", type: "Power", dotColor: "bg-teal-400" },
   { date: "14 May", time: "14:30", event: "ECG power outage — generator started", type: "Power", dotColor: "bg-red-400" },
 ];
 

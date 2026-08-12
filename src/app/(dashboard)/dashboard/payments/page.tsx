@@ -117,7 +117,7 @@ export default function PaymentsPage() {
       <PageHeader title="Payments" description="Track all payments and transactions" action={{ label: "Record Payment", onClick: () => setShowAdd(true) }} />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard title="Total Collected" value={formatCurrency(totalCompleted)} icon={Wallet} iconClassName="bg-emerald-50 text-emerald-600" />
+        <StatCard title="Total Collected" value={formatCurrency(totalCompleted)} icon={Wallet} iconClassName="bg-teal-500/10 text-teal-500" />
         <StatCard title="Pending" value={formatCurrency(totalPending)} icon={Clock} iconClassName="bg-amber-50 text-amber-600" />
         <StatCard title="Transactions" value={allPayments.length} icon={CreditCard} iconClassName="bg-blue-50 text-blue-600" />
         <StatCard title="Today" value={formatCurrency(todayTotal)} icon={TrendingUp} iconClassName="bg-purple-50 text-purple-600" />
