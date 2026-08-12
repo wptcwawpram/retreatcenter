@@ -45,7 +45,7 @@ export function PublicNavbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
             {siteLogo ? (
-              <Image src={siteLogo} alt={SITE.name} width={140} height={48} className="h-10 w-auto object-contain" unoptimized />
+              <Image src={siteLogo} alt={SITE.name} width={200} height={64} className="h-14 w-auto object-contain" unoptimized />
             ) : (
               <>
                 <div className="w-9 h-9 border border-gold/40 rounded flex items-center justify-center">

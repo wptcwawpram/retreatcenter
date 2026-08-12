@@ -19,7 +19,7 @@ export function PublicFooter() {
           <div className="lg:col-span-4">
             <div className="flex items-center gap-3 mb-5">
               {siteLogo ? (
-                <Image src={siteLogo} alt={SITE.name} width={140} height={48} className="h-12 w-auto object-contain" unoptimized />
+                <Image src={siteLogo} alt={SITE.name} width={200} height={72} className="h-16 w-auto object-contain" unoptimized />
               ) : (
                 <>
                   <div className="w-9 h-9 border border-gold/30 rounded flex items-center justify-center">

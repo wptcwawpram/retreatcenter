@@ -39,6 +39,7 @@ const navGroups = [
     items: [
       { label: "Rooms", href: "/dashboard/rooms", icon: BedDouble },
       { label: "Bookings", href: "/dashboard/bookings", icon: CalendarCheck },
+      { label: "Calendar", href: "/dashboard/calendar", icon: Calendar },
       { label: "Guests", href: "/dashboard/guests", icon: Users },
       { label: "Housekeeping", href: "/dashboard/housekeeping", icon: SprayCan },
       { label: "Events", href: "/dashboard/events", icon: Calendar },
@@ -91,7 +92,7 @@ export function DashboardSidebar() {
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 h-16 border-b border-sidebar-border">
         {siteLogo ? (
-          <Image src={siteLogo} alt="WPTC" width={collapsed ? 36 : 120} height={36} className={cn("object-contain shrink-0", collapsed ? "h-9 w-9" : "h-9 w-auto")} unoptimized />
+          <Image src={siteLogo} alt="WPTC" width={collapsed ? 40 : 160} height={48} className={cn("object-contain shrink-0", collapsed ? "h-10 w-10" : "h-12 w-auto")} unoptimized />
         ) : (
           <>
             <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-sidebar-primary shrink-0">
