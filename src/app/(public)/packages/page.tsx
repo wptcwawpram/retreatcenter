@@ -41,16 +41,17 @@ export default function PackagesPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative h-[45vh] min-h-[320px] overflow-hidden bg-neutral-900">
+      <section className="relative h-[50vh] min-h-[350px] overflow-hidden bg-luxury">
         <Image src={IMAGES.hero.packages} alt="Retreat Packages" fill className="object-cover" priority quality={85} />
-        <div className="absolute inset-0 bg-black/45" />
+        <div className="absolute inset-0 bg-black/55" />
         <div className="relative h-full flex items-center justify-center text-center">
           <div>
-            <p className="text-burnt-light text-xs font-bold tracking-[0.2em] uppercase mb-3">Packages</p>
-            <h1 className="font-[family-name:var(--font-playfair)] text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-3">
+            <div className="w-10 h-px bg-gold mx-auto mb-5" />
+            <p className="text-gold/60 text-[11px] tracking-[0.2em] uppercase mb-3">Packages</p>
+            <h1 className="font-[family-name:var(--font-playfair)] text-4xl md:text-5xl lg:text-6xl font-bold text-warm-white mb-4">
               Retreat Packages
             </h1>
-            <p className="text-white/60 text-base max-w-2xl mx-auto">
+            <p className="text-warm-muted text-base max-w-2xl mx-auto">
               Specially curated packages for your retreat, conference or spiritual programs.
             </p>
           </div>
@@ -58,17 +59,17 @@ export default function PackagesPage() {
       </section>
 
       {/* Tabs + Cards */}
-      <section className="py-16 md:py-20 bg-white">
+      <section className="py-20 md:py-28 bg-luxury">
         <div className="container mx-auto px-6">
-          <div className="flex flex-wrap justify-center gap-2 mb-12">
+          <div className="flex flex-wrap justify-center gap-1 mb-14">
             {TABS.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-5 py-2.5 rounded-full text-[12px] font-semibold tracking-wide transition-all duration-300 ${
+                className={`px-5 py-2.5 text-[11px] tracking-[0.15em] uppercase transition-all duration-300 border ${
                   activeTab === tab
-                    ? "bg-burnt text-white shadow-md shadow-burnt/20"
-                    : "bg-neutral-50 text-neutral-500 hover:text-neutral-800 border border-neutral-200 hover:border-neutral-300"
+                    ? "bg-gold/10 border-gold/40 text-gold"
+                    : "border-gold/10 text-warm-muted hover:text-warm-white hover:border-gold/20"
                 }`}
               >
                 {tab}
@@ -76,30 +77,30 @@ export default function PackagesPage() {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-1 max-w-4xl mx-auto">
             {filtered.map((pkg, i) => (
               <FadeIn key={pkg.name} delay={i * 0.06}>
-                <div className="group bg-white rounded-xl border border-neutral-100 shadow-sm hover:shadow-lg transition-all duration-500 overflow-hidden">
-                  <div className="relative h-52 overflow-hidden">
+                <div className="group bg-luxury-card border border-gold/8 overflow-hidden hover:border-gold/20 transition-colors duration-500">
+                  <div className="relative h-56 overflow-hidden">
                     <Image src={pkg.image} alt={pkg.name} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-width: 768px) 100vw, 50vw" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                     <div className="absolute bottom-3 right-3">
-                      <span className="bg-white/90 backdrop-blur-sm text-neutral-900 text-sm font-bold px-3 py-1.5 rounded-lg">
+                      <span className="bg-gold/90 text-luxury text-sm font-bold px-3 py-1.5">
                         {pkg.price}
                       </span>
                     </div>
                   </div>
-                  <div className="p-5">
-                    <h3 className="font-[family-name:var(--font-playfair)] text-lg font-bold text-neutral-900 mb-2">{pkg.name}</h3>
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-400 mb-3">
-                      <span className="flex items-center gap-1"><Users className="h-3 w-3" />{pkg.guests}</span>
-                      {pkg.duration && <span className="flex items-center gap-1"><CalendarDays className="h-3 w-3" />{pkg.duration}</span>}
-                      {pkg.board && <span className="flex items-center gap-1"><UtensilsCrossed className="h-3 w-3" />{pkg.board}</span>}
+                  <div className="p-6">
+                    <h3 className="font-[family-name:var(--font-playfair)] text-lg font-bold text-warm-white mb-2">{pkg.name}</h3>
+                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-warm-muted mb-3">
+                      <span className="flex items-center gap-1"><Users className="h-3 w-3 text-gold/40" />{pkg.guests}</span>
+                      {pkg.duration && <span className="flex items-center gap-1"><CalendarDays className="h-3 w-3 text-gold/40" />{pkg.duration}</span>}
+                      {pkg.board && <span className="flex items-center gap-1"><UtensilsCrossed className="h-3 w-3 text-gold/40" />{pkg.board}</span>}
                     </div>
-                    <p className="text-sm text-neutral-500 leading-relaxed mb-4">{pkg.description}</p>
+                    <p className="text-sm text-warm-muted leading-relaxed mb-5">{pkg.description}</p>
                     <Link href="/contact">
-                      <span className="inline-flex items-center gap-1 text-sm font-semibold text-burnt hover:text-burnt-dark transition-colors">
-                        View Details <ArrowRight className="h-3.5 w-3.5" />
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-gold tracking-[0.1em] uppercase hover:text-gold-bright transition-colors">
+                        View Details <ArrowRight className="h-3 w-3" />
                       </span>
                     </Link>
                   </div>
@@ -111,23 +112,23 @@ export default function PackagesPage() {
       </section>
 
       {/* Custom CTA */}
-      <section className="py-16 bg-cream">
+      <section className="py-16 bg-luxury-card border-t border-gold/8">
         <div className="container mx-auto px-6">
           <FadeIn>
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6 max-w-3xl mx-auto bg-burnt text-white rounded-2xl p-8 shadow-xl shadow-burnt/20">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 max-w-3xl mx-auto border border-gold/15 p-8">
               <div>
-                <h3 className="font-[family-name:var(--font-playfair)] text-lg font-bold mb-1">Need a Custom Package?</h3>
-                <p className="text-white/70 text-sm">We can tailor a package to match your group size, budget, and requirements.</p>
+                <h3 className="font-[family-name:var(--font-playfair)] text-lg font-bold text-warm-white mb-1">Need a Custom Package?</h3>
+                <p className="text-warm-muted text-sm">We can tailor a package to match your group size, budget, and requirements.</p>
               </div>
               <div className="flex gap-3 shrink-0">
                 <Link href="/contact">
-                  <Button className="bg-white text-burnt hover:bg-neutral-100 text-sm h-10 px-5 font-semibold">
-                    Contact Us <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                  <Button className="bg-gold text-luxury hover:bg-gold-bright text-[11px] tracking-[0.1em] uppercase h-10 px-5 font-semibold">
+                    Contact Us <ArrowRight className="h-3 w-3 ml-1.5" />
                   </Button>
                 </Link>
                 <a href={`tel:${SITE.phone.replace(/\s/g, "")}`}>
-                  <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 text-sm h-10 px-5">
-                    <Phone className="h-3.5 w-3.5 mr-1" /> Call Us
+                  <Button variant="outline" className="border-gold/30 text-gold hover:bg-gold/10 text-[11px] tracking-[0.1em] uppercase h-10 px-5">
+                    <Phone className="h-3 w-3 mr-1.5" /> Call Us
                   </Button>
                 </a>
               </div>

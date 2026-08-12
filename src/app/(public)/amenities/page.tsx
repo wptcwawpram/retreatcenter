@@ -1,11 +1,13 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { motion, useInView } from "framer-motion";
 import { useRef, type ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 import { AMENITIES } from "@/lib/site-data";
 import { IMAGES } from "@/lib/images";
-import { BedDouble, TreePine, ChefHat, UtensilsCrossed, Store, Sofa, Church, Tent } from "lucide-react";
+import { ArrowRight, BedDouble, TreePine, ChefHat, UtensilsCrossed, Store, Sofa, Church, Tent } from "lucide-react";
 
 const SPRING = { type: "spring" as const, stiffness: 80, damping: 20, mass: 0.8 };
 
@@ -38,60 +40,65 @@ export default function AmenitiesPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative h-[45vh] min-h-[320px] overflow-hidden bg-neutral-900">
-        <Image src={IMAGES.hero.amenities} alt="Facilities" fill className="object-cover" priority quality={85} />
-        <div className="absolute inset-0 bg-black/45" />
+      <section className="relative h-[50vh] min-h-[350px] overflow-hidden bg-luxury">
+        <Image src={IMAGES.hero.amenities} alt="Amenities" fill className="object-cover" priority quality={85} />
+        <div className="absolute inset-0 bg-black/55" />
         <div className="relative h-full flex items-center justify-center text-center">
           <div>
-            <p className="text-burnt-light text-xs font-bold tracking-[0.2em] uppercase mb-3">Facilities</p>
-            <h1 className="font-[family-name:var(--font-playfair)] text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-3">
-              Amenities & Facilities
+            <div className="w-10 h-px bg-gold mx-auto mb-5" />
+            <p className="text-gold/60 text-[11px] tracking-[0.2em] uppercase mb-3">Facilities</p>
+            <h1 className="font-[family-name:var(--font-playfair)] text-4xl md:text-5xl lg:text-6xl font-bold text-warm-white mb-4">
+              Amenities
             </h1>
-            <p className="text-white/60 text-base max-w-2xl mx-auto">
-              Modern facilities set within a peaceful, lush environment for your comfort and spiritual renewal.
+            <p className="text-warm-muted text-base max-w-2xl mx-auto">
+              Everything you need for a comfortable and memorable retreat experience.
             </p>
           </div>
         </div>
       </section>
 
       {/* Amenities */}
-      <section className="py-20 md:py-28 bg-white">
-        <div className="container mx-auto px-6">
-          <div className="space-y-6 max-w-5xl mx-auto">
-            {AMENITIES.map((amenity, i) => {
-              const Icon = ICON_MAP[amenity.icon] ?? Church;
-              const imgSrc = AMENITY_IMAGES[amenity.title];
-              const isEven = i % 2 === 0;
-              return (
-                <FadeIn key={amenity.title} delay={i * 0.04}>
-                  <div className={`group flex flex-col ${isEven ? "md:flex-row" : "md:flex-row-reverse"} overflow-hidden rounded-xl border border-neutral-100 bg-white hover:shadow-lg transition-shadow duration-500`}>
-                    {imgSrc && (
-                      <div className="relative w-full md:w-[300px] h-52 md:h-auto shrink-0 overflow-hidden">
-                        <Image
-                          src={imgSrc}
-                          alt={amenity.title}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-700"
-                          sizes="(max-width: 768px) 100vw, 300px"
-                        />
-                      </div>
-                    )}
-                    <div className="flex items-start gap-4 p-6 md:p-8">
-                      <div className="shrink-0 w-11 h-11 rounded-lg bg-burnt/8 flex items-center justify-center text-burnt">
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <h3 className="font-[family-name:var(--font-playfair)] text-lg font-bold text-neutral-900 mb-2">
-                          {amenity.title}
-                        </h3>
-                        <p className="text-neutral-500 leading-relaxed text-sm">{amenity.description}</p>
-                      </div>
-                    </div>
+      <section className="py-24 md:py-32 bg-luxury">
+        <div className="container mx-auto px-6 max-w-6xl">
+          {AMENITIES.map((amenity, i) => {
+            const Icon = ICON_MAP[amenity.icon];
+            const img = AMENITY_IMAGES[amenity.title];
+            const isEven = i % 2 === 0;
+
+            return (
+              <FadeIn key={amenity.title} delay={0.05}>
+                <div className={`grid grid-cols-1 lg:grid-cols-2 gap-0 mb-1 ${!isEven ? "" : ""}`}>
+                  <div className={`relative aspect-[16/10] lg:aspect-auto lg:min-h-[320px] overflow-hidden ${!isEven ? "lg:order-2" : ""}`}>
+                    {img && <Image src={img} alt={amenity.title} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 50vw" />}
+                    <div className="absolute inset-0 bg-black/20" />
                   </div>
-                </FadeIn>
-              );
-            })}
-          </div>
+                  <div className={`bg-luxury-card border border-gold/8 p-8 md:p-12 flex flex-col justify-center ${!isEven ? "lg:order-1" : ""}`}>
+                    {Icon && <Icon className="h-5 w-5 text-gold/60 mb-4" />}
+                    <h3 className="font-[family-name:var(--font-playfair)] text-2xl font-bold text-warm-white mb-3">{amenity.title}</h3>
+                    <div className="w-10 h-px bg-gold/25 mb-4" />
+                    <p className="text-warm-muted leading-relaxed">{amenity.description}</p>
+                  </div>
+                </div>
+              </FadeIn>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-16 bg-luxury-card border-t border-gold/8">
+        <div className="container mx-auto px-6 text-center">
+          <FadeIn>
+            <h3 className="font-[family-name:var(--font-playfair)] text-2xl font-bold text-warm-white mb-3">
+              Ready to Experience Our Facilities?
+            </h3>
+            <p className="text-warm-muted mb-6">Book your stay and enjoy all our amenities.</p>
+            <Link href="/booking">
+              <Button className="bg-gold text-luxury hover:bg-gold-bright font-semibold h-11 px-8 text-[11px] tracking-[0.12em] uppercase">
+                Book Now <ArrowRight className="h-3.5 w-3.5 ml-2" />
+              </Button>
+            </Link>
+          </FadeIn>
         </div>
       </section>
     </>

@@ -17,7 +17,6 @@ import {
   TreePine,
   Wifi,
   Phone,
-  Mail,
   ChevronLeft,
   ChevronRight,
   Sparkles,
@@ -107,8 +106,8 @@ export default function HomePage() {
 
   return (
     <>
-      {/* ═══ HERO SLIDER ═══ */}
-      <section className="relative h-[85vh] min-h-[550px] max-h-[800px] overflow-hidden bg-neutral-900">
+      {/* HERO SLIDER */}
+      <section className="relative h-[90vh] min-h-[600px] max-h-[900px] overflow-hidden bg-luxury">
         <AnimatePresence initial={false} custom={direction}>
           <motion.div
             key={slide}
@@ -127,11 +126,10 @@ export default function HomePage() {
               priority={slide === 0}
               quality={90}
             />
-            <div className="absolute inset-0 bg-black/40" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-black/20" />
           </motion.div>
         </AnimatePresence>
 
-        {/* Slide content */}
         <div className="relative h-full container mx-auto px-6 flex items-center">
           <div className="max-w-xl">
             <AnimatePresence mode="wait">
@@ -142,23 +140,24 @@ export default function HomePage() {
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
-                <h1 className="font-[family-name:var(--font-playfair)] text-4xl sm:text-5xl md:text-6xl font-bold text-white leading-[1.1] mb-4 whitespace-pre-line">
+                <div className="w-12 h-px bg-gold mb-6" />
+                <h1 className="font-[family-name:var(--font-playfair)] text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-warm-white leading-[1.08] mb-5 whitespace-pre-line">
                   {current.title}
                 </h1>
-                <p className="text-white/70 text-base md:text-lg mb-8 max-w-md">
+                <p className="text-warm-muted text-base md:text-lg mb-10 max-w-md leading-relaxed">
                   {current.subtitle}
                 </p>
               </motion.div>
             </AnimatePresence>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <Link href="/booking">
-                <Button size="lg" className="bg-burnt hover:bg-burnt-dark text-white font-semibold h-12 px-7 text-sm shadow-xl shadow-burnt/25">
+                <Button size="lg" className="bg-transparent border border-gold/50 text-gold hover:bg-gold/10 font-medium h-12 px-8 text-[11px] tracking-[0.15em] uppercase">
                   Book Your Stay
                 </Button>
               </Link>
               <Link href="/rooms">
-                <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 font-medium h-12 px-7 text-sm backdrop-blur-sm">
-                  View Rooms
+                <Button size="lg" variant="ghost" className="text-warm-white/60 hover:text-warm-white hover:bg-white/5 font-medium h-12 px-6 text-[11px] tracking-[0.15em] uppercase gap-2">
+                  View Rooms <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
               </Link>
             </div>
@@ -166,26 +165,24 @@ export default function HomePage() {
         </div>
 
         {/* Slider controls */}
-        <div className="absolute bottom-6 left-0 right-0">
+        <div className="absolute bottom-8 left-0 right-0">
           <div className="container mx-auto px-6 flex items-center justify-between">
-            {/* Dots */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               {HERO_SLIDES.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => goTo(i)}
-                  className={`h-1.5 rounded-full transition-all duration-500 ${
-                    i === slide ? "w-8 bg-burnt" : "w-4 bg-white/40 hover:bg-white/60"
+                  className={`h-[2px] rounded-full transition-all duration-500 ${
+                    i === slide ? "w-10 bg-gold" : "w-5 bg-warm-white/25 hover:bg-warm-white/40"
                   }`}
                 />
               ))}
             </div>
-            {/* Arrows */}
             <div className="flex items-center gap-2">
-              <button onClick={prev} className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors">
+              <button onClick={prev} className="w-10 h-10 border border-gold/20 flex items-center justify-center text-warm-white/60 hover:text-gold hover:border-gold/40 transition-colors">
                 <ChevronLeft className="h-4 w-4" />
               </button>
-              <button onClick={next} className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors">
+              <button onClick={next} className="w-10 h-10 border border-gold/20 flex items-center justify-center text-warm-white/60 hover:text-gold hover:border-gold/40 transition-colors">
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
@@ -193,18 +190,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ═══ THREE PILLARS ═══ */}
-      <section className="py-16 bg-white border-b border-neutral-100">
+      {/* THREE PILLARS */}
+      <section className="py-16 bg-luxury-card border-b border-gold/8">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {PILLARS.map((p, i) => (
               <FadeIn key={p.title} delay={i * 0.1}>
                 <div className="text-center">
-                  <div className="w-12 h-12 rounded-full bg-burnt/8 flex items-center justify-center mx-auto mb-4">
-                    <p.icon className="h-5 w-5 text-burnt" />
+                  <div className="w-12 h-12 border border-gold/20 flex items-center justify-center mx-auto mb-4">
+                    <p.icon className="h-5 w-5 text-gold" />
                   </div>
-                  <h3 className="font-[family-name:var(--font-playfair)] text-base font-bold text-neutral-900 mb-2">{p.title}</h3>
-                  <p className="text-sm text-neutral-500 leading-relaxed">{p.desc}</p>
+                  <h3 className="font-[family-name:var(--font-playfair)] text-base font-bold text-warm-white mb-2">{p.title}</h3>
+                  <p className="text-sm text-warm-muted leading-relaxed">{p.desc}</p>
                 </div>
               </FadeIn>
             ))}
@@ -212,36 +209,37 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ═══ ABOUT PREVIEW ═══ */}
-      <section className="py-20 md:py-28 bg-cream">
+      {/* ABOUT PREVIEW */}
+      <section className="py-24 md:py-32 bg-luxury">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center max-w-6xl mx-auto">
             <FadeIn>
               <div className="relative">
-                <div className="rounded-2xl overflow-hidden shadow-xl">
-                  <Image src={IMAGES.lifestyle.fellowship} alt="Fellowship at WPTC" width={600} height={450} className="w-full h-[380px] object-cover" />
+                <div className="overflow-hidden">
+                  <Image src={IMAGES.lifestyle.fellowship} alt="Fellowship at WPTC" width={600} height={450} className="w-full h-[420px] object-cover" />
                 </div>
-                <div className="absolute -bottom-6 -right-4 bg-burnt text-white rounded-xl p-5 shadow-lg hidden md:block">
-                  <div className="font-[family-name:var(--font-playfair)] text-3xl font-bold mb-0.5">10+</div>
-                  <div className="text-xs text-white/70 tracking-wide">Years of<br />Ministry</div>
+                <div className="absolute -bottom-6 -right-4 bg-luxury-card border border-gold/15 p-5 hidden md:block">
+                  <div className="font-[family-name:var(--font-playfair)] text-3xl font-bold text-gold mb-0.5">10+</div>
+                  <div className="text-xs text-warm-muted tracking-wide">Years of<br />Ministry</div>
                 </div>
               </div>
             </FadeIn>
 
             <FadeIn delay={0.1}>
-              <p className="text-burnt text-xs font-bold tracking-[0.2em] uppercase mb-3">About Us</p>
-              <h2 className="font-[family-name:var(--font-playfair)] text-3xl md:text-4xl font-bold text-neutral-900 mb-5 leading-tight">
+              <p className="text-gold/60 text-[11px] tracking-[0.2em] uppercase mb-4">About Us</p>
+              <h2 className="font-[family-name:var(--font-playfair)] text-3xl md:text-4xl font-bold text-warm-white mb-6 leading-tight">
                 A Sanctuary for Spiritual Renewal
               </h2>
-              <p className="text-neutral-500 leading-relaxed mb-4">
+              <div className="w-12 h-px bg-gold/30 mb-6" />
+              <p className="text-warm-muted leading-relaxed mb-4">
                 Warriors Prayer Tower Complex is a premier Christian retreat centre nestled in the peaceful community of Atwima Boko, Kumasi, Ghana.
               </p>
-              <p className="text-neutral-500 leading-relaxed mb-8">
+              <p className="text-warm-muted leading-relaxed mb-8">
                 Whether you seek a personal retreat, family getaway, church program or a life-transforming encounter — our world-class facilities and genuine hospitality ensure an unforgettable experience.
               </p>
               <Link href="/about">
-                <Button variant="outline" className="border-burnt text-burnt hover:bg-burnt hover:text-white gap-2 font-semibold transition-all duration-300">
-                  Learn More <ArrowRight className="h-4 w-4" />
+                <Button variant="outline" className="border-gold/30 text-gold hover:bg-gold/10 gap-2 font-medium tracking-[0.1em] uppercase text-[11px] h-11 px-6">
+                  Learn More <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
               </Link>
             </FadeIn>
@@ -249,15 +247,15 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ═══ FACILITIES STRIP ═══ */}
-      <section className="py-14 bg-neutral-900 text-white">
+      {/* FACILITIES STRIP */}
+      <section className="py-12 bg-luxury-card border-y border-gold/8">
         <div className="container mx-auto px-6">
           <div className="flex flex-wrap justify-center gap-x-12 gap-y-6">
             {FACILITIES.map((f, i) => (
               <FadeIn key={f.label} delay={i * 0.05}>
                 <div className="flex items-center gap-3">
-                  <f.icon className="h-5 w-5 text-burnt" />
-                  <span className="text-sm font-medium text-white/80">{f.label}</span>
+                  <f.icon className="h-4 w-4 text-gold/60" />
+                  <span className="text-[12px] font-medium text-warm-white/60 tracking-[0.08em] uppercase">{f.label}</span>
                 </div>
               </FadeIn>
             ))}
@@ -265,81 +263,81 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ═══ ROOMS SHOWCASE ═══ */}
-      <section className="py-20 md:py-28 bg-white">
+      {/* ROOMS SHOWCASE */}
+      <section className="py-24 md:py-32 bg-luxury">
         <div className="container mx-auto px-6">
-          <div className="text-center mb-14 max-w-xl mx-auto">
+          <div className="text-center mb-16 max-w-xl mx-auto">
             <FadeIn>
-              <p className="text-burnt text-xs font-bold tracking-[0.2em] uppercase mb-3">Accommodation</p>
-              <h2 className="font-[family-name:var(--font-playfair)] text-3xl md:text-4xl font-bold text-neutral-900 mb-3">
+              <p className="text-gold/60 text-[11px] tracking-[0.2em] uppercase mb-4">Accommodation</p>
+              <h2 className="font-[family-name:var(--font-playfair)] text-3xl md:text-4xl font-bold text-warm-white mb-4">
                 Rooms & Suites
               </h2>
-              <p className="text-neutral-500">From cozy shared rooms to premium air-conditioned suites — find the perfect space for your stay.</p>
+              <div className="w-12 h-px bg-gold/30 mx-auto mb-4" />
+              <p className="text-warm-muted">From cozy shared rooms to premium air-conditioned suites — find the perfect space for your stay.</p>
             </FadeIn>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1 max-w-5xl mx-auto">
             {ROOMS.slice(0, 6).map((room, i) => (
               <FadeIn key={room.slug} delay={i * 0.06}>
-                <Link href="/booking" className="group block">
-                  <div className="relative rounded-xl overflow-hidden aspect-[4/3] mb-3">
-                    <Image
-                      src={IMAGES.rooms[room.slug as keyof typeof IMAGES.rooms]}
-                      alt={room.name}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-700"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-                    {room.featured && (
-                      <span className="absolute top-3 left-3 bg-burnt text-white text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-md">
-                        Premium
-                      </span>
-                    )}
-                    <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
-                      <div>
-                        <h3 className="font-[family-name:var(--font-playfair)] text-white font-bold text-base">{room.name}</h3>
-                        <div className="flex items-center gap-3 text-white/70 text-[11px] mt-0.5">
-                          <span className="flex items-center gap-1"><Users className="h-3 w-3" />{room.capacity}</span>
-                          <span className="flex items-center gap-1"><BedDouble className="h-3 w-3" />{room.beds} beds</span>
-                        </div>
+                <Link href="/booking" className="group block relative overflow-hidden aspect-[4/3]">
+                  <Image
+                    src={IMAGES.rooms[room.slug as keyof typeof IMAGES.rooms]}
+                    alt={room.name}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover:from-black/80 transition-colors duration-500" />
+                  {room.featured && (
+                    <span className="absolute top-3 left-3 bg-gold/90 text-luxury text-[9px] font-bold tracking-[0.15em] uppercase px-2.5 py-1">
+                      Premium
+                    </span>
+                  )}
+                  <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
+                    <div>
+                      <h3 className="font-[family-name:var(--font-playfair)] text-warm-white font-bold text-base mb-1">{room.name}</h3>
+                      <div className="flex items-center gap-3 text-warm-white/50 text-[11px]">
+                        <span className="flex items-center gap-1"><Users className="h-3 w-3" />{room.capacity}</span>
+                        <span className="flex items-center gap-1"><BedDouble className="h-3 w-3" />{room.beds} beds</span>
                       </div>
-                      <span className="text-white font-bold text-sm bg-black/30 backdrop-blur-sm px-2.5 py-1 rounded-md">
-                        GH₵{room.price}
-                      </span>
                     </div>
+                    <span className="text-gold font-semibold text-sm">
+                      GH&#x20B5;{room.price}
+                    </span>
                   </div>
                 </Link>
               </FadeIn>
             ))}
           </div>
 
-          <FadeIn className="text-center mt-10">
+          <FadeIn className="text-center mt-12">
             <Link href="/rooms">
-              <Button variant="outline" className="border-neutral-300 text-neutral-700 hover:bg-neutral-50 gap-2">
-                View All Rooms <ArrowRight className="h-4 w-4" />
+              <Button variant="outline" className="border-gold/25 text-gold hover:bg-gold/10 gap-2 tracking-[0.1em] uppercase text-[11px] h-10 px-6">
+                View All Rooms <ArrowRight className="h-3.5 w-3.5" />
               </Button>
             </Link>
           </FadeIn>
         </div>
       </section>
 
-      {/* ═══ SCRIPTURE BANNER ═══ */}
-      <section className="relative py-24 overflow-hidden">
+      {/* SCRIPTURE BANNER */}
+      <section className="relative py-28 overflow-hidden">
         <Image src={IMAGES.lifestyle.prayer} alt="Prayer" fill className="object-cover" sizes="100vw" />
-        <div className="absolute inset-0 bg-black/55" />
+        <div className="absolute inset-0 bg-black/65" />
         <div className="relative container mx-auto px-6 text-center max-w-3xl">
           <FadeIn>
-            <blockquote className="font-[family-name:var(--font-playfair)] text-xl md:text-2xl lg:text-3xl text-white italic leading-relaxed mb-5">
+            <div className="w-8 h-px bg-gold mx-auto mb-8" />
+            <blockquote className="font-[family-name:var(--font-playfair)] text-xl md:text-2xl lg:text-3xl text-warm-white italic leading-relaxed mb-6">
               &ldquo;But as for me, I will come into your house in the multitude of your steadfast love; in fear of you I will bow down toward your holy temple.&rdquo;
             </blockquote>
-            <p className="text-burnt-light text-sm font-semibold">&mdash; Psalm 5:7</p>
+            <p className="text-gold text-sm tracking-[0.1em]">&mdash; Psalm 5:7</p>
           </FadeIn>
         </div>
       </section>
 
-      {/* ═══ STATS ═══ */}
-      <section className="py-16 bg-white">
+      {/* STATS */}
+      <section className="py-16 bg-luxury-card border-y border-gold/8">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
             {[
@@ -349,34 +347,35 @@ export default function HomePage() {
               { value: 1000, suffix: "+", label: "Guests Served" },
             ].map((stat, i) => (
               <FadeIn key={stat.label} delay={i * 0.08} className="text-center">
-                <div className="font-[family-name:var(--font-playfair)] text-3xl md:text-4xl font-bold text-burnt mb-1">
+                <div className="font-[family-name:var(--font-playfair)] text-3xl md:text-4xl font-bold text-gold mb-1">
                   <CountUp target={stat.value} suffix={stat.suffix} />
                 </div>
-                <p className="text-xs text-neutral-400 font-medium tracking-wide uppercase">{stat.label}</p>
+                <p className="text-[10px] text-warm-muted font-medium tracking-[0.15em] uppercase">{stat.label}</p>
               </FadeIn>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ═══ CTA ═══ */}
-      <section className="py-16 bg-cream">
+      {/* CTA */}
+      <section className="py-20 bg-luxury">
         <div className="container mx-auto px-6">
           <FadeIn>
-            <div className="max-w-4xl mx-auto bg-burnt rounded-2xl p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-6 text-white shadow-xl shadow-burnt/20">
-              <div>
-                <h3 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl font-bold mb-2">Ready to Book Your Stay?</h3>
-                <p className="text-white/70 text-sm">Contact us today or book directly online.</p>
-              </div>
-              <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0">
+            <div className="max-w-3xl mx-auto text-center">
+              <p className="text-gold/60 text-[11px] tracking-[0.2em] uppercase mb-4">Plan Your Visit</p>
+              <h3 className="font-[family-name:var(--font-playfair)] text-3xl md:text-4xl font-bold text-warm-white mb-4">
+                Ready to Book Your Stay?
+              </h3>
+              <p className="text-warm-muted mb-10 max-w-md mx-auto">Contact us today or book directly online for an unforgettable retreat experience.</p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link href="/booking">
-                  <Button size="lg" className="bg-white text-burnt hover:bg-neutral-100 font-semibold h-12 px-7 shadow-md">
-                    Book Now <ArrowRight className="h-4 w-4 ml-1" />
+                  <Button size="lg" className="bg-gold text-luxury hover:bg-gold-bright font-semibold h-12 px-8 text-[11px] tracking-[0.12em] uppercase">
+                    Book Now <ArrowRight className="h-3.5 w-3.5 ml-2" />
                   </Button>
                 </Link>
                 <a href={`tel:${SITE.phone.replace(/\s/g, "")}`}>
-                  <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 h-12 px-7">
-                    <Phone className="h-4 w-4 mr-2" /> Call Us
+                  <Button size="lg" variant="outline" className="border-gold/30 text-gold hover:bg-gold/10 h-12 px-8 text-[11px] tracking-[0.12em] uppercase">
+                    <Phone className="h-3.5 w-3.5 mr-2" /> Call Us
                   </Button>
                 </a>
               </div>
