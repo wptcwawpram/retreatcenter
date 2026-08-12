@@ -160,6 +160,7 @@ function ImageCard({
 }
 
 export default function SiteImagesPage() {
+  const logoRef = useRef<HTMLInputElement>(null);
   const [defaults] = useState(() => flattenImages(IMAGES as unknown as Record<string, ImageValue>));
   const [overrides, setOverrides] = useState<Record<string, string>>({});
   const [currentUrls, setCurrentUrls] = useState<Record<string, string>>({});
@@ -264,6 +265,83 @@ export default function SiteImagesPage() {
           <button onClick={() => setError("")} className="ml-2 text-red-300 hover:text-red-200">×</button>
         </div>
       )}
+
+      {/* Logo / Branding */}
+      <div className="border border-border/50 rounded-lg overflow-hidden bg-card/50">
+        <div className="px-4 py-3 flex items-center gap-3 border-b border-border/50">
+          <ImageIcon className="h-4 w-4 text-sidebar-primary" />
+          <span className="font-semibold text-sm">Site Logo</span>
+          {overrides["branding.logo"] && (
+            <span className="text-[10px] bg-sidebar-primary/15 text-sidebar-primary px-2 py-0.5 rounded-full font-medium">
+              Custom
+            </span>
+          )}
+        </div>
+        <div className="p-4">
+          <p className="text-xs text-muted-foreground mb-4">
+            Upload your site logo. It appears on the navbar, dashboard sidebar, and footer. Recommended: square or landscape, transparent PNG.
+          </p>
+          <div className="flex items-center gap-4">
+            <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-border/50 bg-muted/20 shrink-0 group">
+              {currentUrls["branding.logo"] ? (
+                <Image
+                  src={currentUrls["branding.logo"]}
+                  alt="Site logo"
+                  fill
+                  className="object-contain p-1"
+                  unoptimized
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <span className="text-2xl font-bold text-sidebar-primary font-[family-name:var(--font-playfair)]">W</span>
+                </div>
+              )}
+              <div
+                onClick={() => logoRef.current?.click()}
+                className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer flex items-center justify-center"
+              >
+                <Upload className="h-5 w-5 text-white" />
+              </div>
+            </div>
+            <div className="flex-1 space-y-2">
+              <input
+                ref={logoRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleUpload("branding.logo", file);
+                  e.target.value = "";
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => logoRef.current?.click()}
+                disabled={!!saving["branding.logo"]}
+                className="w-full flex items-center justify-center gap-2 h-10 rounded-md border border-dashed border-sidebar-primary/30 text-sidebar-primary text-sm hover:bg-sidebar-primary/5 transition-colors disabled:opacity-50"
+              >
+                {saving["branding.logo"] ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" />Uploading...</>
+                ) : saved["branding.logo"] ? (
+                  <><Check className="h-4 w-4" />Uploaded!</>
+                ) : (
+                  <><Upload className="h-4 w-4" />Upload Logo</>
+                )}
+              </button>
+              {overrides["branding.logo"] && (
+                <button
+                  onClick={() => handleReset("branding.logo")}
+                  disabled={!!saving["branding.logo"]}
+                  className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1"
+                >
+                  <RotateCcw className="h-3 w-3" />Reset to default text logo
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="space-y-3">
         {Object.entries(groups).map(([category, images]) => {

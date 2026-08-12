@@ -1,8 +1,14 @@
+"use client";
+
 import Link from "next/link";
+import Image from "next/image";
 import { Phone, Mail, MapPin } from "lucide-react";
 import { SITE, NAV_LINKS, SERVICES } from "@/lib/site-data";
+import { useSiteLogo } from "@/lib/use-site-logo";
 
 export function PublicFooter() {
+  const siteLogo = useSiteLogo();
+
   return (
     <footer className="bg-luxury relative">
       <div className="h-px bg-gradient-to-r from-transparent via-gold/20 to-transparent" />
@@ -12,13 +18,19 @@ export function PublicFooter() {
           {/* Brand */}
           <div className="lg:col-span-4">
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-9 h-9 border border-gold/30 rounded flex items-center justify-center">
-                <span className="text-gold font-[family-name:var(--font-playfair)] font-bold text-sm">W</span>
-              </div>
-              <div>
-                <h3 className="font-[family-name:var(--font-playfair)] text-base font-bold text-warm-white">{SITE.shortName}</h3>
-                <p className="text-[8px] text-gold/50 tracking-[0.2em] uppercase">Retreat Centre</p>
-              </div>
+              {siteLogo ? (
+                <Image src={siteLogo} alt={SITE.name} width={140} height={48} className="h-12 w-auto object-contain" unoptimized />
+              ) : (
+                <>
+                  <div className="w-9 h-9 border border-gold/30 rounded flex items-center justify-center">
+                    <span className="text-gold font-[family-name:var(--font-playfair)] font-bold text-sm">W</span>
+                  </div>
+                  <div>
+                    <h3 className="font-[family-name:var(--font-playfair)] text-base font-bold text-warm-white">{SITE.shortName}</h3>
+                    <p className="text-[8px] text-gold/50 tracking-[0.2em] uppercase">Retreat Centre</p>
+                  </div>
+                </>
+              )}
             </div>
             <p className="text-sm text-warm-muted leading-relaxed max-w-xs">
               A premier Christian retreat centre in Ghana providing peaceful accommodation, conference facilities, and spiritual retreat programs.

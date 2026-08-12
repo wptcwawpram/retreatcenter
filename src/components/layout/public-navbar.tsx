@@ -8,11 +8,14 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { X, Menu, Phone, Mail, Shield } from "lucide-react";
 import { NAV_LINKS, SITE } from "@/lib/site-data";
+import { useSiteLogo } from "@/lib/use-site-logo";
+import Image from "next/image";
 
 export function PublicNavbar() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const siteLogo = useSiteLogo();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -41,17 +44,23 @@ export function PublicNavbar() {
         <div className="container mx-auto flex h-[72px] items-center justify-between px-6">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 border border-gold/40 rounded flex items-center justify-center">
-              <span className="text-gold font-[family-name:var(--font-playfair)] font-bold text-sm">W</span>
-            </div>
-            <div>
-              <h1 className="font-[family-name:var(--font-playfair)] text-[15px] font-bold tracking-[0.08em] text-warm-white leading-tight">
-                WARRIORS
-              </h1>
-              <p className="text-[8px] text-gold/60 tracking-[0.2em] uppercase">
-                Prayer Tower Complex
-              </p>
-            </div>
+            {siteLogo ? (
+              <Image src={siteLogo} alt={SITE.name} width={140} height={48} className="h-10 w-auto object-contain" unoptimized />
+            ) : (
+              <>
+                <div className="w-9 h-9 border border-gold/40 rounded flex items-center justify-center">
+                  <span className="text-gold font-[family-name:var(--font-playfair)] font-bold text-sm">W</span>
+                </div>
+                <div>
+                  <h1 className="font-[family-name:var(--font-playfair)] text-[15px] font-bold tracking-[0.08em] text-warm-white leading-tight">
+                    WARRIORS
+                  </h1>
+                  <p className="text-[8px] text-gold/60 tracking-[0.2em] uppercase">
+                    Prayer Tower Complex
+                  </p>
+                </div>
+              </>
+            )}
           </Link>
 
           {/* Desktop nav */}

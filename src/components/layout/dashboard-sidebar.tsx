@@ -24,6 +24,8 @@ import {
   ImageIcon,
 } from "lucide-react";
 import { useState } from "react";
+import Image from "next/image";
+import { useSiteLogo } from "@/lib/use-site-logo";
 
 const navGroups = [
   {
@@ -77,6 +79,7 @@ const navGroups = [
 export function DashboardSidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const siteLogo = useSiteLogo();
 
   return (
     <aside
@@ -87,16 +90,22 @@ export function DashboardSidebar() {
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 h-16 border-b border-sidebar-border">
-        <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-sidebar-primary shrink-0">
-          <Church className="h-4.5 w-4.5 text-sidebar-primary-foreground" />
-        </div>
-        {!collapsed && (
-          <div className="overflow-hidden">
-            <h1 className="text-sm font-bold leading-tight text-sidebar-primary tracking-wide">WPTC</h1>
-            <p className="text-[10px] text-sidebar-foreground/50 leading-tight">
-              Retreat Centre
-            </p>
-          </div>
+        {siteLogo ? (
+          <Image src={siteLogo} alt="WPTC" width={collapsed ? 36 : 120} height={36} className={cn("object-contain shrink-0", collapsed ? "h-9 w-9" : "h-9 w-auto")} unoptimized />
+        ) : (
+          <>
+            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-sidebar-primary shrink-0">
+              <Church className="h-4.5 w-4.5 text-sidebar-primary-foreground" />
+            </div>
+            {!collapsed && (
+              <div className="overflow-hidden">
+                <h1 className="text-sm font-bold leading-tight text-sidebar-primary tracking-wide">WPTC</h1>
+                <p className="text-[10px] text-sidebar-foreground/50 leading-tight">
+                  Retreat Centre
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
 
