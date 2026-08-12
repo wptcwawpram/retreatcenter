@@ -9,21 +9,11 @@ const SPRING = { type: "spring" as const, stiffness: 80, damping: 20, mass: 0.8 
 
 function FadeIn({ children, className, delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-80px" });
+  const isInView = useInView(ref, { once: true, margin: "-60px" });
   return (
-    <motion.div ref={ref} initial={{ opacity: 0, y: 30 }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }} transition={{ ...SPRING, delay }} className={className}>
+    <motion.div ref={ref} initial={{ opacity: 0, y: 24 }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }} transition={{ ...SPRING, delay }} className={className}>
       {children}
     </motion.div>
-  );
-}
-
-function SectionLabel({ label }: { label: string }) {
-  return (
-    <div className="flex items-center justify-center gap-4 mb-4">
-      <span className="h-px w-8 bg-gold/40" />
-      <span className="text-[11px] font-semibold tracking-[0.25em] uppercase text-gold">{label}</span>
-      <span className="h-px w-8 bg-gold/40" />
-    </div>
   );
 }
 
@@ -40,44 +30,41 @@ export default function GalleryPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative text-white py-28 md:py-36 overflow-hidden">
-        <Image src={IMAGES.hero.gallery} alt="WPTC Gallery" fill className="object-cover" priority quality={85} />
-        <div className="absolute inset-0 bg-gradient-to-b from-charcoal/80 via-charcoal/50 to-charcoal/80" />
-        <div className="relative container mx-auto px-6 text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SPRING, delay: 0.2 }}>
-            <SectionLabel label="Visual Tour" />
-          </motion.div>
-          <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SPRING, delay: 0.4 }}
-            className="font-[family-name:var(--font-playfair)] text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-            Photo{" "}
-            <span className="bg-gradient-to-r from-gold to-gold-dark bg-clip-text text-transparent">Gallery</span>
-          </motion.h1>
-          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SPRING, delay: 0.6 }}
-            className="text-base md:text-lg text-neutral-300 max-w-2xl mx-auto leading-relaxed">
-            Take a visual tour of Warriors Prayer Tower Complex and see what awaits you.
-          </motion.p>
+      <section className="relative h-[45vh] min-h-[320px] overflow-hidden bg-neutral-900">
+        <Image src={IMAGES.hero.gallery} alt="Gallery" fill className="object-cover" priority quality={85} />
+        <div className="absolute inset-0 bg-black/45" />
+        <div className="relative h-full flex items-center justify-center text-center">
+          <div>
+            <p className="text-burnt-light text-xs font-bold tracking-[0.2em] uppercase mb-3">Visual Tour</p>
+            <h1 className="font-[family-name:var(--font-playfair)] text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-3">
+              Photo Gallery
+            </h1>
+            <p className="text-white/60 text-base max-w-2xl mx-auto">
+              Take a visual tour of Warriors Prayer Tower Complex and see what awaits you.
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* Gallery Sections */}
-      <section className="py-20 md:py-28 bg-ivory">
+      {/* Gallery */}
+      <section className="py-20 md:py-28 bg-white">
         <div className="container mx-auto px-6">
-          <div className="max-w-6xl mx-auto space-y-24">
+          <div className="max-w-6xl mx-auto space-y-20">
             {GALLERY_SECTIONS.map((section) => (
               <FadeIn key={section.title}>
-                <div className="mb-8">
-                  <h2 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl font-bold text-charcoal mb-2">
+                <div className="mb-6">
+                  <p className="text-burnt text-xs font-bold tracking-[0.2em] uppercase mb-2">{section.description}</p>
+                  <h2 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl font-bold text-neutral-900">
                     {section.title}
                   </h2>
-                  <p className="text-neutral-500">{section.description}</p>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {section.images.map((src, i) => (
                     <div
                       key={i}
-                      className={`group relative overflow-hidden rounded-xl shadow-sm hover:shadow-xl transition-all duration-500 ${
-                        i === 0 ? "col-span-2 row-span-2 h-[300px] md:h-[420px]" : "h-[200px]"
+                      className={`group relative overflow-hidden rounded-lg ${
+                        i === 0 ? "col-span-2 row-span-2 h-[280px] md:h-[400px]" : "h-[180px] md:h-[195px]"
                       }`}
                     >
                       <Image
