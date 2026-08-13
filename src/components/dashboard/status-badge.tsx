@@ -7,7 +7,7 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status, config, className }: StatusBadgeProps) {
-  const cfg = config[status] ?? { label: status, color: "text-gray-700", bgColor: "bg-gray-100 border-gray-300" };
+  const cfg = config[status] ?? { label: status, color: "text-gray-700", bgColor: "bg-muted/40 border-border" };
   return (
     <span
       className={cn(

@@ -118,9 +118,9 @@ export default function PaymentsPage() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard title="Total Collected" value={formatCurrency(totalCompleted)} icon={Wallet} iconClassName="bg-teal-500/10 text-teal-500" />
-        <StatCard title="Pending" value={formatCurrency(totalPending)} icon={Clock} iconClassName="bg-amber-50 text-amber-600" />
-        <StatCard title="Transactions" value={allPayments.length} icon={CreditCard} iconClassName="bg-blue-50 text-blue-600" />
-        <StatCard title="Today" value={formatCurrency(todayTotal)} icon={TrendingUp} iconClassName="bg-purple-50 text-purple-600" />
+        <StatCard title="Pending" value={formatCurrency(totalPending)} icon={Clock} iconClassName="bg-amber-500/10 text-amber-600" />
+        <StatCard title="Transactions" value={allPayments.length} icon={CreditCard} iconClassName="bg-blue-500/10 text-blue-600" />
+        <StatCard title="Today" value={formatCurrency(todayTotal)} icon={TrendingUp} iconClassName="bg-purple-500/10 text-purple-600" />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2">

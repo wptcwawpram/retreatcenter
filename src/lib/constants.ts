@@ -30,32 +30,32 @@ export const ROOM_STATUS_CONFIG: Record<
   OCCUPIED: {
     label: "Occupied",
     color: "text-blue-700",
-    bgColor: "bg-blue-50 border-blue-200",
+    bgColor: "bg-blue-500/10 border-blue-500/20",
   },
   DIRTY: {
     label: "Dirty",
-    color: "text-amber-700",
-    bgColor: "bg-amber-50 border-amber-200",
+    color: "text-sidebar-primary",
+    bgColor: "bg-sidebar-primary/5 border-sidebar-primary/20",
   },
   CLEANING: {
     label: "Cleaning",
     color: "text-orange-700",
-    bgColor: "bg-orange-50 border-orange-200",
+    bgColor: "bg-orange-500/10 border-orange-500/20",
   },
   AWAITING_INSPECTION: {
     label: "Awaiting Inspection",
     color: "text-purple-700",
-    bgColor: "bg-purple-50 border-purple-200",
+    bgColor: "bg-purple-500/10 border-purple-500/20",
   },
   MAINTENANCE: {
     label: "Under Maintenance",
     color: "text-red-700",
-    bgColor: "bg-red-50 border-red-200",
+    bgColor: "bg-red-500/10 border-red-500/20",
   },
   BLOCKED: {
     label: "Blocked",
     color: "text-gray-700",
-    bgColor: "bg-gray-100 border-gray-300",
+    bgColor: "bg-muted/40 border-border",
   },
 };
 
@@ -67,13 +67,13 @@ export const BOOKING_STATUS_CONFIG: Record<
 > = {
   PENDING: {
     label: "Pending",
-    color: "text-amber-700",
-    bgColor: "bg-amber-50 border-amber-200",
+    color: "text-sidebar-primary",
+    bgColor: "bg-sidebar-primary/5 border-sidebar-primary/20",
   },
   CONFIRMED: {
     label: "Confirmed",
     color: "text-blue-700",
-    bgColor: "bg-blue-50 border-blue-200",
+    bgColor: "bg-blue-500/10 border-blue-500/20",
   },
   CHECKED_IN: {
     label: "Checked In",
@@ -83,22 +83,22 @@ export const BOOKING_STATUS_CONFIG: Record<
   CHECKED_OUT: {
     label: "Checked Out",
     color: "text-gray-700",
-    bgColor: "bg-gray-100 border-gray-300",
+    bgColor: "bg-muted/40 border-border",
   },
   CANCELLED: {
     label: "Cancelled",
     color: "text-red-700",
-    bgColor: "bg-red-50 border-red-200",
+    bgColor: "bg-red-500/10 border-red-500/20",
   },
   NO_SHOW: {
     label: "No Show",
     color: "text-rose-700",
-    bgColor: "bg-rose-50 border-rose-200",
+    bgColor: "bg-rose-500/10 border-rose-500/20",
   },
   PENDING_SYNC: {
     label: "Pending Sync",
     color: "text-violet-700",
-    bgColor: "bg-violet-50 border-violet-200",
+    bgColor: "bg-violet-500/10 border-violet-500/20",
   },
 };
 
@@ -121,8 +121,8 @@ export const PAYMENT_STATUS_CONFIG: Record<
 > = {
   PENDING: {
     label: "Pending",
-    color: "text-amber-700",
-    bgColor: "bg-amber-50 border-amber-200",
+    color: "text-sidebar-primary",
+    bgColor: "bg-sidebar-primary/5 border-sidebar-primary/20",
   },
   COMPLETED: {
     label: "Completed",
@@ -132,17 +132,17 @@ export const PAYMENT_STATUS_CONFIG: Record<
   FAILED: {
     label: "Failed",
     color: "text-red-700",
-    bgColor: "bg-red-50 border-red-200",
+    bgColor: "bg-red-500/10 border-red-500/20",
   },
   REFUNDED: {
     label: "Refunded",
     color: "text-purple-700",
-    bgColor: "bg-purple-50 border-purple-200",
+    bgColor: "bg-purple-500/10 border-purple-500/20",
   },
   PARTIALLY_PAID: {
     label: "Partially Paid",
     color: "text-orange-700",
-    bgColor: "bg-orange-50 border-orange-200",
+    bgColor: "bg-orange-500/10 border-orange-500/20",
   },
 };
 

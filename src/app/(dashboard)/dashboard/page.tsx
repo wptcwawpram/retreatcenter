@@ -106,7 +106,7 @@ function AdminDashboard({ greeting }: { greeting: string }) {
       </div>
 
       {(openComplaints > 0 || s.dirtyRooms > 2) && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-800">
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-sidebar-primary/5 border border-sidebar-primary/20 text-sidebar-primary">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <p className="text-sm">
             {openComplaints > 0 && <span className="font-semibold">{openComplaints} open complaint{openComplaints > 1 ? "s" : ""}</span>}

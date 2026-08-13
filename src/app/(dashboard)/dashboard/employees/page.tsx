@@ -15,9 +15,9 @@ import { cn } from "@/lib/utils";
 import type { Profile } from "@/lib/supabase/types";
 
 const ROLE_COLORS: Record<string, string> = {
-  admin: "bg-purple-50 text-purple-700 border-purple-200",
-  manager: "bg-blue-50 text-blue-700 border-blue-200",
-  receptionist: "bg-amber-50 text-amber-700 border-amber-200",
+  admin: "bg-purple-500/10 text-purple-700 border-purple-500/20",
+  manager: "bg-blue-500/10 text-blue-700 border-blue-500/20",
+  receptionist: "bg-sidebar-primary/5 text-sidebar-primary border-sidebar-primary/20",
   housekeeping: "bg-teal-500/10 text-teal-400 border-teal-500/20",
 };
 
@@ -69,7 +69,7 @@ export default function EmployeesPage() {
       </div>
     )},
     { header: "Role", accessor: (e) => (
-      <Badge className={cn("text-[11px] border font-medium", ROLE_COLORS[e.role] ?? "bg-gray-50 text-gray-700 border-gray-200")}>
+      <Badge className={cn("text-[11px] border font-medium", ROLE_COLORS[e.role] ?? "bg-muted/30 text-muted-foreground border-border")}>
         <Shield className="h-3 w-3 mr-1" />
         {USER_ROLE_LABELS[e.role] ?? e.role}
       </Badge>

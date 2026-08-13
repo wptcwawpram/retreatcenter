@@ -83,7 +83,7 @@ export default function FinancePage() {
     { header: "Type", accessor: (f) => (
       <Badge className={cn(
         "text-[10px] border gap-0.5",
-        f.type === "INCOME" ? "bg-teal-500/10 text-teal-400 border-teal-500/20" : "bg-red-50 text-red-700 border-red-200"
+        f.type === "INCOME" ? "bg-teal-500/10 text-teal-400 border-teal-500/20" : "bg-red-500/10 text-red-400 border-red-500/20"
       )}>
         {f.type === "INCOME" ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
         {f.type}
@@ -110,8 +110,8 @@ export default function FinancePage() {
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <StatCard title="Total Income" value={formatCurrency(totalIncome)} icon={TrendingUp} iconClassName="bg-teal-500/10 text-teal-500" />
-        <StatCard title="Total Expenses" value={formatCurrency(totalExpenses)} icon={TrendingDown} iconClassName="bg-red-50 text-red-600" />
-        <StatCard title="Net Income" value={formatCurrency(netIncome)} icon={DollarSign} iconClassName={netIncome >= 0 ? "bg-teal-500/10 text-teal-500" : "bg-red-50 text-red-600"} />
+        <StatCard title="Total Expenses" value={formatCurrency(totalExpenses)} icon={TrendingDown} iconClassName="bg-red-500/10 text-red-600" />
+        <StatCard title="Net Income" value={formatCurrency(netIncome)} icon={DollarSign} iconClassName={netIncome >= 0 ? "bg-teal-500/10 text-teal-500" : "bg-red-500/10 text-red-600"} />
       </div>
 
       {/* Income breakdown */}

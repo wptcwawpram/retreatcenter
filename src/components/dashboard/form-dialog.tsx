@@ -112,7 +112,7 @@ export function FormDialog({
                       id={field.name}
                       checked={!!values[field.name]}
                       onChange={(e) => updateValue(field.name, e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                      className="h-4 w-4 rounded border-border text-sidebar-primary focus:ring-sidebar-primary"
                     />
                     <Label htmlFor={field.name} className="cursor-pointer">{field.label}</Label>
                   </div>
@@ -163,7 +163,7 @@ export function FormDialog({
           </div>
 
           {error && (
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400">
               <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
               {error}
             </div>

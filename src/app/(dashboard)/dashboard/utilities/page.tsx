@@ -21,9 +21,9 @@ const UTILITY_CARDS = [
   {
     title: "Generator",
     icon: Fuel,
-    iconBg: "bg-amber-50 text-amber-600",
+    iconBg: "bg-amber-500/10 text-amber-600",
     status: "Standby",
-    statusColor: "bg-gray-50 text-gray-700 border-gray-200",
+    statusColor: "bg-muted/30 text-muted-foreground border-border",
     details: [
       { label: "Fuel level", value: "65%", bold: true },
       { label: "Last run", value: "14 May, 2:30 PM" },
@@ -33,7 +33,7 @@ const UTILITY_CARDS = [
   {
     title: "Water Supply",
     icon: Droplets,
-    iconBg: "bg-blue-50 text-blue-600",
+    iconBg: "bg-blue-500/10 text-blue-600",
     status: "Normal",
     statusColor: "bg-teal-500/10 text-teal-400 border-teal-500/20",
     details: [

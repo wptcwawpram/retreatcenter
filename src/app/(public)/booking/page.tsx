@@ -593,7 +593,8 @@ export default function BookingPage() {
               )}
             </SectionCard>
 
-            {/* Hall Usage — multi-select */}
+            {/* Hall Usage — multi-select (group only) */}
+            {bookingType === "group" && (
             <SectionCard icon={Church} title="Hall Usage">
               <p className="text-xs text-warm-muted/60 mb-4 -mt-3">
                 Select one or more halls you need. Each hall is charged per day of use.
@@ -623,7 +624,10 @@ export default function BookingPage() {
               )}
             </SectionCard>
 
-            {/* Kitchen & Dining — single select */}
+            )}
+
+            {/* Kitchen & Dining — single select (group only) */}
+            {bookingType === "group" && (
             <SectionCard icon={UtensilsCrossed} title="Kitchen & Dining">
               <p className="text-xs text-warm-muted/60 mb-4 -mt-3">
                 Select one kitchen option based on your group size.
@@ -654,7 +658,10 @@ export default function BookingPage() {
               )}
             </SectionCard>
 
-            {/* Wedding Grounds */}
+            )}
+
+            {/* Wedding Grounds (group only) */}
+            {bookingType === "group" && (
             <SectionCard icon={TreePine} title="Grounds Usage">
               <label className={checkboxCardClass(needsGrounds)}>
                 <input
@@ -669,6 +676,8 @@ export default function BookingPage() {
                 </div>
               </label>
             </SectionCard>
+
+            )}
 
             {/* Special Requests */}
             <SectionCard icon={CalendarCheck} title="Special Requests">

@@ -13,10 +13,10 @@ import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { cn } from "@/lib/utils";
 
 const PRIORITY_COLORS: Record<string, string> = {
-  LOW: "bg-gray-50 text-gray-600 border-gray-200",
-  NORMAL: "bg-blue-50 text-blue-700 border-blue-200",
-  HIGH: "bg-amber-50 text-amber-700 border-amber-200",
-  URGENT: "bg-red-50 text-red-700 border-red-200",
+  LOW: "bg-muted/30 text-muted-foreground border-border",
+  NORMAL: "bg-blue-500/10 text-blue-700 border-blue-500/20",
+  HIGH: "bg-sidebar-primary/5 text-sidebar-primary border-sidebar-primary/20",
+  URGENT: "bg-red-500/10 text-red-700 border-red-500/20",
 };
 
 export function MaintenanceDashboard({ greeting }: { greeting: string }) {
@@ -73,14 +73,14 @@ export function MaintenanceDashboard({ greeting }: { greeting: string }) {
       </div>
 
       {urgentTasks.length > 0 && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200/60 text-red-800">
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <p className="text-sm"><span className="font-semibold">{urgentTasks.length} urgent maintenance request{urgentTasks.length > 1 ? "s" : ""}</span> &mdash; requires immediate attention</p>
         </div>
       )}
 
       {s.openComplaints > 0 && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-800">
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-sidebar-primary/5 border border-sidebar-primary/20 text-sidebar-primary">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <p className="text-sm"><span className="font-semibold">{s.openComplaints} open complaint{s.openComplaints > 1 ? "s" : ""}</span> may need maintenance follow-up</p>
         </div>

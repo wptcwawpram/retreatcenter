@@ -133,7 +133,7 @@ export function FinanceDashboard({ greeting }: { greeting: string }) {
                       <p className="text-sm font-medium truncate">{record.category}</p>
                       <Badge className={cn(
                         "text-[10px] border",
-                        record.type === "INCOME" ? "bg-teal-500/10 text-teal-400 border-teal-500/20" : "bg-red-50 text-red-700 border-red-200"
+                        record.type === "INCOME" ? "bg-teal-500/10 text-teal-400 border-teal-500/20" : "bg-red-500/10 text-red-400 border-red-500/20"
                       )}>{record.type}</Badge>
                     </div>
                     <p className="text-[11px] text-muted-foreground truncate">{record.description} &middot; {formatDate(record.date)}</p>
@@ -165,8 +165,8 @@ export function FinanceDashboard({ greeting }: { greeting: string }) {
                 <div className="flex items-center justify-between mb-1">
                   <Badge className={cn("text-[10px] border",
                     p.status === "COMPLETED" ? "bg-teal-500/10 text-teal-400 border-teal-500/20" :
-                    p.status === "PENDING" ? "bg-amber-50 text-amber-700 border-amber-200" :
-                    "bg-red-50 text-red-700 border-red-200"
+                    p.status === "PENDING" ? "bg-sidebar-primary/5 text-sidebar-primary border-sidebar-primary/20" :
+                    "bg-red-500/10 text-red-400 border-red-500/20"
                   )}>{p.status}</Badge>
                   <span className="text-sm font-semibold tabular-nums">{formatCurrency(Number(p.amount))}</span>
                 </div>

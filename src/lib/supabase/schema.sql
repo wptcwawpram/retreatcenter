@@ -398,6 +398,12 @@ create policy "Staff can update guests"
   to authenticated
   using (true);
 
+drop policy if exists "Admins can delete guests" on guests;
+create policy "Admins can delete guests"
+  on guests for delete
+  to authenticated
+  using (auth_user_role() = 'admin');
+
 -- ── Bookings ───────────────────────────────────────────────
 drop policy if exists "Authenticated users can read bookings" on bookings;
 create policy "Authenticated users can read bookings"
@@ -416,6 +422,12 @@ create policy "Staff can update bookings"
   on bookings for update
   to authenticated
   using (true);
+
+drop policy if exists "Admins can delete bookings" on bookings;
+create policy "Admins can delete bookings"
+  on bookings for delete
+  to authenticated
+  using (auth_user_role() = 'admin');
 
 -- ── Payments ───────────────────────────────────────────────
 drop policy if exists "Authenticated users can read payments" on payments;
@@ -455,6 +467,12 @@ create policy "Staff can update housekeeping tasks"
   to authenticated
   using (true);
 
+drop policy if exists "Staff can delete housekeeping tasks" on housekeeping_tasks;
+create policy "Staff can delete housekeeping tasks"
+  on housekeeping_tasks for delete
+  to authenticated
+  using (true);
+
 -- ── Complaints ─────────────────────────────────────────────
 drop policy if exists "Authenticated users can read complaints" on complaints;
 create policy "Authenticated users can read complaints"
@@ -473,6 +491,12 @@ create policy "Staff can update complaints"
   on complaints for update
   to authenticated
   using (true);
+
+drop policy if exists "Admins can delete complaints" on complaints;
+create policy "Admins can delete complaints"
+  on complaints for delete
+  to authenticated
+  using (auth_user_role() = 'admin');
 
 -- ── Inventory ──────────────────────────────────────────────
 drop policy if exists "Authenticated users can read inventory" on inventory_items;
@@ -505,6 +529,12 @@ create policy "Staff can update events"
   on events for update
   to authenticated
   using (true);
+
+drop policy if exists "Admins can delete events" on events;
+create policy "Admins can delete events"
+  on events for delete
+  to authenticated
+  using (auth_user_role() = 'admin');
 
 -- ── Finance Records ────────────────────────────────────────
 drop policy if exists "Admins and managers can read finance" on finance_records;

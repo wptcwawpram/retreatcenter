@@ -12,16 +12,16 @@ import { BedDouble, Clock, User, CheckCircle, Loader2, Trash2, ArrowRight, Alert
 import { cn } from "@/lib/utils";
 
 const STATUS_COLS = [
-  { key: "PENDING", label: "Pending", dotColor: "bg-amber-400", headerBg: "bg-amber-50/50", icon: Clock },
-  { key: "IN_PROGRESS", label: "In Progress", dotColor: "bg-blue-400", headerBg: "bg-blue-50/50", icon: Sparkles },
+  { key: "PENDING", label: "Pending", dotColor: "bg-amber-400", headerBg: "bg-amber-500/10", icon: Clock },
+  { key: "IN_PROGRESS", label: "In Progress", dotColor: "bg-blue-400", headerBg: "bg-blue-500/10", icon: Sparkles },
   { key: "COMPLETED", label: "Completed", dotColor: "bg-teal-400", headerBg: "bg-teal-500/10", icon: CheckCircle },
 ] as const;
 
 const PRIORITY_MAP: Record<string, { label: string; color: string }> = {
-  LOW: { label: "Low", color: "bg-gray-50 text-gray-600 border-gray-200" },
-  NORMAL: { label: "Normal", color: "bg-blue-50 text-blue-700 border-blue-200" },
-  HIGH: { label: "High", color: "bg-amber-50 text-amber-700 border-amber-200" },
-  URGENT: { label: "Urgent", color: "bg-red-50 text-red-700 border-red-200" },
+  LOW: { label: "Low", color: "bg-muted/30 text-muted-foreground border-border" },
+  NORMAL: { label: "Normal", color: "bg-blue-500/10 text-blue-700 border-blue-500/20" },
+  HIGH: { label: "High", color: "bg-sidebar-primary/5 text-sidebar-primary border-sidebar-primary/20" },
+  URGENT: { label: "Urgent", color: "bg-red-500/10 text-red-700 border-red-500/20" },
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -111,7 +111,7 @@ export default function HousekeepingPage() {
               <div className={cn("flex items-center gap-2 px-3 py-2.5 rounded-lg", col.headerBg)}>
                 <span className={cn("h-2.5 w-2.5 rounded-full", col.dotColor)} />
                 <h3 className="font-semibold text-sm flex-1">{col.label}</h3>
-                <span className="text-xs font-bold text-muted-foreground bg-white/60 px-2 py-0.5 rounded-full">
+                <span className="text-xs font-bold text-muted-foreground bg-card/60 px-2 py-0.5 rounded-full">
                   {taskCounts[col.key]}
                 </span>
               </div>

@@ -156,7 +156,7 @@ export default function InventoryPage() {
     )},
     { header: "Status", accessor: (i) => (
       i.quantity <= i.min_quantity ? (
-        <Badge className="bg-red-50 text-red-700 border-red-200 border text-[11px] gap-1">
+        <Badge className="bg-red-500/10 text-red-400 border-red-500/20 border text-[11px] gap-1">
           <AlertTriangle className="h-3 w-3" /> Low Stock
         </Badge>
       ) : (
@@ -181,7 +181,7 @@ export default function InventoryPage() {
 
       {/* Low stock alert */}
       {totalLowStock > 0 && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200/60 text-red-800">
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <p className="text-sm">
             <span className="font-semibold">{totalLowStock} item{totalLowStock > 1 ? "s" : ""}</span> below minimum stock level
@@ -219,7 +219,7 @@ export default function InventoryPage() {
                 </span>
               )}
               {stat && stat.lowStock > 0 && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-700">
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-400">
                   {stat.lowStock}
                 </span>
               )}

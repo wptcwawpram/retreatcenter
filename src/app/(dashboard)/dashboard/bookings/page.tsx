@@ -101,15 +101,25 @@ function NewBookingDialog({
   const [showRoomBreakdown, setShowRoomBreakdown] = useState(false);
   const [showHallBreakdown, setShowHallBreakdown] = useState(false);
 
-  // Auto-calculate nights from dates
+  // Auto-sync check-out from check-in + nights
+  useEffect(() => {
+    if (checkIn && nights > 0) {
+      const d = new Date(checkIn);
+      d.setDate(d.getDate() + nights);
+      const computed = d.toISOString().split("T")[0];
+      if (computed !== checkOut) setCheckOut(computed);
+    }
+  }, [checkIn, nights]);
+
+  // Auto-calculate nights when check-out is manually changed
   useEffect(() => {
     if (checkIn && checkOut) {
       const diff = Math.ceil(
         (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24)
       );
-      if (diff > 0) setNights(diff);
+      if (diff > 0 && diff !== nights) setNights(diff);
     }
-  }, [checkIn, checkOut]);
+  }, [checkOut]);
 
   // Fill guest fields when selecting existing guest
   useEffect(() => {
@@ -276,7 +286,7 @@ function NewBookingDialog({
             {/* ─── Guest Info ─── */}
             <div className="space-y-4">
               <h3 className="font-semibold flex items-center gap-2 text-sm">
-                <User className="h-4 w-4 text-amber-700" /> Guest Information
+                <User className="h-4 w-4 text-sidebar-primary" /> Guest Information
               </h3>
               <div className="flex gap-3 mb-3">
                 {(["new", "existing"] as const).map((mode) => (
@@ -286,8 +296,8 @@ function NewBookingDialog({
                     onClick={() => setGuestMode(mode)}
                     className={`px-4 py-1.5 rounded-lg text-xs font-semibold border-2 transition-all ${
                       guestMode === mode
-                        ? "border-amber-500 bg-amber-50 text-amber-900"
-                        : "border-gray-200 text-gray-500 hover:border-amber-300"
+                        ? "border-sidebar-primary bg-sidebar-primary/10 text-sidebar-primary"
+                        : "border-border text-muted-foreground hover:border-sidebar-primary/40"
                     }`}
                   >
                     {mode === "new" ? "New Guest" : "Existing Guest"}
@@ -357,8 +367,8 @@ function NewBookingDialog({
                       onClick={() => setBookingType(type)}
                       className={`px-4 py-1.5 rounded-lg text-xs font-semibold border-2 transition-all ${
                         bookingType === type
-                          ? "border-amber-500 bg-amber-50 text-amber-900"
-                          : "border-gray-200 text-gray-500 hover:border-amber-300"
+                          ? "border-sidebar-primary bg-sidebar-primary/10 text-sidebar-primary"
+                          : "border-border text-muted-foreground hover:border-sidebar-primary/40"
                       }`}
                     >
                       {type === "individual" ? "Individual" : "Group"}
@@ -401,7 +411,7 @@ function NewBookingDialog({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold flex items-center gap-2 text-sm">
-                  <BedDouble className="h-4 w-4 text-amber-700" /> Rooms
+                  <BedDouble className="h-4 w-4 text-sidebar-primary" /> Rooms
                 </h3>
                 <div className="flex gap-2">
                   {([true, false] as const).map((opt) => (
@@ -411,8 +421,8 @@ function NewBookingDialog({
                       onClick={() => setIsLodging(opt)}
                       className={`px-3 py-1 rounded-lg text-xs font-semibold border-2 transition-all ${
                         isLodging === opt
-                          ? "border-amber-500 bg-amber-50 text-amber-900"
-                          : "border-gray-200 text-gray-500 hover:border-amber-300"
+                          ? "border-sidebar-primary bg-sidebar-primary/10 text-sidebar-primary"
+                          : "border-border text-muted-foreground hover:border-sidebar-primary/40"
                       }`}
                     >
                       {opt ? "Yes" : "No rooms"}
@@ -439,10 +449,10 @@ function NewBookingDialog({
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {ROOM_OPTIONS.map((r) => (
-                        <div key={r.label} className="flex items-center justify-between p-2.5 rounded-lg border border-gray-200 bg-white">
+                        <div key={r.label} className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-card">
                           <div>
                             <p className="text-xs font-medium">{r.label}</p>
-                            <p className="text-[10px] text-gray-400">GH₵{r.price}/night</p>
+                            <p className="text-[10px] text-muted-foreground">GH₵{r.price}/night</p>
                           </div>
                           <NumberStepper
                             value={roomQuantities[r.label] || 0}
@@ -458,11 +468,12 @@ function NewBookingDialog({
               )}
             </div>
 
-            {/* ─── Hall / Venue ─── */}
+            {/* ─── Hall / Venue (group only) ─── */}
+            {bookingType === "group" && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold flex items-center gap-2 text-sm">
-                  <Church className="h-4 w-4 text-amber-700" /> Hall / Venue
+                  <Church className="h-4 w-4 text-sidebar-primary" /> Hall / Venue
                 </h3>
                 <div className="flex gap-2">
                   {([true, false] as const).map((opt) => (
@@ -472,8 +483,8 @@ function NewBookingDialog({
                       onClick={() => setNeedsHall(opt)}
                       className={`px-3 py-1 rounded-lg text-xs font-semibold border-2 transition-all ${
                         needsHall === opt
-                          ? "border-amber-500 bg-amber-50 text-amber-900"
-                          : "border-gray-200 text-gray-500 hover:border-amber-300"
+                          ? "border-sidebar-primary bg-sidebar-primary/10 text-sidebar-primary"
+                          : "border-border text-muted-foreground hover:border-sidebar-primary/40"
                       }`}
                     >
                       {opt ? "Yes" : "No hall"}
@@ -509,13 +520,14 @@ function NewBookingDialog({
                   id="dash-wedding"
                   checked={needsGrounds}
                   onChange={(e) => setNeedsGrounds(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                  className="h-4 w-4 rounded border-border text-sidebar-primary focus:ring-sidebar-primary"
                 />
                 <Label htmlFor="dash-wedding" className="text-xs cursor-pointer">
                   Wedding Grounds (GH₵{WEDDING_GROUNDS_PRICE.toLocaleString()})
                 </Label>
               </div>
             </div>
+            )}
 
             {/* ─── Special Requests ─── */}
             <div className="space-y-1.5">
@@ -524,7 +536,7 @@ function NewBookingDialog({
             </div>
 
             {/* ─── Price Summary ─── */}
-            <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-4 space-y-1">
+            <div className="rounded-lg border border-sidebar-primary/20 bg-sidebar-primary/5 p-4 space-y-1">
               <h4 className="font-semibold text-sm mb-2">Price Summary</h4>
 
               {/* Room line */}
@@ -533,17 +545,17 @@ function NewBookingDialog({
                 onClick={() => roomBreakdownLines.length > 0 && setShowRoomBreakdown(!showRoomBreakdown)}
                 className="flex items-center justify-between w-full py-1.5 text-left"
               >
-                <span className="text-xs text-gray-600 flex items-center gap-1">
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
                   Rooms
                   {roomBreakdownLines.length > 0 && (
-                    <ChevronDown className={`h-3 w-3 text-amber-600 transition-transform ${showRoomBreakdown ? "rotate-180" : ""}`} />
+                    <ChevronDown className={`h-3 w-3 text-sidebar-primary transition-transform ${showRoomBreakdown ? "rotate-180" : ""}`} />
                   )}
                 </span>
                 <span className="text-xs font-semibold">GH₵{roomPrice.toFixed(2)}</span>
               </button>
               {showRoomBreakdown && roomBreakdownLines.map((line, i) => (
-                <div key={i} className="flex justify-between text-[10px] text-gray-500 pl-4">
-                  <span>{line.label} <span className="text-gray-400">{line.calc}</span></span>
+                <div key={i} className="flex justify-between text-[10px] text-muted-foreground/70 pl-4">
+                  <span>{line.label} <span className="text-muted-foreground">{line.calc}</span></span>
                   <span>= GH₵{line.amount.toFixed(2)}</span>
                 </div>
               ))}
@@ -554,30 +566,30 @@ function NewBookingDialog({
                 onClick={() => hallBreakdownLines.length > 0 && setShowHallBreakdown(!showHallBreakdown)}
                 className="flex items-center justify-between w-full py-1.5 text-left"
               >
-                <span className="text-xs text-gray-600 flex items-center gap-1">
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
                   Halls / Grounds
                   {hallBreakdownLines.length > 0 && (
-                    <ChevronDown className={`h-3 w-3 text-amber-600 transition-transform ${showHallBreakdown ? "rotate-180" : ""}`} />
+                    <ChevronDown className={`h-3 w-3 text-sidebar-primary transition-transform ${showHallBreakdown ? "rotate-180" : ""}`} />
                   )}
                 </span>
                 <span className="text-xs font-semibold">GH₵{hallPrice.toFixed(2)}</span>
               </button>
               {showHallBreakdown && hallBreakdownLines.map((line, i) => (
-                <div key={i} className="flex justify-between text-[10px] text-gray-500 pl-4">
-                  <span>{line.label} <span className="text-gray-400">{line.calc}</span></span>
+                <div key={i} className="flex justify-between text-[10px] text-muted-foreground/70 pl-4">
+                  <span>{line.label} <span className="text-muted-foreground">{line.calc}</span></span>
                   <span>= GH₵{line.amount.toFixed(2)}</span>
                 </div>
               ))}
 
-              <div className="flex items-center justify-between pt-2 border-t border-amber-300">
+              <div className="flex items-center justify-between pt-2 border-t border-sidebar-primary/30">
                 <span className="text-sm font-bold">Total</span>
-                <span className="text-base font-bold text-amber-800">GH₵{totalAmount.toFixed(2)}</span>
+                <span className="text-base font-bold text-sidebar-primary">GH₵{totalAmount.toFixed(2)}</span>
               </div>
             </div>
 
             {/* ─── Error / Submit ─── */}
             {error && (
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400">
                 <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                 {error}
               </div>
@@ -612,7 +624,7 @@ export default function BookingsPage() {
   const [deleting, setDeleting] = useState(false);
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-amber-500" /></div>;
+    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-sidebar-primary" /></div>;
   }
 
   const allBookings = (bookings || []) as BookingWithGuest[];
@@ -679,7 +691,7 @@ export default function BookingsPage() {
     { header: "Total", accessor: (b) => <span className="font-semibold">{formatCurrency(Number(b.total_amount))}</span> },
     { header: "Paid", accessor: (b) => {
       const isPaid = Number(b.paid_amount) >= Number(b.total_amount);
-      return <span className={isPaid ? "text-teal-500" : "text-amber-600"}>{formatCurrency(Number(b.paid_amount))}</span>;
+      return <span className={isPaid ? "text-teal-500" : "text-sidebar-primary"}>{formatCurrency(Number(b.paid_amount))}</span>;
     }},
     { header: "Status", accessor: (b) => <StatusBadge status={b.status} config={BOOKING_STATUS_CONFIG} /> },
     { header: "Actions", accessor: (b) => (
@@ -749,7 +761,7 @@ export default function BookingsPage() {
                 <div><span className="text-muted-foreground">Type:</span><p>{viewItem.booking_type}</p></div>
                 <div><span className="text-muted-foreground">Total:</span><p className="font-bold">{formatCurrency(Number(viewItem.total_amount))}</p></div>
                 <div><span className="text-muted-foreground">Paid:</span><p className="font-bold text-teal-500">{formatCurrency(Number(viewItem.paid_amount))}</p></div>
-                <div><span className="text-muted-foreground">Balance:</span><p className="font-bold text-amber-600">{formatCurrency(Number(viewItem.balance))}</p></div>
+                <div><span className="text-muted-foreground">Balance:</span><p className="font-bold text-sidebar-primary">{formatCurrency(Number(viewItem.balance))}</p></div>
                 <div><span className="text-muted-foreground">Source:</span><p>{viewItem.source}</p></div>
               </div>
               {viewItem.special_requests && (
