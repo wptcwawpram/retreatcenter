@@ -6,7 +6,7 @@ import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useRef, useState, useEffect, useCallback, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { SITE, ROOMS } from "@/lib/site-data";
-import { IMAGES } from "@/lib/images";
+import { useSiteImages, img } from "@/lib/use-site-images";
 import {
   ArrowRight,
   BedDouble,
@@ -55,12 +55,12 @@ function CountUp({ target, suffix = "" }: { target: number; suffix?: string }) {
   return <span ref={ref}>{count}{suffix}</span>;
 }
 
-const HERO_SLIDES = [
-  { src: IMAGES.hero.home, title: "A Place of Peace,\nPower & Purpose", subtitle: "Your luxury Christian retreat in the heart of Ghana" },
-  { src: IMAGES.amenities.serene, title: "Serene Grounds\n& Gardens", subtitle: "Lush landscapes designed for prayer, meditation and rest" },
-  { src: IMAGES.hero.rooms, title: "Premium Rooms\n& Suites", subtitle: "Comfortable accommodation for individuals, families and groups" },
-  { src: IMAGES.venues.faithHall, title: "World-Class\nEvent Venues", subtitle: "Conference halls, pavilions and worship spaces for any occasion" },
-  { src: IMAGES.gallery.grounds[0], title: "A Sanctuary\nfor Renewal", subtitle: "Come as you are. Leave transformed." },
+const HERO_SLIDE_DATA = [
+  { key: "hero.home", title: "A Place of Peace,\nPower & Purpose", subtitle: "Your luxury Christian retreat in the heart of Ghana" },
+  { key: "amenities.serene", title: "Serene Grounds\n& Gardens", subtitle: "Lush landscapes designed for prayer, meditation and rest" },
+  { key: "hero.rooms", title: "Premium Rooms\n& Suites", subtitle: "Comfortable accommodation for individuals, families and groups" },
+  { key: "venues.faithHall", title: "World-Class\nEvent Venues", subtitle: "Conference halls, pavilions and worship spaces for any occasion" },
+  { key: "gallery.grounds[0]", title: "A Sanctuary\nfor Renewal", subtitle: "Come as you are. Leave transformed." },
 ];
 
 const PILLARS = [
@@ -79,6 +79,8 @@ const FACILITIES = [
 ];
 
 export default function HomePage() {
+  const siteImages = useSiteImages();
+  const heroSlides = HERO_SLIDE_DATA.map((s) => ({ ...s, src: img(siteImages, s.key) }));
   const [slide, setSlide] = useState(0);
   const [direction, setDirection] = useState(1);
 
@@ -89,12 +91,12 @@ export default function HomePage() {
 
   const next = useCallback(() => {
     setDirection(1);
-    setSlide((s) => (s + 1) % HERO_SLIDES.length);
+    setSlide((s) => (s + 1) % heroSlides.length);
   }, []);
 
   const prev = useCallback(() => {
     setDirection(-1);
-    setSlide((s) => (s - 1 + HERO_SLIDES.length) % HERO_SLIDES.length);
+    setSlide((s) => (s - 1 + heroSlides.length) % heroSlides.length);
   }, []);
 
   useEffect(() => {
@@ -102,7 +104,7 @@ export default function HomePage() {
     return () => clearInterval(timer);
   }, [next]);
 
-  const current = HERO_SLIDES[slide];
+  const current = heroSlides[slide];
 
   return (
     <>
@@ -168,7 +170,7 @@ export default function HomePage() {
         <div className="absolute bottom-8 left-0 right-0">
           <div className="container mx-auto px-6 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              {HERO_SLIDES.map((_, i) => (
+              {heroSlides.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => goTo(i)}
@@ -216,7 +218,7 @@ export default function HomePage() {
             <FadeIn>
               <div className="relative">
                 <div className="overflow-hidden">
-                  <Image src={IMAGES.lifestyle.fellowship} alt="Fellowship at WPTC" width={600} height={450} className="w-full h-[420px] object-cover" />
+                  <Image src={img(siteImages, "lifestyle.fellowship")} alt="Fellowship at WPTC" width={600} height={450} className="w-full h-[420px] object-cover" />
                 </div>
                 <div className="absolute -bottom-6 -right-4 bg-luxury-card border border-gold/15 p-5 hidden md:block">
                   <div className="font-[family-name:var(--font-playfair)] text-3xl font-bold text-gold mb-0.5">10+</div>
@@ -282,7 +284,7 @@ export default function HomePage() {
               <FadeIn key={room.slug} delay={i * 0.06}>
                 <Link href="/booking" className="group block relative overflow-hidden aspect-[4/3]">
                   <Image
-                    src={IMAGES.rooms[room.slug as keyof typeof IMAGES.rooms]}
+                    src={img(siteImages, `rooms.${room.slug}`)}
                     alt={room.name}
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-700"
@@ -323,7 +325,7 @@ export default function HomePage() {
 
       {/* SCRIPTURE BANNER */}
       <section className="relative py-28 overflow-hidden">
-        <Image src={IMAGES.lifestyle.prayer} alt="Prayer" fill className="object-cover" sizes="100vw" />
+        <Image src={img(siteImages, "lifestyle.prayer")} alt="Prayer" fill className="object-cover" sizes="100vw" />
         <div className="absolute inset-0 bg-black/65" />
         <div className="relative container mx-auto px-6 text-center max-w-3xl">
           <FadeIn>

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SITE } from "@/lib/site-data";
-import { IMAGES } from "@/lib/images";
+import { useSiteImages, img } from "@/lib/use-site-images";
 import { Phone, Mail, MapPin, Clock, Send, Loader2, CheckCircle } from "lucide-react";
 
 const SPRING = { type: "spring" as const, stiffness: 80, damping: 20, mass: 0.8 };
@@ -32,6 +32,7 @@ const CONTACT_INFO = [
 ];
 
 export default function ContactPage() {
+  const siteImages = useSiteImages();
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
@@ -50,7 +51,7 @@ export default function ContactPage() {
     <>
       {/* Hero */}
       <section className="relative h-[50vh] min-h-[350px] overflow-hidden bg-luxury">
-        <Image src={IMAGES.hero.contact} alt="Contact Us" fill className="object-cover" priority quality={85} />
+        <Image src={img(siteImages, "hero.contact")} alt="Contact Us" fill className="object-cover" priority quality={85} />
         <div className="absolute inset-0 bg-black/55" />
         <div className="relative h-full flex items-center justify-center text-center">
           <div>
@@ -100,7 +101,7 @@ export default function ContactPage() {
               </div>
 
               <div className="mt-8 relative h-[220px] overflow-hidden border border-gold/10">
-                <Image src={IMAGES.hero.home} alt="WPTC" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 40vw" />
+                <Image src={img(siteImages, "hero.home")} alt="WPTC" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 40vw" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 <div className="absolute bottom-4 left-4">
                   <p className="text-sm font-semibold text-warm-white">{SITE.address}</p>

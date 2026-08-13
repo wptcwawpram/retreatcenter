@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { IMAGES } from "./images";
+import { IMAGES } from "@/lib/images";
 
 type ImageValue = string | string[] | Record<string, string | string[]>;
 
@@ -21,26 +21,55 @@ function flattenImages(obj: Record<string, ImageValue>, prefix = ""): Record<str
 }
 
 const defaults = flattenImages(IMAGES as unknown as Record<string, ImageValue>);
+let cachedImages: Record<string, string> | null = null;
+let fetchPromise: Promise<Record<string, string>> | null = null;
 
-export function getImageUrl(path: string, overrides: Record<string, string>): string {
-  return overrides[path] || defaults[path] || "";
+function fetchImages(): Promise<Record<string, string>> {
+  if (!fetchPromise) {
+    fetchPromise = fetch("/api/site-images")
+      .then((res) => res.json())
+      .then((data) => {
+        const merged: Record<string, string> = { ...defaults };
+        if (data.overrides) {
+          for (const [path, url] of Object.entries(data.overrides)) {
+            merged[path] = url as string;
+          }
+        }
+        cachedImages = merged;
+        return merged;
+      })
+      .catch(() => {
+        cachedImages = defaults;
+        return defaults;
+      });
+  }
+  return fetchPromise;
 }
 
 export function useSiteImages() {
-  const [overrides, setOverrides] = useState<Record<string, string>>({});
-  const [loaded, setLoaded] = useState(false);
+  const [images, setImages] = useState<Record<string, string>>(cachedImages || defaults);
 
   useEffect(() => {
-    fetch("/api/site-images")
-      .then((res) => res.json())
-      .then((data) => {
-        setOverrides(data.overrides || {});
-        setLoaded(true);
-      })
-      .catch(() => setLoaded(true));
+    if (cachedImages) {
+      setImages(cachedImages);
+      return;
+    }
+    fetchImages().then((merged) => setImages(merged));
   }, []);
 
-  const getImage = (path: string) => getImageUrl(path, overrides);
+  return images;
+}
 
-  return { getImage, overrides, loaded, IMAGES };
+export function img(images: Record<string, string>, path: string): string {
+  return images[path] || defaults[path] || "";
+}
+
+export function imgArray(images: Record<string, string>, prefix: string): string[] {
+  const result: string[] = [];
+  let i = 0;
+  while (images[`${prefix}[${i}]`] || defaults[`${prefix}[${i}]`]) {
+    result.push(images[`${prefix}[${i}]`] || defaults[`${prefix}[${i}]`]);
+    i++;
+  }
+  return result;
 }

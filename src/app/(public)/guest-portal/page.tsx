@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { IMAGES } from "@/lib/images";
+import { useSiteImages, img } from "@/lib/use-site-images";
 import { formatCurrency, formatDate } from "@/lib/format";
 import {
   Search,
@@ -52,6 +52,7 @@ const inputClass = "bg-luxury border-gold/15 text-warm-white placeholder:text-wa
 const labelClass = "text-warm-muted text-xs tracking-wide";
 
 export default function GuestPortalPage() {
+  const siteImages = useSiteImages();
   const [step, setStep] = useState<"lookup" | "dashboard">("lookup");
   const [lookupRef, setLookupRef] = useState("");
   const [lookupPhone, setLookupPhone] = useState("");
@@ -118,7 +119,7 @@ export default function GuestPortalPage() {
     <>
       {/* Hero */}
       <section className="relative h-[50vh] min-h-[350px] overflow-hidden bg-luxury">
-        <Image src={IMAGES.hero.booking} alt="Guest Portal" fill className="object-cover" priority quality={85} />
+        <Image src={img(siteImages, "hero.booking")} alt="Guest Portal" fill className="object-cover" priority quality={85} />
         <div className="absolute inset-0 bg-black/55" />
         <div className="relative h-full flex items-center justify-center text-center">
           <div>

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useRef, useState, type ReactNode } from "react";
-import { IMAGES } from "@/lib/images";
+import { useSiteImages, img, imgArray } from "@/lib/use-site-images";
 import { X } from "lucide-react";
 
 const SPRING = { type: "spring" as const, stiffness: 80, damping: 20, mass: 0.8 };
@@ -27,32 +27,31 @@ const CATEGORIES = [
   { label: "Events", key: "events" },
 ] as const;
 
-function getAllImages(category: string) {
+function getAllImages(siteImages: Record<string, string>, category: string) {
   if (category === "all") {
     return [
-      ...IMAGES.gallery.accommodation.map((src) => ({ src, cat: "Accommodation" })),
-      ...IMAGES.gallery.venues.map((src) => ({ src, cat: "Venues" })),
-      ...IMAGES.gallery.grounds.map((src) => ({ src, cat: "Grounds" })),
-      ...IMAGES.gallery.dining.map((src) => ({ src, cat: "Dining" })),
-      ...IMAGES.gallery.events.map((src) => ({ src, cat: "Events" })),
+      ...imgArray(siteImages, "gallery.accommodation").map((src) => ({ src, cat: "Accommodation" })),
+      ...imgArray(siteImages, "gallery.venues").map((src) => ({ src, cat: "Venues" })),
+      ...imgArray(siteImages, "gallery.grounds").map((src) => ({ src, cat: "Grounds" })),
+      ...imgArray(siteImages, "gallery.dining").map((src) => ({ src, cat: "Dining" })),
+      ...imgArray(siteImages, "gallery.events").map((src) => ({ src, cat: "Events" })),
     ];
   }
-  const imgs = IMAGES.gallery[category as keyof typeof IMAGES.gallery];
-  if (!Array.isArray(imgs)) return [];
-  return imgs.map((src) => ({ src, cat: category }));
+  return imgArray(siteImages, `gallery.${category}`).map((src) => ({ src, cat: category }));
 }
 
 export default function GalleryPage() {
+  const siteImages = useSiteImages();
   const [activeCategory, setActiveCategory] = useState("all");
   const [lightbox, setLightbox] = useState<string | null>(null);
 
-  const images = getAllImages(activeCategory);
+  const images = getAllImages(siteImages, activeCategory);
 
   return (
     <>
       {/* Hero */}
       <section className="relative h-[50vh] min-h-[350px] overflow-hidden bg-luxury">
-        <Image src={IMAGES.hero.gallery} alt="Gallery" fill className="object-cover" priority quality={85} />
+        <Image src={img(siteImages, "hero.gallery")} alt="Gallery" fill className="object-cover" priority quality={85} />
         <div className="absolute inset-0 bg-black/55" />
         <div className="relative h-full flex items-center justify-center text-center">
           <div>

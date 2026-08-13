@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NumberStepper } from "@/components/ui/number-stepper";
 import { SITE } from "@/lib/site-data";
-import { IMAGES } from "@/lib/images";
+import { useSiteImages, img } from "@/lib/use-site-images";
 import {
   CalendarCheck,
   User,
@@ -119,6 +119,7 @@ function SectionCard({ icon: Icon, title, children }: { icon: React.ComponentTyp
 }
 
 export default function BookingPage() {
+  const siteImages = useSiteImages();
   const [bookingType, setBookingType] = useState<"individual" | "group">("individual");
   const [isLodging, setIsLodging] = useState<"yes" | "no" | "">("");
   const [selectedRoom, setSelectedRoom] = useState("");
@@ -361,7 +362,7 @@ export default function BookingPage() {
     <>
       {/* Hero */}
       <section className="relative h-[50vh] min-h-[350px] overflow-hidden bg-luxury">
-        <Image src={IMAGES.hero.booking} alt="Book your stay at WPTC" fill className="object-cover" priority quality={85} />
+        <Image src={img(siteImages, "hero.booking")} alt="Book your stay at WPTC" fill className="object-cover" priority quality={85} />
         <div className="absolute inset-0 bg-black/55" />
         <div className="relative h-full flex items-center justify-center text-center">
           <div>

@@ -6,7 +6,7 @@ import { motion, useInView } from "framer-motion";
 import { useRef, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { AMENITIES } from "@/lib/site-data";
-import { IMAGES } from "@/lib/images";
+import { useSiteImages, img } from "@/lib/use-site-images";
 import { ArrowRight, BedDouble, TreePine, ChefHat, UtensilsCrossed, Store, Sofa, Church, Tent } from "lucide-react";
 
 const SPRING = { type: "spring" as const, stiffness: 80, damping: 20, mass: 0.8 };
@@ -25,23 +25,24 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   BedDouble, TreePine, ChefHat, UtensilsCrossed, Store, Sofa, Church, Tent,
 };
 
-const AMENITY_IMAGES: Record<string, string> = {
-  Accommodation: IMAGES.amenities.accommodation,
-  "Serene Environment": IMAGES.amenities.serene,
-  Kitchen: IMAGES.amenities.kitchen,
-  "Dining Area": IMAGES.amenities.dining,
-  Store: IMAGES.amenities.store,
-  "Common Room": IMAGES.amenities.commonRoom,
-  "Faith Hall": IMAGES.amenities.faithHall,
-  Pavilion: IMAGES.amenities.pavilion,
+const AMENITY_IMAGE_KEYS: Record<string, string> = {
+  Accommodation: "amenities.accommodation",
+  "Serene Environment": "amenities.serene",
+  Kitchen: "amenities.kitchen",
+  "Dining Area": "amenities.dining",
+  Store: "amenities.store",
+  "Common Room": "amenities.commonRoom",
+  "Faith Hall": "amenities.faithHall",
+  Pavilion: "amenities.pavilion",
 };
 
 export default function AmenitiesPage() {
+  const siteImages = useSiteImages();
   return (
     <>
       {/* Hero */}
       <section className="relative h-[50vh] min-h-[350px] overflow-hidden bg-luxury">
-        <Image src={IMAGES.hero.amenities} alt="Amenities" fill className="object-cover" priority quality={85} />
+        <Image src={img(siteImages, "hero.amenities")} alt="Amenities" fill className="object-cover" priority quality={85} />
         <div className="absolute inset-0 bg-black/55" />
         <div className="relative h-full flex items-center justify-center text-center">
           <div>
@@ -62,14 +63,14 @@ export default function AmenitiesPage() {
         <div className="container mx-auto px-6 max-w-6xl">
           {AMENITIES.map((amenity, i) => {
             const Icon = ICON_MAP[amenity.icon];
-            const img = AMENITY_IMAGES[amenity.title];
+            const amenityImg = AMENITY_IMAGE_KEYS[amenity.title] ? img(siteImages, AMENITY_IMAGE_KEYS[amenity.title]) : "";
             const isEven = i % 2 === 0;
 
             return (
               <FadeIn key={amenity.title} delay={0.05}>
                 <div className={`grid grid-cols-1 lg:grid-cols-2 gap-0 mb-1 ${!isEven ? "" : ""}`}>
                   <div className={`relative aspect-[16/10] lg:aspect-auto lg:min-h-[320px] overflow-hidden ${!isEven ? "lg:order-2" : ""}`}>
-                    {img && <Image src={img} alt={amenity.title} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 50vw" />}
+                    {amenityImg && <Image src={amenityImg} alt={amenity.title} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 50vw" />}
                     <div className="absolute inset-0 bg-black/20" />
                   </div>
                   <div className={`bg-luxury-card border border-gold/8 p-8 md:p-12 flex flex-col justify-center ${!isEven ? "lg:order-1" : ""}`}>

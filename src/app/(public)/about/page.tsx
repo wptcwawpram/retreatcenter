@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, useInView } from "framer-motion";
 import { useRef, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { IMAGES } from "@/lib/images";
+import { useSiteImages, img } from "@/lib/use-site-images";
 import { SITE } from "@/lib/site-data";
 import { ArrowRight, BookOpen, Heart, Users, Shield, Star, Church } from "lucide-react";
 
@@ -31,11 +31,12 @@ const VALUES = [
 ];
 
 export default function AboutPage() {
+  const siteImages = useSiteImages();
   return (
     <>
       {/* Hero */}
       <section className="relative h-[50vh] min-h-[350px] overflow-hidden bg-luxury">
-        <Image src={IMAGES.hero.about} alt="About Us" fill className="object-cover" priority quality={85} />
+        <Image src={img(siteImages, "hero.about")} alt="About Us" fill className="object-cover" priority quality={85} />
         <div className="absolute inset-0 bg-black/55" />
         <div className="relative h-full flex items-center justify-center text-center">
           <div>
@@ -58,10 +59,10 @@ export default function AboutPage() {
             <FadeIn>
               <div className="relative">
                 <div className="overflow-hidden">
-                  <Image src={IMAGES.lifestyle.fellowship} alt="Our Community" width={600} height={500} className="w-full h-[460px] object-cover" />
+                  <Image src={img(siteImages, "lifestyle.fellowship")} alt="Our Community" width={600} height={500} className="w-full h-[460px] object-cover" />
                 </div>
                 <div className="absolute -bottom-5 -right-5 w-[180px] h-[140px] overflow-hidden border border-gold/15 hidden lg:block">
-                  <Image src={IMAGES.lifestyle.prayer} alt="Prayer" fill className="object-cover" />
+                  <Image src={img(siteImages, "lifestyle.prayer")} alt="Prayer" fill className="object-cover" />
                 </div>
               </div>
             </FadeIn>
@@ -120,7 +121,7 @@ export default function AboutPage() {
 
       {/* Scripture */}
       <section className="relative py-28 overflow-hidden">
-        <Image src={IMAGES.gallery.grounds[1]} alt="Grounds" fill className="object-cover" sizes="100vw" />
+        <Image src={img(siteImages, "gallery.grounds[1]")} alt="Grounds" fill className="object-cover" sizes="100vw" />
         <div className="absolute inset-0 bg-black/65" />
         <div className="relative container mx-auto px-6 text-center max-w-3xl">
           <FadeIn>

@@ -6,7 +6,7 @@ import { motion, useInView } from "framer-motion";
 import { useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { ROOMS } from "@/lib/site-data";
-import { IMAGES } from "@/lib/images";
+import { useSiteImages, img } from "@/lib/use-site-images";
 import { BedDouble, Users, ArrowRight, Check } from "lucide-react";
 
 const SPRING = { type: "spring" as const, stiffness: 80, damping: 20, mass: 0.8 };
@@ -24,6 +24,7 @@ function FadeIn({ children, className, delay = 0 }: { children: ReactNode; class
 const TABS = ["All Rooms", "Standard", "Premium"] as const;
 
 export default function RoomsPage() {
+  const siteImages = useSiteImages();
   const [activeTab, setActiveTab] = useState<string>("All Rooms");
 
   const filtered = ROOMS.filter((room) => {
@@ -36,7 +37,7 @@ export default function RoomsPage() {
     <>
       {/* Hero */}
       <section className="relative h-[50vh] min-h-[350px] overflow-hidden bg-luxury">
-        <Image src={IMAGES.hero.rooms} alt="Our Rooms" fill className="object-cover" priority quality={85} />
+        <Image src={img(siteImages, "hero.rooms")} alt="Our Rooms" fill className="object-cover" priority quality={85} />
         <div className="absolute inset-0 bg-black/55" />
         <div className="relative h-full flex items-center justify-center text-center">
           <div>
@@ -80,7 +81,7 @@ export default function RoomsPage() {
                   {/* Image */}
                   <div className={`relative aspect-[4/3] lg:aspect-auto lg:min-h-[400px] overflow-hidden ${i % 2 === 1 ? "lg:order-2" : ""}`}>
                     <Image
-                      src={IMAGES.rooms[room.slug as keyof typeof IMAGES.rooms]}
+                      src={img(siteImages, `rooms.${room.slug}`)}
                       alt={room.name}
                       fill
                       className="object-cover"
