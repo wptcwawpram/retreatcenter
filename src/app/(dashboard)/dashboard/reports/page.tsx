@@ -69,10 +69,10 @@ export default function ReportsPage() {
 
       {/* Top-level stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard title="Occupancy" value={`${occupancyPct}%`} subtitle={`${occupiedRooms} of ${totalRooms} rooms`} icon={BedDouble} iconClassName="bg-blue-50 text-blue-600" />
+        <StatCard title="Occupancy" value={`${occupancyPct}%`} subtitle={`${occupiedRooms} of ${totalRooms} rooms`} icon={BedDouble} iconClassName="bg-blue-500/10 text-blue-600" />
         <StatCard title="Total Revenue" value={formatCurrency(totalIncome)} icon={TrendingUp} iconClassName="bg-teal-500/10 text-teal-500" />
-        <StatCard title="Total Guests" value={allGuests.length} icon={Users} iconClassName="bg-purple-50 text-purple-600" />
-        <StatCard title="Active Bookings" value={checkedInCount + confirmedCount} subtitle={`${checkedInCount} checked in, ${confirmedCount} confirmed`} icon={Calendar} iconClassName="bg-amber-50 text-amber-600" />
+        <StatCard title="Total Guests" value={allGuests.length} icon={Users} iconClassName="bg-purple-500/10 text-purple-600" />
+        <StatCard title="Active Bookings" value={checkedInCount + confirmedCount} subtitle={`${checkedInCount} checked in, ${confirmedCount} confirmed`} icon={Calendar} iconClassName="bg-amber-500/10 text-amber-600" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -131,12 +131,12 @@ export default function ReportsPage() {
       {/* Financial Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <StatCard title="Total Income" value={formatCurrency(totalIncome)} icon={TrendingUp} iconClassName="bg-teal-500/10 text-teal-500" />
-        <StatCard title="Total Expenses" value={formatCurrency(totalExpenses)} icon={Wallet} iconClassName="bg-red-50 text-red-600" />
+        <StatCard title="Total Expenses" value={formatCurrency(totalExpenses)} icon={Wallet} iconClassName="bg-red-500/10 text-red-600" />
         <StatCard
           title="Net Profit"
           value={formatCurrency(totalIncome - totalExpenses)}
           icon={BarChart3}
-          iconClassName={(totalIncome - totalExpenses) >= 0 ? "bg-teal-500/10 text-teal-500" : "bg-red-50 text-red-600"}
+          iconClassName={(totalIncome - totalExpenses) >= 0 ? "bg-teal-500/10 text-teal-500" : "bg-red-500/10 text-red-600"}
         />
       </div>
 

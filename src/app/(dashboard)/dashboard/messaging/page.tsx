@@ -172,7 +172,7 @@ export default function MessagingPage() {
             {sendResult && (
               <div className={cn(
                 "flex items-start gap-2 p-3 rounded-lg border text-sm",
-                sendResult.success ? "bg-teal-500/10 border-teal-500/20 text-teal-400" : "bg-red-50 border-red-200 text-red-800"
+                sendResult.success ? "bg-teal-500/10 border-teal-500/20 text-teal-400" : "bg-red-500/10 border-red-500/20 text-red-400"
               )}>
                 {sendResult.success ? <CheckCircle className="h-4 w-4 shrink-0 mt-0.5" /> : <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />}
                 {sendResult.message}

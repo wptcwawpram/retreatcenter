@@ -41,10 +41,10 @@ const STATUS_DOT: Record<string, string> = {
 
 const STATUS_CARD_BG: Record<string, string> = {
   AVAILABLE: "border-teal-500/15 hover:border-teal-500/30",
-  OCCUPIED: "border-blue-200/60 hover:border-blue-300",
-  CLEANING: "border-orange-200/60 hover:border-orange-300",
-  MAINTENANCE: "border-red-200/60 hover:border-red-300",
-  RESERVED: "border-purple-200/60 hover:border-purple-300",
+  OCCUPIED: "border-blue-500/20 hover:border-blue-500/30",
+  CLEANING: "border-orange-500/20 hover:border-orange-500/30",
+  MAINTENANCE: "border-red-500/20 hover:border-red-500/30",
+  RESERVED: "border-purple-500/20 hover:border-purple-500/30",
 };
 
 const roomFields: FormField[] = [
@@ -214,7 +214,7 @@ export default function RoomsPage() {
                 {/* Room number + status dot */}
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-bold text-lg tracking-tight">{room.number}</span>
-                  <span className={cn("h-2.5 w-2.5 rounded-full ring-2 ring-white", STATUS_DOT[room.status])} />
+                  <span className={cn("h-2.5 w-2.5 rounded-full ring-2 ring-card", STATUS_DOT[room.status])} />
                 </div>
 
                 {/* Status label */}
