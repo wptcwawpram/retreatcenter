@@ -6,7 +6,7 @@ import { motion, useInView } from "framer-motion";
 import { useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { ROOMS } from "@/lib/site-data";
-import { useSiteImages, img } from "@/lib/use-site-images";
+import { useSiteImages, useSiteBlurs, img, imgBlurStyle } from "@/lib/use-site-images";
 import { BedDouble, Users, ArrowRight, Check } from "lucide-react";
 
 const SPRING = { type: "spring" as const, stiffness: 80, damping: 20, mass: 0.8 };
@@ -25,6 +25,7 @@ const TABS = ["All Rooms", "Standard", "Premium"] as const;
 
 export default function RoomsPage() {
   const siteImages = useSiteImages();
+  const siteBlurs = useSiteBlurs();
   const [activeTab, setActiveTab] = useState<string>("All Rooms");
 
   const filtered = ROOMS.filter((room) => {
@@ -37,7 +38,7 @@ export default function RoomsPage() {
     <>
       {/* Hero */}
       <section className="relative h-[50vh] min-h-[350px] overflow-hidden bg-luxury">
-        <Image src={img(siteImages, "hero.rooms")} alt="Our Rooms" fill className="object-cover" priority quality={85} />
+        <Image src={img(siteImages, "hero.rooms")} alt="Our Rooms" fill className="object-cover" style={imgBlurStyle(siteBlurs, "hero.rooms")} priority quality={85} />
         <div className="absolute inset-0 bg-black/55" />
         <div className="relative h-full flex items-center justify-center text-center">
           <div>

@@ -8,10 +8,10 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { images, logo } = await getSiteImages();
+  const { images, logo, blurs } = await getSiteImages();
 
   return (
-    <SiteImagesProvider serverImages={images} serverLogo={logo}>
+    <SiteImagesProvider serverImages={images} serverLogo={logo} serverBlurs={blurs}>
       <div className="flex h-screen overflow-hidden">
         <DashboardSidebar />
         <div className="flex flex-col flex-1 overflow-hidden">

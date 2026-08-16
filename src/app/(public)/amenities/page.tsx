@@ -6,7 +6,7 @@ import { motion, useInView } from "framer-motion";
 import { useRef, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { AMENITIES } from "@/lib/site-data";
-import { useSiteImages, img } from "@/lib/use-site-images";
+import { useSiteImages, useSiteBlurs, img, imgBlurStyle } from "@/lib/use-site-images";
 import { ArrowRight, BedDouble, TreePine, ChefHat, UtensilsCrossed, Store, Sofa, Church, Tent } from "lucide-react";
 
 const SPRING = { type: "spring" as const, stiffness: 80, damping: 20, mass: 0.8 };
@@ -38,11 +38,12 @@ const AMENITY_IMAGE_KEYS: Record<string, string> = {
 
 export default function AmenitiesPage() {
   const siteImages = useSiteImages();
+  const siteBlurs = useSiteBlurs();
   return (
     <>
       {/* Hero */}
       <section className="relative h-[50vh] min-h-[350px] overflow-hidden bg-luxury">
-        <Image src={img(siteImages, "hero.amenities")} alt="Amenities" fill className="object-cover" priority quality={85} />
+        <Image src={img(siteImages, "hero.amenities")} alt="Amenities" fill className="object-cover" style={imgBlurStyle(siteBlurs, "hero.amenities")} priority quality={85} />
         <div className="absolute inset-0 bg-black/55" />
         <div className="relative h-full flex items-center justify-center text-center">
           <div>

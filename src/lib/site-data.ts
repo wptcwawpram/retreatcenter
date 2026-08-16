@@ -22,6 +22,7 @@ export const NAV_LINKS = [
   { label: "Amenities", href: "/amenities" },
   { label: "Gallery", href: "/gallery" },
   { label: "Contact", href: "/contact" },
+  { label: "Guest Portal", href: "/guest-portal" },
 ] as const;
 
 export const SERVICES = [

@@ -6,7 +6,7 @@ import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useRef, useState, useEffect, useCallback, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { SITE, ROOMS } from "@/lib/site-data";
-import { useSiteImages, img } from "@/lib/use-site-images";
+import { useSiteImages, useSiteBlurs, img, imgBlurStyle } from "@/lib/use-site-images";
 import {
   ArrowRight,
   BedDouble,
@@ -80,7 +80,8 @@ const FACILITIES = [
 
 export default function HomePage() {
   const siteImages = useSiteImages();
-  const heroSlides = HERO_SLIDE_DATA.map((s) => ({ ...s, src: img(siteImages, s.key) }));
+  const siteBlurs = useSiteBlurs();
+  const heroSlides = HERO_SLIDE_DATA.map((s) => ({ ...s, src: img(siteImages, s.key), blurStyle: imgBlurStyle(siteBlurs, s.key) }));
   const [slide, setSlide] = useState(0);
   const [direction, setDirection] = useState(1);
 
@@ -125,10 +126,11 @@ export default function HomePage() {
               alt={current.title}
               fill
               className="object-cover"
+              style={current.blurStyle}
               priority={slide === 0}
               quality={90}
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-black/20" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/50 to-black/30" />
           </motion.div>
         </AnimatePresence>
 
@@ -153,12 +155,12 @@ export default function HomePage() {
             </AnimatePresence>
             <div className="flex items-center gap-4">
               <Link href="/booking">
-                <Button size="lg" className="bg-transparent border border-gold/50 text-gold hover:bg-gold/10 font-medium h-12 px-8 text-[11px] tracking-[0.15em] uppercase">
+                <Button size="lg" className="bg-gold/90 text-luxury hover:bg-gold font-semibold h-12 px-8 text-[11px] tracking-[0.15em] uppercase shadow-lg shadow-black/30">
                   Book Your Stay
                 </Button>
               </Link>
               <Link href="/rooms">
-                <Button size="lg" variant="ghost" className="text-warm-white/60 hover:text-warm-white hover:bg-white/5 font-medium h-12 px-6 text-[11px] tracking-[0.15em] uppercase gap-2">
+                <Button size="lg" variant="ghost" className="text-warm-white hover:text-gold bg-white/10 backdrop-blur-sm hover:bg-white/15 font-medium h-12 px-6 text-[11px] tracking-[0.15em] uppercase gap-2 border border-white/20">
                   View Rooms <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
               </Link>
@@ -218,7 +220,7 @@ export default function HomePage() {
             <FadeIn>
               <div className="relative">
                 <div className="overflow-hidden">
-                  <Image src={img(siteImages, "lifestyle.fellowship")} alt="Fellowship at WPTC" width={600} height={450} className="w-full h-[420px] object-cover" />
+                  <Image src={img(siteImages, "lifestyle.fellowship")} alt="Fellowship at WPTC" width={600} height={450} className="w-full h-[420px] object-cover" style={imgBlurStyle(siteBlurs, "lifestyle.fellowship")} />
                 </div>
                 <div className="absolute -bottom-6 -right-4 bg-luxury-card border border-gold/15 p-5 hidden md:block">
                   <div className="font-[family-name:var(--font-playfair)] text-3xl font-bold text-gold mb-0.5">10+</div>
@@ -288,6 +290,7 @@ export default function HomePage() {
                     alt={room.name}
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-700"
+                    style={imgBlurStyle(siteBlurs, `rooms.${room.slug}`)}
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover:from-black/80 transition-colors duration-500" />
@@ -325,7 +328,7 @@ export default function HomePage() {
 
       {/* SCRIPTURE BANNER */}
       <section className="relative py-28 overflow-hidden">
-        <Image src={img(siteImages, "lifestyle.prayer")} alt="Prayer" fill className="object-cover" sizes="100vw" />
+        <Image src={img(siteImages, "lifestyle.prayer")} alt="Prayer" fill className="object-cover" sizes="100vw" style={imgBlurStyle(siteBlurs, "lifestyle.prayer")} />
         <div className="absolute inset-0 bg-black/65" />
         <div className="relative container mx-auto px-6 text-center max-w-3xl">
           <FadeIn>

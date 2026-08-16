@@ -84,13 +84,13 @@ export function PublicNavbar() {
           {/* Right */}
           <div className="flex items-center gap-3">
             <Link href="/dashboard" className="hidden md:inline-flex">
-              <Button variant="ghost" size="sm" className="text-warm-white/40 hover:text-warm-white hover:bg-white/5 gap-1.5 text-xs">
+              <Button variant="ghost" size="sm" className="text-warm-white/60 hover:text-warm-white hover:bg-white/10 gap-1.5 text-xs">
                 <Shield className="h-3.5 w-3.5" />
                 Admin
               </Button>
             </Link>
             <Link href="/booking" className="hidden md:inline-flex">
-              <Button size="sm" className="bg-transparent border border-gold/50 text-gold hover:bg-gold/10 font-medium px-6 text-[11px] tracking-[0.15em] uppercase h-9">
+              <Button size="sm" className="bg-gold/90 text-luxury hover:bg-gold font-semibold px-6 text-[11px] tracking-[0.15em] uppercase h-9 shadow-md shadow-black/20">
                 Book Now
               </Button>
             </Link>

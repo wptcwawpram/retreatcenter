@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, useInView } from "framer-motion";
 import { useRef, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { useSiteImages, img } from "@/lib/use-site-images";
+import { useSiteImages, useSiteBlurs, img, imgBlurStyle } from "@/lib/use-site-images";
 import { SITE } from "@/lib/site-data";
 import { ArrowRight, BookOpen, Heart, Users, Shield, Star, Church } from "lucide-react";
 
@@ -32,11 +32,12 @@ const VALUES = [
 
 export default function AboutPage() {
   const siteImages = useSiteImages();
+  const siteBlurs = useSiteBlurs();
   return (
     <>
       {/* Hero */}
       <section className="relative h-[50vh] min-h-[350px] overflow-hidden bg-luxury">
-        <Image src={img(siteImages, "hero.about")} alt="About Us" fill className="object-cover" priority quality={85} />
+        <Image src={img(siteImages, "hero.about")} alt="About Us" fill className="object-cover" style={imgBlurStyle(siteBlurs, "hero.about")} priority quality={85} />
         <div className="absolute inset-0 bg-black/55" />
         <div className="relative h-full flex items-center justify-center text-center">
           <div>

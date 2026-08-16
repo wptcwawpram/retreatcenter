@@ -27,8 +27,19 @@ export function useSiteImages() {
   return images;
 }
 
+export function useSiteBlurs() {
+  const { blurs } = useSiteImagesCtx();
+  return blurs;
+}
+
 export function img(images: Record<string, string>, path: string): string {
   return images[path] || defaults[path] || "";
+}
+
+export function imgBlurStyle(blurs: Record<string, number>, path: string): React.CSSProperties | undefined {
+  const value = blurs[path] || 0;
+  if (value === 0) return undefined;
+  return { filter: `blur(${value / 5}px)`, transform: "scale(1.05)" };
 }
 
 export function imgArray(images: Record<string, string>, prefix: string): string[] {

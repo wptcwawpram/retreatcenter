@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useRef, useState, type ReactNode } from "react";
-import { useSiteImages, img, imgArray } from "@/lib/use-site-images";
+import { useSiteImages, useSiteBlurs, img, imgArray, imgBlurStyle } from "@/lib/use-site-images";
 import { X } from "lucide-react";
 
 const SPRING = { type: "spring" as const, stiffness: 80, damping: 20, mass: 0.8 };
@@ -42,6 +42,7 @@ function getAllImages(siteImages: Record<string, string>, category: string) {
 
 export default function GalleryPage() {
   const siteImages = useSiteImages();
+  const siteBlurs = useSiteBlurs();
   const [activeCategory, setActiveCategory] = useState("all");
   const [lightbox, setLightbox] = useState<string | null>(null);
 
@@ -51,7 +52,7 @@ export default function GalleryPage() {
     <>
       {/* Hero */}
       <section className="relative h-[50vh] min-h-[350px] overflow-hidden bg-luxury">
-        <Image src={img(siteImages, "hero.gallery")} alt="Gallery" fill className="object-cover" priority quality={85} />
+        <Image src={img(siteImages, "hero.gallery")} alt="Gallery" fill className="object-cover" style={imgBlurStyle(siteBlurs, "hero.gallery")} priority quality={85} />
         <div className="absolute inset-0 bg-black/55" />
         <div className="relative h-full flex items-center justify-center text-center">
           <div>

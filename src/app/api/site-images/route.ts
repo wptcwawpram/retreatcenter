@@ -52,11 +52,16 @@ export async function GET() {
     const { data } = await supabase
       .from("settings")
       .select("key, value")
-      .like("key", "site_image:%");
+      .or("key.like.site_image:%,key.like.site_image_blur:%");
 
     const overrides: Record<string, string> = {};
+    const blurs: Record<string, number> = {};
     data?.forEach((row: { key: string; value: string }) => {
-      overrides[row.key.replace("site_image:", "")] = row.value;
+      if (row.key.startsWith("site_image_blur:")) {
+        blurs[row.key.replace("site_image_blur:", "")] = Number(row.value) || 0;
+      } else if (row.key.startsWith("site_image:")) {
+        overrides[row.key.replace("site_image:", "")] = row.value;
+      }
     });
 
     const defaults = flattenImages(IMAGES as unknown as Record<string, ImageValue>);
@@ -66,7 +71,7 @@ export async function GET() {
       merged[path] = overrides[path] || defaultUrl;
     }
 
-    return NextResponse.json({ images: merged, overrides });
+    return NextResponse.json({ images: merged, overrides, blurs });
   } catch (error) {
     console.error("Site images GET error:", error);
     return NextResponse.json({ error: "Failed to fetch images" }, { status: 500 });
@@ -80,24 +85,41 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
-    const { path, url } = body as { path: string; url: string };
+    const { path, url, blur } = body as { path: string; url?: string; blur?: number };
 
-    if (!path || !url) {
-      return NextResponse.json({ error: "Path and URL required" }, { status: 400 });
+    if (!path) {
+      return NextResponse.json({ error: "Path required" }, { status: 400 });
     }
 
     const supabase = createServiceClient();
 
-    const { error } = await supabase
-      .from("settings")
-      .upsert({
-        key: `site_image:${path}`,
-        value: url,
-        updated_by: user.id,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "key" });
+    if (url) {
+      const { error } = await supabase
+        .from("settings")
+        .upsert({
+          key: `site_image:${path}`,
+          value: url,
+          updated_by: user.id,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "key" });
+      if (error) throw error;
+    }
 
-    if (error) throw error;
+    if (blur !== undefined) {
+      if (blur === 0) {
+        await supabase.from("settings").delete().eq("key", `site_image_blur:${path}`);
+      } else {
+        const { error } = await supabase
+          .from("settings")
+          .upsert({
+            key: `site_image_blur:${path}`,
+            value: String(blur),
+            updated_by: user.id,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: "key" });
+        if (error) throw error;
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

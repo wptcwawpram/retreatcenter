@@ -63,16 +63,20 @@ function ImageCard({
   path,
   currentUrl,
   isOverridden,
+  blur,
   onUpload,
   onReset,
+  onBlurChange,
   saving,
   saved,
 }: {
   path: string;
   currentUrl: string;
   isOverridden: boolean;
+  blur: number;
   onUpload: (path: string, file: File) => void;
   onReset: (path: string) => void;
+  onBlurChange: (path: string, value: number) => void;
   saving: boolean;
   saved: boolean;
 }) {
@@ -100,6 +104,7 @@ function ImageCard({
               alt={prettifyKey(path)}
               fill
               className="object-cover"
+              style={blur > 0 ? { filter: `blur(${blur / 5}px)`, transform: "scale(1.05)" } : undefined}
               unoptimized
             />
           )}
@@ -139,6 +144,18 @@ function ImageCard({
             )}
           </button>
 
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-muted-foreground shrink-0 w-12">Blur: {blur}</span>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={blur}
+              onChange={(e) => onBlurChange(path, Number(e.target.value))}
+              className="flex-1 h-1.5 accent-sidebar-primary cursor-pointer"
+            />
+          </div>
+
           <div className="flex items-center gap-3">
             <span className="text-[10px] text-muted-foreground truncate flex-1">
               {isOverridden ? "Custom image" : "Default (Unsplash)"}
@@ -163,12 +180,14 @@ export default function SiteImagesPage() {
   const logoRef = useRef<HTMLInputElement>(null);
   const [defaults] = useState(() => flattenImages(IMAGES as unknown as Record<string, ImageValue>));
   const [overrides, setOverrides] = useState<Record<string, string>>({});
+  const [blurs, setBlurs] = useState<Record<string, number>>({});
   const [currentUrls, setCurrentUrls] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
   const [error, setError] = useState("");
+  const blurTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const fetchImages = useCallback(async () => {
     try {
@@ -176,6 +195,7 @@ export default function SiteImagesPage() {
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       setOverrides(data.overrides || {});
+      setBlurs(data.blurs || {});
       const merged: Record<string, string> = {};
       for (const [path] of Object.entries(defaults)) {
         merged[path] = data.overrides?.[path] || defaults[path];
@@ -236,6 +256,23 @@ export default function SiteImagesPage() {
     }
   };
 
+  const handleBlurChange = (path: string, value: number) => {
+    setBlurs((p) => ({ ...p, [path]: value }));
+    if (blurTimers.current[path]) clearTimeout(blurTimers.current[path]);
+    blurTimers.current[path] = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/site-images", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ path, blur: value }),
+        });
+        if (!res.ok) throw new Error("Failed");
+      } catch {
+        setError(`Failed to save blur for ${path}`);
+      }
+    }, 500);
+  };
+
   const toggleCategory = (cat: string) => {
     setExpandedCategories((p) => ({ ...p, [cat]: !p[cat] }));
   };
@@ -255,14 +292,14 @@ export default function SiteImagesPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Site Images</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Upload images to replace the defaults on the public website. Accepted formats: JPEG, PNG, WebP, GIF (max 5MB).
+          Upload images to replace the defaults on the public website. Use the blur slider to add a blur effect (0-100). Accepted formats: JPEG, PNG, WebP, GIF (max 5MB).
         </p>
       </div>
 
       {error && (
         <div className="p-3 border border-red-500/30 bg-red-500/10 text-sm text-red-400 rounded-md">
           {error}
-          <button onClick={() => setError("")} className="ml-2 text-red-300 hover:text-red-200">×</button>
+          <button onClick={() => setError("")} className="ml-2 text-red-300 hover:text-red-200">x</button>
         </div>
       )}
 
@@ -379,8 +416,10 @@ export default function SiteImagesPage() {
                       path={path}
                       currentUrl={currentUrls[path] || defaults[path]}
                       isOverridden={!!overrides[path]}
+                      blur={blurs[path] || 0}
                       onUpload={handleUpload}
                       onReset={handleReset}
+                      onBlurChange={handleBlurChange}
                       saving={!!saving[path]}
                       saved={!!saved[path]}
                     />

@@ -23,6 +23,7 @@ const defaults = flattenImages(IMAGES as unknown as Record<string, ImageValue>);
 export async function getSiteImages(): Promise<{
   images: Record<string, string>;
   logo: string | null;
+  blurs: Record<string, number>;
 }> {
   try {
     const supabase = createServerClient(
@@ -34,11 +35,16 @@ export async function getSiteImages(): Promise<{
     const { data } = await supabase
       .from("settings")
       .select("key, value")
-      .like("key", "site_image:%");
+      .or("key.like.site_image:%,key.like.site_image_blur:%");
 
     const overrides: Record<string, string> = {};
+    const blurs: Record<string, number> = {};
     data?.forEach((row: { key: string; value: string }) => {
-      overrides[row.key.replace("site_image:", "")] = row.value;
+      if (row.key.startsWith("site_image_blur:")) {
+        blurs[row.key.replace("site_image_blur:", "")] = Number(row.value) || 0;
+      } else if (row.key.startsWith("site_image:")) {
+        overrides[row.key.replace("site_image:", "")] = row.value;
+      }
     });
 
     const merged: Record<string, string> = {};
@@ -49,8 +55,9 @@ export async function getSiteImages(): Promise<{
     return {
       images: merged,
       logo: overrides["branding.logo"] || null,
+      blurs,
     };
   } catch {
-    return { images: defaults, logo: null };
+    return { images: defaults, logo: null, blurs: {} };
   }
 }
