@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useSiteImagesCtx } from "@/lib/site-images-context";
 import { IMAGES } from "@/lib/images";
 
 type ImageValue = string | string[] | Record<string, string | string[]>;
@@ -21,38 +21,9 @@ function flattenImages(obj: Record<string, ImageValue>, prefix = ""): Record<str
 }
 
 const defaults = flattenImages(IMAGES as unknown as Record<string, ImageValue>);
-const CACHE_KEY = "wptc_site_images";
-
-function getCachedImages(): Record<string, string> {
-  if (typeof window === "undefined") return defaults;
-  try {
-    const cached = localStorage.getItem(CACHE_KEY);
-    if (cached) return JSON.parse(cached);
-  } catch {}
-  return defaults;
-}
 
 export function useSiteImages() {
-  const [images, setImages] = useState<Record<string, string>>(getCachedImages);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/site-images")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed");
-        return res.json();
-      })
-      .then((data) => {
-        if (cancelled) return;
-        if (data.images && typeof data.images === "object") {
-          setImages(data.images);
-          try { localStorage.setItem(CACHE_KEY, JSON.stringify(data.images)); } catch {}
-        }
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, []);
-
+  const { images } = useSiteImagesCtx();
   return images;
 }
 
