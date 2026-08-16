@@ -21,40 +21,25 @@ function flattenImages(obj: Record<string, ImageValue>, prefix = ""): Record<str
 }
 
 const defaults = flattenImages(IMAGES as unknown as Record<string, ImageValue>);
-let cachedImages: Record<string, string> | null = null;
-let fetchPromise: Promise<Record<string, string>> | null = null;
-
-function fetchImages(): Promise<Record<string, string>> {
-  if (!fetchPromise) {
-    fetchPromise = fetch("/api/site-images")
-      .then((res) => res.json())
-      .then((data) => {
-        const merged: Record<string, string> = { ...defaults };
-        if (data.overrides) {
-          for (const [path, url] of Object.entries(data.overrides)) {
-            merged[path] = url as string;
-          }
-        }
-        cachedImages = merged;
-        return merged;
-      })
-      .catch(() => {
-        cachedImages = defaults;
-        return defaults;
-      });
-  }
-  return fetchPromise;
-}
 
 export function useSiteImages() {
-  const [images, setImages] = useState<Record<string, string>>(cachedImages || defaults);
+  const [images, setImages] = useState<Record<string, string>>(defaults);
 
   useEffect(() => {
-    if (cachedImages) {
-      setImages(cachedImages);
-      return;
-    }
-    fetchImages().then((merged) => setImages(merged));
+    let cancelled = false;
+    fetch("/api/site-images")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed");
+        return res.json();
+      })
+      .then((data) => {
+        if (cancelled) return;
+        if (data.images && typeof data.images === "object") {
+          setImages(data.images);
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
   }, []);
 
   return images;
