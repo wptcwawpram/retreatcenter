@@ -2,31 +2,37 @@
 
 import { useState, useEffect } from "react";
 
-let cachedLogo: string | null = null;
-let fetchPromise: Promise<string | null> | null = null;
+const CACHE_KEY = "wptc_site_logo";
 
-function fetchLogo(): Promise<string | null> {
-  if (!fetchPromise) {
-    fetchPromise = fetch("/api/site-images")
-      .then((res) => res.json())
-      .then((data) => {
-        cachedLogo = data.overrides?.["branding.logo"] || null;
-        return cachedLogo;
-      })
-      .catch(() => null);
-  }
-  return fetchPromise;
+function getCachedLogo(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem(CACHE_KEY) || null;
+  } catch {}
+  return null;
 }
 
 export function useSiteLogo() {
-  const [logo, setLogo] = useState<string | null>(cachedLogo);
+  const [logo, setLogo] = useState<string | null>(getCachedLogo);
 
   useEffect(() => {
-    if (cachedLogo !== null) {
-      setLogo(cachedLogo);
-      return;
-    }
-    fetchLogo().then((url) => setLogo(url));
+    let cancelled = false;
+    fetch("/api/site-images")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed");
+        return res.json();
+      })
+      .then((data) => {
+        if (cancelled) return;
+        const url = data.overrides?.["branding.logo"] || null;
+        setLogo(url);
+        try {
+          if (url) localStorage.setItem(CACHE_KEY, url);
+          else localStorage.removeItem(CACHE_KEY);
+        } catch {}
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
   }, []);
 
   return logo;
