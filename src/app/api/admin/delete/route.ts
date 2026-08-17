@@ -49,7 +49,9 @@ export async function POST(request: NextRequest) {
 
     // For bookings, also delete related records first
     if (table === "bookings") {
+      await supabase.from("booking_rooms").delete().eq("booking_id", id);
       await supabase.from("payments").delete().eq("booking_id", id);
+      await supabase.from("finance_records").delete().eq("booking_id", id);
       await supabase.from("complaints").delete().eq("booking_id", id);
     }
 
@@ -58,7 +60,9 @@ export async function POST(request: NextRequest) {
       const { data: bookings } = await supabase.from("bookings").select("id").eq("guest_id", id);
       if (bookings) {
         for (const b of bookings) {
+          await supabase.from("booking_rooms").delete().eq("booking_id", b.id);
           await supabase.from("payments").delete().eq("booking_id", b.id);
+          await supabase.from("finance_records").delete().eq("booking_id", b.id);
           await supabase.from("complaints").delete().eq("booking_id", b.id);
         }
         await supabase.from("bookings").delete().eq("guest_id", id);

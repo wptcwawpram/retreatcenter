@@ -168,6 +168,7 @@ export default function RoomsPage() {
       capacity: Number(values.capacity) || 2,
       beds: Number(values.beds) || 1,
       price_per_night: Number(values.price_per_night) || 0,
+      status: (values.status as Room["status"]) || editItem.status,
       has_ac: !!values.has_ac,
       has_tv: !!values.has_tv,
       has_fridge: !!values.has_fridge,

@@ -65,7 +65,7 @@ const SEED_ROOMS = [
   },
   // Suite 1 (between room 6 and 7)
   {
-    number: "S1",
+    number: "ST1",
     name: "Suite 1",
     type: "SUITE_AC" as const,
     building: "Main Building",
@@ -83,7 +83,7 @@ const SEED_ROOMS = [
   },
   // Suite 2
   {
-    number: "S2",
+    number: "ST2",
     name: "Suite 2",
     type: "SUITE_AC" as const,
     building: "Main Building",
@@ -137,9 +137,9 @@ const SEED_ROOMS = [
   })),
   // Holy Family: Room 1 (2-in-1)
   {
-    number: "HF-1",
+    number: "HF1",
     name: "Holy Family Room 1",
-    type: "2_IN_1" as const,
+    type: "APARTMENT" as const,
     building: "Holy Family",
     floor: 0,
     capacity: 2,
@@ -155,9 +155,9 @@ const SEED_ROOMS = [
   },
   // Holy Family: Room 2 (2-in-1)
   {
-    number: "HF-2",
+    number: "HF2",
     name: "Holy Family Room 2",
-    type: "2_IN_1" as const,
+    type: "APARTMENT" as const,
     building: "Holy Family",
     floor: 0,
     capacity: 2,
@@ -173,9 +173,9 @@ const SEED_ROOMS = [
   },
   // Holy Family: Room 3 (3-in-1)
   {
-    number: "HF-3",
+    number: "HF3",
     name: "Holy Family Room 3",
-    type: "3_IN_1" as const,
+    type: "APARTMENT" as const,
     building: "Holy Family",
     floor: 0,
     capacity: 3,

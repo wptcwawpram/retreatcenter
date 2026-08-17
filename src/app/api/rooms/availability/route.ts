@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     const { data: allRooms, error: roomsError } = await supabase
       .from("rooms")
       .select("id, number, name, type, building, capacity, price_per_night, status, has_ac")
-      .in("status", ["AVAILABLE", "RESERVED"]) // Only rooms not in maintenance/cleaning
+      .in("status", ["AVAILABLE", "RESERVED", "CLEANING", "OCCUPIED"]) // Exclude only MAINTENANCE/BLOCKED
       .order("number");
 
     if (roomsError) throw roomsError;

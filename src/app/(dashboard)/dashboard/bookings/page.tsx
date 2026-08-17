@@ -652,14 +652,22 @@ export default function BookingsPage() {
 
   const handleEdit = async (values: Record<string, unknown>) => {
     if (!editItem) return;
+    const total = Number(values.total_amount) || 0;
+    const paid = Number(values.paid_amount) || 0;
+    const bal = Math.max(0, total - paid);
+    let payStatus = values.payment_status as Booking["payment_status"];
+    if (paid >= total && total > 0) payStatus = "PAID";
+    else if (paid > 0) payStatus = "PARTIAL";
+    else payStatus = "UNPAID";
     await updateBooking(editItem.id, {
       status: values.status as Booking["status"],
-      payment_status: values.payment_status as Booking["payment_status"],
+      payment_status: payStatus,
       check_in: values.check_in as string,
       check_out: values.check_out as string,
       nights: Number(values.nights),
-      total_amount: Number(values.total_amount),
-      paid_amount: Number(values.paid_amount),
+      total_amount: total,
+      paid_amount: paid,
+      balance: bal,
       special_requests: (values.special_requests as string) || null,
     });
     setEditItem(null);

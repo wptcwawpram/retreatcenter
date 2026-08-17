@@ -188,6 +188,7 @@ function BookingPage() {
       .then((res) => res.json())
       .then((data) => {
         const counts: Record<string, number> = {};
+        ROOM_OPTIONS.forEach((r) => { counts[r.label] = 0; });
         (data.available || []).forEach((r: { type: string }) => {
           const typeMap: Record<string, string> = {
             "2_IN_1": "2 IN 1", "3_IN_1": "3 IN 1", "4_IN_1": "4 IN 1", "6_IN_1": "6 IN 1",
