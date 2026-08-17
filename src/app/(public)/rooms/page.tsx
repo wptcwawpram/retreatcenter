@@ -123,7 +123,7 @@ export default function RoomsPage() {
                         <span className="font-[family-name:var(--font-playfair)] text-2xl font-bold text-gold">GH&#x20B5;{room.price}</span>
                         <span className="text-warm-muted text-sm ml-1">/ night</span>
                       </div>
-                      <Link href="/booking">
+                      <Link href={`/booking?room=${room.slug}`}>
                         <Button className="bg-transparent border border-gold/40 text-gold hover:bg-gold/10 text-[11px] tracking-[0.12em] uppercase h-10 px-6">
                           Book Now
                         </Button>

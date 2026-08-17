@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,12 +54,12 @@ const RELATIONSHIP_STATUSES = ["Married", "Single", "In a Relationship", "Divorc
 const ID_TYPES = ["Ghana Card", "Passport", "Driver's License"];
 
 const ROOM_OPTIONS = [
-  { label: "2 IN 1", price: 150 },
-  { label: "4 IN 1", price: 200 },
-  { label: "6 IN 1", price: 270 },
-  { label: "Suite (Fan)", price: 350 },
-  { label: "Suite (AC)", price: 750 },
-  { label: "Holy Family Apartment", price: 750 },
+  { label: "2 IN 1", price: 150, slug: "2-in-1" },
+  { label: "4 IN 1", price: 200, slug: "4-in-1" },
+  { label: "6 IN 1", price: 270, slug: "6-in-1" },
+  { label: "Suite (Fan)", price: 350, slug: "suite-fan" },
+  { label: "Suite (AC)", price: 750, slug: "suite-ac" },
+  { label: "Holy Family Apartment", price: 750, slug: "holy-family-apartment" },
 ];
 
 const HALL_OPTIONS = [
@@ -118,9 +119,20 @@ function SectionCard({ icon: Icon, title, children }: { icon: React.ComponentTyp
   );
 }
 
-export default function BookingPage() {
+export default function BookingPageWrapper() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-luxury" />}>
+      <BookingPage />
+    </Suspense>
+  );
+}
+
+function BookingPage() {
   const siteImages = useSiteImages();
   const siteBlurs = useSiteBlurs();
+  const searchParams = useSearchParams();
+  const roomParam = searchParams.get("room");
+  const [showTypePopup, setShowTypePopup] = useState(!!roomParam);
   const [bookingType, setBookingType] = useState<"individual" | "group">("individual");
   const [isLodging, setIsLodging] = useState<"yes" | "no" | "">("");
   const [selectedRoom, setSelectedRoom] = useState("");
@@ -145,6 +157,22 @@ export default function BookingPage() {
     fromDate: "", toDate: "", startTime: "", endTime: "",
     specialRequests: "",
   });
+
+  const handleTypeSelect = useCallback((type: "individual" | "group") => {
+    setBookingType(type);
+    setIsLodging("yes");
+    if (roomParam) {
+      const match = ROOM_OPTIONS.find((r) => r.slug === roomParam);
+      if (match) {
+        if (type === "individual") {
+          setSelectedRoom(match.label);
+        } else {
+          setRoomQuantities((prev) => ({ ...prev, [match.label]: 1 }));
+        }
+      }
+    }
+    setShowTypePopup(false);
+  }, [roomParam]);
 
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -353,14 +381,72 @@ export default function BookingPage() {
   const balance = totalAmount - deposit;
 
   const toggleBtnClass = (active: boolean) =>
-    `px-6 py-2.5 text-sm font-medium border transition-all duration-200 ${
+    `px-6 py-2.5 text-sm font-medium rounded-lg border transition-all duration-200 ${
       active
-        ? "border-gold/40 bg-gold/10 text-gold"
-        : "border-gold/10 text-warm-muted hover:border-gold/25 hover:text-warm-white"
+        ? "border-gold/30 bg-gold/10 text-gold backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+        : "border-white/[0.08] bg-white/[0.03] text-warm-muted hover:border-gold/20 hover:text-warm-white hover:bg-white/[0.05] backdrop-blur-sm"
     }`;
 
   return (
     <>
+      {/* Booking Type Popup */}
+      {showTypePopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowTypePopup(false)} />
+          <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-white/[0.12] bg-white/[0.06] backdrop-blur-2xl shadow-[0_8px_60px_rgba(0,0,0,0.5)]">
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/[0.08] to-transparent pointer-events-none" />
+            <div className="relative p-8 text-center">
+              <div className="w-14 h-14 mx-auto mb-5 rounded-full border border-gold/20 bg-gold/[0.06] flex items-center justify-center">
+                <Users className="h-6 w-6 text-gold" />
+              </div>
+              <h2 className="font-[family-name:var(--font-playfair)] text-2xl font-bold text-warm-white mb-2">
+                How are you booking?
+              </h2>
+              <p className="text-warm-muted text-sm mb-8">
+                {roomParam ? (
+                  <>You selected <span className="text-gold font-medium">{ROOM_OPTIONS.find((r) => r.slug === roomParam)?.label || roomParam}</span>. Are you booking for yourself or a group?</>
+                ) : (
+                  "Are you booking for yourself or a group?"
+                )}
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleTypeSelect("individual")}
+                  className="group relative overflow-hidden rounded-xl border border-white/[0.1] bg-white/[0.04] p-6 transition-all duration-300 hover:border-gold/30 hover:bg-gold/[0.06]"
+                >
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/[0.04] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="relative">
+                    <User className="h-8 w-8 text-gold/70 mx-auto mb-3 group-hover:text-gold transition-colors" />
+                    <p className="text-warm-white font-semibold text-sm mb-1">Individual</p>
+                    <p className="text-warm-muted text-xs">Booking for myself</p>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleTypeSelect("group")}
+                  className="group relative overflow-hidden rounded-xl border border-white/[0.1] bg-white/[0.04] p-6 transition-all duration-300 hover:border-gold/30 hover:bg-gold/[0.06]"
+                >
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/[0.04] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="relative">
+                    <Users className="h-8 w-8 text-gold/70 mx-auto mb-3 group-hover:text-gold transition-colors" />
+                    <p className="text-warm-white font-semibold text-sm mb-1">Group</p>
+                    <p className="text-warm-muted text-xs">Booking for a group</p>
+                  </div>
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowTypePopup(false)}
+                className="mt-5 text-warm-muted text-xs hover:text-warm-white transition-colors"
+              >
+                Skip &mdash; I&rsquo;ll choose below
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hero */}
       <section className="relative h-[50vh] min-h-[350px] overflow-hidden bg-luxury">
         <Image src={img(siteImages, "hero.booking")} alt="Book your stay at WPTC" fill className="object-cover" style={imgBlurStyle(siteBlurs, "hero.booking")} priority quality={85} />

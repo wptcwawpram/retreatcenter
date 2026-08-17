@@ -296,7 +296,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1 max-w-5xl mx-auto">
             {ROOMS.slice(0, 6).map((room, i) => (
               <FadeIn key={room.slug} delay={i * 0.06}>
-                <Link href="/booking" className="group block relative overflow-hidden aspect-[4/3]">
+                <Link href={`/booking?room=${room.slug}`} className="group block relative overflow-hidden aspect-[4/3]">
                   <Image
                     src={img(siteImages, `rooms.${room.slug}`)}
                     alt={room.name}
