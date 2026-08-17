@@ -167,12 +167,12 @@ export default function HomePage() {
             </AnimatePresence>
             <div className="flex items-center gap-4">
               <Link href={current.buttonLink}>
-                <Button size="lg" className="bg-gold/90 text-luxury hover:bg-gold font-semibold h-12 px-8 text-[11px] tracking-[0.15em] uppercase shadow-lg shadow-black/30">
+                <Button size="lg" className="bg-gold/90 text-luxury hover:bg-gold font-semibold h-12 px-8 text-[11px] tracking-[0.15em] uppercase shadow-[0_4px_20px_rgba(212,175,55,0.25)] hover:shadow-[0_6px_30px_rgba(212,175,55,0.35)] hover:scale-[1.03] active:scale-[0.97] rounded-xl transition-all duration-300">
                   {current.buttonText}
                 </Button>
               </Link>
               <Link href={current.button2Link}>
-                <Button size="lg" variant="ghost" className="text-warm-white hover:text-gold bg-white/10 backdrop-blur-sm hover:bg-white/15 font-medium h-12 px-6 text-[11px] tracking-[0.15em] uppercase gap-2 border border-white/20">
+                <Button size="lg" variant="ghost" className="text-warm-white hover:text-gold bg-white/[0.08] backdrop-blur-xl hover:bg-white/[0.14] hover:shadow-[0_4px_20px_rgba(255,255,255,0.04),inset_0_1px_0_rgba(255,255,255,0.1)] hover:scale-[1.03] active:scale-[0.97] font-medium h-12 px-6 text-[11px] tracking-[0.15em] uppercase gap-2 border border-white/[0.15] rounded-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition-all duration-300">
                   {current.button2Text} <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
               </Link>

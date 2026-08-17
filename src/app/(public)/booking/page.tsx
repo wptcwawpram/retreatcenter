@@ -81,10 +81,10 @@ const inputClass = "bg-luxury border-gold/15 text-warm-white placeholder:text-wa
 const selectClass = "w-full h-9 rounded-md border border-gold/15 bg-luxury px-3 text-sm text-warm-white focus:outline-none focus:ring-2 focus:ring-gold/30";
 const labelClass = "text-warm-muted text-xs tracking-wide";
 const checkboxCardClass = (checked: boolean) =>
-  `flex items-center gap-3 p-3.5 rounded-lg border cursor-pointer transition-all duration-200 select-none backdrop-blur-sm ${
+  `flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all duration-300 select-none backdrop-blur-xl ${
     checked
-      ? "border-gold/30 bg-gold/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
-      : "border-white/[0.08] bg-white/[0.03] hover:border-gold/20 hover:bg-white/[0.05]"
+      ? "border-gold/40 bg-gold/[0.1] shadow-[0_2px_12px_rgba(212,175,55,0.06),inset_0_1px_0_rgba(255,255,255,0.06)]"
+      : "border-white/[0.1] bg-white/[0.04] hover:border-gold/25 hover:bg-white/[0.07] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
   }`;
 
 function todayStr() {
@@ -106,7 +106,7 @@ function daysBetween(a: string, b: string): number {
 
 function SectionCard({ icon: Icon, title, children }: { icon: React.ComponentType<{ className?: string }>; title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-luxury-card/60 backdrop-blur-lg border border-white/[0.08] rounded-xl overflow-hidden shadow-[0_4px_30px_rgba(0,0,0,0.15)]">
+    <div className="bg-white/[0.04] backdrop-blur-2xl border border-white/[0.1] rounded-2xl overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.06)]">
       <div className="h-px bg-gradient-to-r from-gold/30 via-gold/10 to-transparent" />
       <div className="p-6 md:p-8">
         <h2 className="text-lg font-semibold text-warm-white mb-6 flex items-center gap-2.5">
@@ -132,7 +132,7 @@ function BookingPage() {
   const siteBlurs = useSiteBlurs();
   const searchParams = useSearchParams();
   const roomParam = searchParams.get("room");
-  const [showTypePopup, setShowTypePopup] = useState(!!roomParam);
+  const [showTypePopup, setShowTypePopup] = useState(true);
   const [bookingType, setBookingType] = useState<"individual" | "group">("individual");
   const [isLodging, setIsLodging] = useState<"yes" | "no" | "">("");
   const [selectedRoom, setSelectedRoom] = useState("");
@@ -409,10 +409,10 @@ function BookingPage() {
   const balance = totalAmount - deposit;
 
   const toggleBtnClass = (active: boolean) =>
-    `px-6 py-2.5 text-sm font-medium rounded-lg border transition-all duration-200 ${
+    `px-7 py-3 text-sm font-medium rounded-xl border transition-all duration-300 backdrop-blur-xl ${
       active
-        ? "border-gold/30 bg-gold/10 text-gold backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
-        : "border-white/[0.08] bg-white/[0.03] text-warm-muted hover:border-gold/20 hover:text-warm-white hover:bg-white/[0.05] backdrop-blur-sm"
+        ? "border-gold/40 bg-gold/[0.12] text-gold shadow-[0_4px_20px_rgba(212,175,55,0.1),inset_0_1px_0_rgba(255,255,255,0.1)]"
+        : "border-white/[0.1] bg-white/[0.04] text-warm-muted hover:border-gold/30 hover:text-warm-white hover:bg-white/[0.08] hover:shadow-[0_4px_15px_rgba(255,255,255,0.03),inset_0_1px_0_rgba(255,255,255,0.06)] hover:scale-[1.02] active:scale-[0.97]"
     }`;
 
   return (
@@ -420,12 +420,13 @@ function BookingPage() {
       {/* Booking Type Popup */}
       {showTypePopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowTypePopup(false)} />
-          <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-white/[0.12] bg-white/[0.06] backdrop-blur-2xl shadow-[0_8px_60px_rgba(0,0,0,0.5)]">
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/[0.08] to-transparent pointer-events-none" />
-            <div className="relative p-8 text-center">
-              <div className="w-14 h-14 mx-auto mb-5 rounded-full border border-gold/20 bg-gold/[0.06] flex items-center justify-center">
-                <Users className="h-6 w-6 text-gold" />
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={() => setShowTypePopup(false)} />
+          <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/[0.15] bg-white/[0.07] backdrop-blur-3xl shadow-[0_8px_80px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.1)]">
+            <div className="absolute inset-0 rounded-3xl bg-gradient-to-b from-white/[0.12] via-white/[0.03] to-transparent pointer-events-none" />
+            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-gold/[0.03] to-transparent pointer-events-none" />
+            <div className="relative p-10 text-center">
+              <div className="w-16 h-16 mx-auto mb-6 rounded-2xl border border-gold/20 bg-gold/[0.08] backdrop-blur-sm flex items-center justify-center shadow-[0_4px_20px_rgba(212,175,55,0.1)]">
+                <Users className="h-7 w-7 text-gold" />
               </div>
               <h2 className="font-[family-name:var(--font-playfair)] text-2xl font-bold text-warm-white mb-2">
                 How are you booking?
@@ -437,36 +438,36 @@ function BookingPage() {
                   "Are you booking for yourself or a group?"
                 )}
               </p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 <button
                   type="button"
                   onClick={() => handleTypeSelect("individual")}
-                  className="group relative overflow-hidden rounded-xl border border-white/[0.1] bg-white/[0.04] p-6 transition-all duration-300 hover:border-gold/30 hover:bg-gold/[0.06]"
+                  className="group relative overflow-hidden rounded-2xl border border-white/[0.12] bg-white/[0.05] backdrop-blur-xl p-7 transition-all duration-300 hover:border-gold/40 hover:bg-white/[0.1] hover:shadow-[0_8px_30px_rgba(212,175,55,0.08),inset_0_1px_0_rgba(255,255,255,0.1)] hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/[0.04] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/[0.08] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <div className="relative">
-                    <User className="h-8 w-8 text-gold/70 mx-auto mb-3 group-hover:text-gold transition-colors" />
+                    <User className="h-9 w-9 text-gold/60 mx-auto mb-3 group-hover:text-gold transition-colors duration-300" />
                     <p className="text-warm-white font-semibold text-sm mb-1">Individual</p>
-                    <p className="text-warm-muted text-xs">Booking for myself</p>
+                    <p className="text-warm-muted/70 text-xs">Booking for myself</p>
                   </div>
                 </button>
                 <button
                   type="button"
                   onClick={() => handleTypeSelect("group")}
-                  className="group relative overflow-hidden rounded-xl border border-white/[0.1] bg-white/[0.04] p-6 transition-all duration-300 hover:border-gold/30 hover:bg-gold/[0.06]"
+                  className="group relative overflow-hidden rounded-2xl border border-white/[0.12] bg-white/[0.05] backdrop-blur-xl p-7 transition-all duration-300 hover:border-gold/40 hover:bg-white/[0.1] hover:shadow-[0_8px_30px_rgba(212,175,55,0.08),inset_0_1px_0_rgba(255,255,255,0.1)] hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/[0.04] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/[0.08] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <div className="relative">
-                    <Users className="h-8 w-8 text-gold/70 mx-auto mb-3 group-hover:text-gold transition-colors" />
+                    <Users className="h-9 w-9 text-gold/60 mx-auto mb-3 group-hover:text-gold transition-colors duration-300" />
                     <p className="text-warm-white font-semibold text-sm mb-1">Group</p>
-                    <p className="text-warm-muted text-xs">Booking for a group</p>
+                    <p className="text-warm-muted/70 text-xs">Booking for a group</p>
                   </div>
                 </button>
               </div>
               <button
                 type="button"
                 onClick={() => setShowTypePopup(false)}
-                className="mt-5 text-warm-muted text-xs hover:text-warm-white transition-colors"
+                className="mt-6 text-warm-muted/60 text-xs hover:text-warm-white transition-colors duration-200"
               >
                 Skip &mdash; I&rsquo;ll choose below
               </button>
@@ -675,7 +676,7 @@ function BookingPage() {
               {isLodging === "yes" && (
                 <div className="space-y-6">
                   {formData.fromDate && formData.toDate && (
-                    <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm">
+                    <div className="flex flex-wrap gap-2 p-4 rounded-xl border border-white/[0.1] bg-white/[0.04] backdrop-blur-xl">
                       {loadingAvailability ? (
                         <span className="text-xs text-warm-muted flex items-center gap-1.5"><Loader2 className="h-3 w-3 animate-spin" />Checking availability...</span>
                       ) : Object.keys(availability).length > 0 ? (
@@ -716,7 +717,7 @@ function BookingPage() {
                         {ROOM_OPTIONS.map((r) => {
                           const count = availability[r.label];
                           return (
-                            <div key={r.label} className="flex items-center justify-between p-3 rounded-lg border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm">
+                            <div key={r.label} className="flex items-center justify-between p-4 rounded-xl border border-white/[0.1] bg-white/[0.04] backdrop-blur-xl hover:bg-white/[0.06] hover:border-white/[0.14] transition-all duration-300">
                               <div>
                                 <p className="text-sm font-medium text-warm-white">{r.label}</p>
                                 <p className="text-xs text-warm-muted">

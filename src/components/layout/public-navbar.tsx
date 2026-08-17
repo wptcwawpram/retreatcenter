@@ -70,10 +70,10 @@ export function PublicNavbar() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "px-4 py-2 text-[12px] tracking-[0.15em] uppercase transition-colors duration-200",
+                  "px-4 py-2 text-[12px] tracking-[0.15em] uppercase transition-all duration-300 rounded-lg",
                   pathname === link.href
-                    ? "text-gold"
-                    : "text-warm-white/60 hover:text-warm-white"
+                    ? "text-gold bg-gold/[0.06]"
+                    : "text-warm-white/60 hover:text-warm-white hover:bg-white/[0.05]"
                 )}
               >
                 {link.label}
@@ -90,7 +90,7 @@ export function PublicNavbar() {
               </Button>
             </Link>
             <Link href="/booking" className="hidden md:inline-flex">
-              <Button size="sm" className="bg-gold/90 text-luxury hover:bg-gold font-semibold px-6 text-[11px] tracking-[0.15em] uppercase h-9 rounded-lg shadow-md shadow-black/20">
+              <Button size="sm" className="bg-gold/90 text-luxury hover:bg-gold font-semibold px-6 text-[11px] tracking-[0.15em] uppercase h-9 rounded-xl shadow-[0_4px_15px_rgba(212,175,55,0.2)] hover:shadow-[0_6px_25px_rgba(212,175,55,0.3)] hover:scale-[1.03] active:scale-[0.97] transition-all duration-300">
                 Book Now
               </Button>
             </Link>
@@ -156,7 +156,7 @@ export function PublicNavbar() {
                 >
                   <div className="h-px bg-gold/10 mb-4" />
                   <Link href="/booking" onClick={() => setMobileOpen(false)}>
-                    <Button className="w-full rounded-xl border border-white/[0.12] bg-white/[0.06] backdrop-blur-md text-gold hover:bg-gold/10 hover:border-gold/30 h-12 tracking-[0.1em] uppercase text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition-all duration-300">
+                    <Button className="w-full rounded-2xl border border-white/[0.15] bg-white/[0.07] backdrop-blur-2xl text-gold hover:bg-gold/[0.12] hover:border-gold/40 hover:shadow-[0_8px_30px_rgba(212,175,55,0.08),inset_0_1px_0_rgba(255,255,255,0.1)] hover:scale-[1.02] active:scale-[0.98] h-12 tracking-[0.1em] uppercase text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition-all duration-300">
                       Book Now
                     </Button>
                   </Link>
