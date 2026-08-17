@@ -22,6 +22,7 @@ import {
   ChevronLeft,
   Church,
   ImageIcon,
+  ClipboardCheck,
 } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
@@ -39,6 +40,7 @@ const navGroups = [
     items: [
       { label: "Rooms", href: "/dashboard/rooms", icon: BedDouble },
       { label: "Bookings", href: "/dashboard/bookings", icon: CalendarCheck },
+      { label: "Check-in/out", href: "/dashboard/checkin", icon: ClipboardCheck },
       { label: "Calendar", href: "/dashboard/calendar", icon: Calendar },
       { label: "Guests", href: "/dashboard/guests", icon: Users },
       { label: "Housekeeping", href: "/dashboard/housekeeping", icon: SprayCan },

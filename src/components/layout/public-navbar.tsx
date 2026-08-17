@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { X, Menu, Phone, Mail, Shield } from "lucide-react";
+import { X, Menu, Phone, Mail } from "lucide-react";
 import { NAV_LINKS, SITE } from "@/lib/site-data";
 import { useSiteLogo } from "@/lib/use-site-logo";
 import Image from "next/image";
@@ -83,12 +83,6 @@ export function PublicNavbar() {
 
           {/* Right */}
           <div className="flex items-center gap-3">
-            <Link href="/dashboard" className="hidden md:inline-flex">
-              <Button variant="ghost" size="sm" className="text-warm-white/60 hover:text-warm-white hover:bg-white/10 gap-1.5 text-xs">
-                <Shield className="h-3.5 w-3.5" />
-                Admin
-              </Button>
-            </Link>
             <Link href="/booking" className="hidden md:inline-flex">
               <Button size="sm" className="bg-gold/90 text-luxury hover:bg-gold font-semibold px-6 text-[11px] tracking-[0.15em] uppercase h-9 rounded-xl shadow-[0_4px_15px_rgba(212,175,55,0.2)] hover:shadow-[0_6px_25px_rgba(212,175,55,0.3)] hover:scale-[1.03] active:scale-[0.97] transition-all duration-300">
                 Book Now

@@ -88,7 +88,6 @@ export function PublicFooter() {
       <div className="border-t border-gold/8">
         <div className="container mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-xs text-warm-muted/50">{SITE.copyright}</p>
-          <p className="text-xs text-warm-muted/30 italic">Built with care for the Kingdom.</p>
         </div>
       </div>
     </footer>
