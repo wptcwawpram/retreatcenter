@@ -29,7 +29,7 @@ export default function SetupPage() {
         setSeedMsg(seedData.message || `Seeded ${seedData.count ?? ""} rooms`);
       } else {
         setSeedStatus("error");
-        setSeedMsg(seedData.error || seedData.details || `Failed (${seedRes.status})`);
+        setSeedMsg(seedData.details || seedData.error || `Failed (${seedRes.status})`);
       }
     } catch (e) {
       setSeedStatus("error");
@@ -49,7 +49,7 @@ export default function SetupPage() {
         setAdminMsg(adminData.message || "Super admin configured");
       } else {
         setAdminStatus("error");
-        setAdminMsg(adminData.error || adminData.details || `Failed (${adminRes.status})`);
+        setAdminMsg(adminData.details || adminData.error || `Failed (${adminRes.status})`);
       }
     } catch (e) {
       setAdminStatus("error");

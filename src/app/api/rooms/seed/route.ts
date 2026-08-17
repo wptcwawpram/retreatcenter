@@ -250,7 +250,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, count: result.data!.length, message: `Seeded ${result.data!.length} rooms` });
   } catch (error) {
     console.error("Room seed error:", error);
-    const msg = error instanceof Error ? error.message : String(error);
+    const msg = error instanceof Error ? error.message : (typeof error === "object" && error !== null ? JSON.stringify(error) : String(error));
     return NextResponse.json({ error: "Failed to seed rooms", details: msg }, { status: 500 });
   }
 }
