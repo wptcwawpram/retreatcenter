@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NumberStepper } from "@/components/ui/number-stepper";
-import { SITE } from "@/lib/site-data";
+import { SITE, CONTACT_NUMBERS } from "@/lib/site-data";
 import { useSiteImages, useSiteBlurs, img, imgBlurStyle } from "@/lib/use-site-images";
 import {
   CalendarCheck,
@@ -190,7 +190,7 @@ function BookingPage() {
         const counts: Record<string, number> = {};
         (data.available || []).forEach((r: { type: string }) => {
           const typeMap: Record<string, string> = {
-            "2_IN_1": "2 IN 1", "4_IN_1": "4 IN 1", "6_IN_1": "6 IN 1",
+            "2_IN_1": "2 IN 1", "3_IN_1": "3 IN 1", "4_IN_1": "4 IN 1", "6_IN_1": "6 IN 1",
             "SUITE_FAN": "Suite (Fan)", "SUITE_AC": "Suite (AC)",
             "APARTMENT": "Holy Family Apartment",
           };
@@ -269,6 +269,31 @@ function BookingPage() {
     if (!formData.fromDate || !formData.toDate) {
       setSubmitError("Please select your check-in and check-out dates.");
       return;
+    }
+
+    if (isLodging === "yes") {
+      if (bookingType === "individual" && selectedRoom) {
+        const avail = availability[selectedRoom];
+        if (avail !== undefined && avail === 0) {
+          setSubmitError(`Sorry, ${selectedRoom} rooms are fully booked for your selected dates. Please choose a different room type or contact us at ${CONTACT_NUMBERS[0]} for assistance.`);
+          return;
+        }
+      } else if (bookingType === "group") {
+        const fullRooms = ROOM_OPTIONS.filter((r) => (roomQuantities[r.label] || 0) > 0 && availability[r.label] === 0);
+        if (fullRooms.length > 0) {
+          setSubmitError(`Sorry, ${fullRooms.map((r) => r.label).join(", ")} rooms are fully booked for your selected dates. Please adjust your selection or contact us at ${CONTACT_NUMBERS[0]}.`);
+          return;
+        }
+        const overbooked = ROOM_OPTIONS.filter((r) => {
+          const qty = roomQuantities[r.label] || 0;
+          const avail = availability[r.label];
+          return qty > 0 && avail !== undefined && qty > avail;
+        });
+        if (overbooked.length > 0) {
+          setSubmitError(`You've selected more rooms than available: ${overbooked.map((r) => `${r.label} (${availability[r.label]} available, ${roomQuantities[r.label]} selected)`).join(", ")}. Please adjust or contact us at ${CONTACT_NUMBERS[0]}.`);
+          return;
+        }
+      }
     }
 
     setSubmitting(true);

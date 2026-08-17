@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyPayment } from "@/lib/paystack";
 import { createServerClient } from "@supabase/ssr";
 import { sendSms, SMS_TEMPLATES } from "@/lib/hubtel-sms";
+import { notifyAdmin } from "@/lib/notify-admin";
 
 function createServiceClient() {
   return createServerClient(
@@ -65,14 +66,26 @@ export async function GET(request: NextRequest) {
           await supabase.from("payments").insert({
             booking_id: bookingRecord.id,
             amount: amountPaid,
-            method: "MOBILE_MONEY",
+            method: "PAYSTACK",
             status: "COMPLETED",
             reference: result.data.reference,
             notes: `Paystack deposit payment via ${result.data.channel}`,
           });
+
+          // Record in finance
+          try {
+            await supabase.from("finance_records").insert({
+              type: "INCOME",
+              category: "Booking Payment",
+              description: `Paystack deposit for booking ${bookingRef}${guestName ? ` — ${guestName}` : ""}`,
+              amount: amountPaid,
+              date: new Date().toISOString().split("T")[0],
+              booking_id: bookingRecord.id,
+            });
+          } catch {}
         }
 
-        // Send confirmation SMS (only now, AFTER payment succeeds)
+        // Send confirmation SMS to guest
         try {
           if (guestPhone && guestName && checkIn && checkOut) {
             const checkInFormatted = new Date(checkIn).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
@@ -83,8 +96,26 @@ export async function GET(request: NextRequest) {
             });
           }
         } catch (smsError) {
-          console.error("SMS send failed (non-blocking):", smsError);
+          console.error("Guest SMS failed:", smsError);
         }
+
+        // Send SMS to admin
+        try {
+          const adminPhone = process.env.ADMIN_PHONE || "+233247258161";
+          await sendSms({
+            to: adminPhone,
+            message: `WPTC: Payment received! ${guestName || "Guest"} paid GH₵${amountPaid} for booking ${bookingRef}. Check-in: ${checkIn || "N/A"}. Phone: ${guestPhone || "N/A"}.`,
+          });
+        } catch (adminSmsError) {
+          console.error("Admin SMS failed:", adminSmsError);
+        }
+
+        // Notify admin in-app
+        notifyAdmin({
+          type: "payment",
+          subject: `Payment Received: ${bookingRef}`,
+          message: `${guestName || "Guest"} paid GH₵${amountPaid} for booking ${bookingRef}.`,
+        }).catch(() => {});
       }
     }
 
