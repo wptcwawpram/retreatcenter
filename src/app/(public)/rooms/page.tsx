@@ -58,15 +58,15 @@ export default function RoomsPage() {
       <section className="py-20 md:py-28 bg-luxury">
         <div className="container mx-auto px-6">
           {/* Tabs */}
-          <div className="flex justify-center gap-1 mb-14">
+          <div className="flex justify-center gap-2 mb-14">
             {TABS.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-6 py-2.5 text-[11px] tracking-[0.15em] uppercase transition-all duration-300 border ${
+                className={`px-6 py-2.5 text-[11px] tracking-[0.15em] uppercase transition-all duration-300 rounded-lg border backdrop-blur-sm ${
                   activeTab === tab
-                    ? "bg-gold/10 border-gold/40 text-gold"
-                    : "border-gold/10 text-warm-muted hover:text-warm-white hover:border-gold/20"
+                    ? "bg-gold/10 border-gold/30 text-gold shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+                    : "border-white/[0.08] bg-white/[0.03] text-warm-muted hover:text-warm-white hover:border-gold/20 hover:bg-white/[0.05]"
                 }`}
               >
                 {tab}
@@ -124,7 +124,7 @@ export default function RoomsPage() {
                         <span className="text-warm-muted text-sm ml-1">/ night</span>
                       </div>
                       <Link href={`/booking?room=${room.slug}`}>
-                        <Button className="bg-transparent border border-gold/40 text-gold hover:bg-gold/10 text-[11px] tracking-[0.12em] uppercase h-10 px-6">
+                        <Button className="rounded-lg border border-white/[0.12] bg-white/[0.06] backdrop-blur-md text-gold hover:bg-gold/10 hover:border-gold/30 text-[11px] tracking-[0.12em] uppercase h-10 px-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition-all duration-300">
                           Book Now
                         </Button>
                       </Link>
@@ -143,7 +143,7 @@ export default function RoomsPage() {
           <FadeIn>
             <p className="text-warm-muted mb-4">Can&rsquo;t find what you need?</p>
             <Link href="/contact">
-              <Button variant="outline" className="border-gold/30 text-gold hover:bg-gold/10 gap-2 text-[11px] tracking-[0.12em] uppercase h-10 px-6">
+              <Button variant="outline" className="rounded-lg border-white/[0.12] bg-white/[0.06] backdrop-blur-md text-gold hover:bg-gold/10 hover:border-gold/30 gap-2 text-[11px] tracking-[0.12em] uppercase h-10 px-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition-all duration-300">
                 Contact Us <ArrowRight className="h-3.5 w-3.5" />
               </Button>
             </Link>

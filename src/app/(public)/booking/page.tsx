@@ -81,10 +81,10 @@ const inputClass = "bg-luxury border-gold/15 text-warm-white placeholder:text-wa
 const selectClass = "w-full h-9 rounded-md border border-gold/15 bg-luxury px-3 text-sm text-warm-white focus:outline-none focus:ring-2 focus:ring-gold/30";
 const labelClass = "text-warm-muted text-xs tracking-wide";
 const checkboxCardClass = (checked: boolean) =>
-  `flex items-center gap-3 p-3.5 border cursor-pointer transition-all duration-200 select-none ${
+  `flex items-center gap-3 p-3.5 rounded-lg border cursor-pointer transition-all duration-200 select-none backdrop-blur-sm ${
     checked
-      ? "border-gold/40 bg-gold/8"
-      : "border-gold/10 bg-luxury hover:border-gold/20"
+      ? "border-gold/30 bg-gold/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+      : "border-white/[0.08] bg-white/[0.03] hover:border-gold/20 hover:bg-white/[0.05]"
   }`;
 
 function todayStr() {
@@ -106,7 +106,7 @@ function daysBetween(a: string, b: string): number {
 
 function SectionCard({ icon: Icon, title, children }: { icon: React.ComponentType<{ className?: string }>; title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-luxury-card/80 backdrop-blur-sm border border-gold/10 overflow-hidden">
+    <div className="bg-luxury-card/60 backdrop-blur-lg border border-white/[0.08] rounded-xl overflow-hidden shadow-[0_4px_30px_rgba(0,0,0,0.15)]">
       <div className="h-px bg-gradient-to-r from-gold/30 via-gold/10 to-transparent" />
       <div className="p-6 md:p-8">
         <h2 className="text-lg font-semibold text-warm-white mb-6 flex items-center gap-2.5">

@@ -90,7 +90,7 @@ export function PublicNavbar() {
               </Button>
             </Link>
             <Link href="/booking" className="hidden md:inline-flex">
-              <Button size="sm" className="bg-gold/90 text-luxury hover:bg-gold font-semibold px-6 text-[11px] tracking-[0.15em] uppercase h-9 shadow-md shadow-black/20">
+              <Button size="sm" className="bg-gold/90 text-luxury hover:bg-gold font-semibold px-6 text-[11px] tracking-[0.15em] uppercase h-9 rounded-lg shadow-md shadow-black/20">
                 Book Now
               </Button>
             </Link>
@@ -156,7 +156,7 @@ export function PublicNavbar() {
                 >
                   <div className="h-px bg-gold/10 mb-4" />
                   <Link href="/booking" onClick={() => setMobileOpen(false)}>
-                    <Button className="w-full bg-transparent border border-gold/40 text-gold hover:bg-gold/10 h-12 tracking-[0.1em] uppercase text-sm">
+                    <Button className="w-full rounded-xl border border-white/[0.12] bg-white/[0.06] backdrop-blur-md text-gold hover:bg-gold/10 hover:border-gold/30 h-12 tracking-[0.1em] uppercase text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition-all duration-300">
                       Book Now
                     </Button>
                   </Link>
