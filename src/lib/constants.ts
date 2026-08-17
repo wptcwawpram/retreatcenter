@@ -161,13 +161,21 @@ export const COMPLAINT_CATEGORY_LABELS: Record<string, string> = {
 
 export const USER_ROLE_LABELS: Record<string, string> = {
   SUPER_ADMIN: "Super Admin",
+  super_admin: "Super Admin",
   ADMIN: "Administrator",
+  admin: "Super Admin",
   MANAGER: "Manager",
+  manager: "Manager",
   RECEPTIONIST: "Receptionist",
+  receptionist: "Receptionist",
   HOUSEKEEPER: "Housekeeper",
+  housekeeping: "Housekeeping",
   ACCOUNTANT: "Accountant",
+  accountant: "Accountant",
   MAINTENANCE: "Maintenance",
+  maintenance: "Maintenance",
   GUEST: "Guest",
+  guest: "Guest",
 };
 
 // ─── Currency ───────────────────────────────────────────────────────────────

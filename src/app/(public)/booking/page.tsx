@@ -53,7 +53,7 @@ const RELATIONSHIP_STATUSES = ["Married", "Single", "In a Relationship", "Divorc
 
 const ID_TYPES = ["Ghana Card", "Passport", "Driver's License"];
 
-const ROOM_OPTIONS = [
+const DEFAULT_ROOM_OPTIONS = [
   { label: "2 IN 1", price: 150, slug: "2-in-1" },
   { label: "4 IN 1", price: 200, slug: "4-in-1" },
   { label: "6 IN 1", price: 270, slug: "6-in-1" },
@@ -137,6 +137,23 @@ function BookingPage() {
   const [isLodging, setIsLodging] = useState<"yes" | "no" | "">("");
   const [selectedRoom, setSelectedRoom] = useState("");
   const [nights, setNights] = useState(1);
+
+  const [ROOM_OPTIONS, setRoomOptions] = useState(DEFAULT_ROOM_OPTIONS);
+
+  useEffect(() => {
+    fetch("/api/rooms/prices")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.types?.length > 0) {
+          setRoomOptions(data.types.map((t: { label: string; price: number; slug: string }) => ({
+            label: t.label,
+            price: t.price,
+            slug: t.slug,
+          })));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const [selectedHalls, setSelectedHalls] = useState<Record<string, boolean>>({});
   const [hallDays, setHallDays] = useState(1);

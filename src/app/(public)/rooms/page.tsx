@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion, useInView } from "framer-motion";
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, useState, useEffect, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { ROOMS } from "@/lib/site-data";
 import { useSiteImages, useSiteBlurs, img, imgBlurStyle } from "@/lib/use-site-images";
@@ -27,8 +27,27 @@ export default function RoomsPage() {
   const siteImages = useSiteImages();
   const siteBlurs = useSiteBlurs();
   const [activeTab, setActiveTab] = useState<string>("All Rooms");
+  const [livePrices, setLivePrices] = useState<Record<string, number>>({});
 
-  const filtered = ROOMS.filter((room) => {
+  useEffect(() => {
+    fetch("/api/rooms/prices")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.types?.length > 0) {
+          const map: Record<string, number> = {};
+          data.types.forEach((t: { slug: string; price: number }) => { map[t.slug] = t.price; });
+          setLivePrices(map);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const rooms = ROOMS.map((r) => ({
+    ...r,
+    price: livePrices[r.slug] ?? r.price,
+  }));
+
+  const filtered = rooms.filter((room) => {
     if (activeTab === "All Rooms") return true;
     if (activeTab === "Premium") return room.featured;
     return !room.featured;
