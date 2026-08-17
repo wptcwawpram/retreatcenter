@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import type { SlideContent } from "@/lib/get-site-images";
 
 interface SiteImagesValue {
@@ -8,6 +8,7 @@ interface SiteImagesValue {
   logo: string | null;
   blurs: Record<string, number>;
   slides: Record<string, SlideContent>;
+  refresh: () => void;
 }
 
 const SiteImagesContext = createContext<SiteImagesValue>({
@@ -15,6 +16,7 @@ const SiteImagesContext = createContext<SiteImagesValue>({
   logo: null,
   blurs: {},
   slides: {},
+  refresh: () => {},
 });
 
 export function SiteImagesProvider({
@@ -35,7 +37,7 @@ export function SiteImagesProvider({
   const [blurs, setBlurs] = useState<Record<string, number>>(serverBlurs);
   const [slides, setSlides] = useState<Record<string, SlideContent>>(serverSlides);
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
     fetch("/api/site-images")
       .then((res) => {
         if (!res.ok) throw new Error("Failed");
@@ -57,8 +59,10 @@ export function SiteImagesProvider({
       .catch(() => {});
   }, []);
 
+  useEffect(() => { fetchData(); }, [fetchData]);
+
   return (
-    <SiteImagesContext.Provider value={{ images, logo, blurs, slides }}>
+    <SiteImagesContext.Provider value={{ images, logo, blurs, slides, refresh: fetchData }}>
       {children}
     </SiteImagesContext.Provider>
   );

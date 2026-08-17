@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { IMAGES } from "@/lib/images";
+import { useSiteImagesCtx } from "@/lib/site-images-context";
 import {
   ImageIcon,
   Loader2,
@@ -180,6 +181,7 @@ function ImageCard({
 }
 
 export default function SiteImagesPage() {
+  const { refresh: refreshContext } = useSiteImagesCtx();
   const logoRef = useRef<HTMLInputElement>(null);
   const [defaults] = useState(() => flattenImages(IMAGES as unknown as Record<string, ImageValue>));
   const [overrides, setOverrides] = useState<Record<string, string>>({});
@@ -257,6 +259,7 @@ export default function SiteImagesPage() {
       setCurrentUrls((p) => ({ ...p, [path]: data.url }));
       setSaved((p) => ({ ...p, [path]: true }));
       setTimeout(() => setSaved((p) => ({ ...p, [path]: false })), 2500);
+      refreshContext();
     } catch (err) {
       setError(err instanceof Error ? err.message : `Failed to upload ${path}`);
     } finally {
@@ -273,6 +276,7 @@ export default function SiteImagesPage() {
       setCurrentUrls((p) => ({ ...p, [path]: defaults[path] }));
       setSaved((p) => ({ ...p, [path]: true }));
       setTimeout(() => setSaved((p) => ({ ...p, [path]: false })), 2000);
+      refreshContext();
     } catch {
       setError(`Failed to reset ${path}`);
     } finally {
