@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
       .from("profiles")
       .upsert({
         id: userId,
+        email: adminEmail,
         full_name: adminName,
         role: "super_admin",
         phone: adminPhone,
@@ -68,6 +69,7 @@ export async function POST(request: NextRequest) {
         .from("profiles")
         .upsert({
           id: userId,
+          email: adminEmail,
           full_name: adminName,
           role: "admin",
           phone: adminPhone,
