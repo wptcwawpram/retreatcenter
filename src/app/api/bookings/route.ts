@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { notifyAdmin } from "@/lib/notify-admin";
 
 // Use service role key so public booking form can insert without auth
 function createServiceClient() {
@@ -92,7 +93,14 @@ export async function POST(request: NextRequest) {
       booking_id: bookingRecord.id,
     });
 
-    // 4. Initialize Paystack payment so frontend can open inline popup
+    // 4. Notify admin (non-blocking)
+    notifyAdmin({
+      type: "booking",
+      subject: `New Booking: ${bookingRecord.reference}`,
+      message: `${guest.full_name} booked ${booking.booking_type || "INDIVIDUAL"} for ${booking.check_in} to ${booking.check_out}. Total: GH₵${totalAmount}. Phone: ${guest.phone}`,
+    }).catch(() => {});
+
+    // 5. Initialize Paystack payment so frontend can open inline popup
     const paystackKey = process.env.PAYSTACK_SECRET_KEY;
     let paymentAccessCode: string | null = null;
     let paymentReference: string | null = null;

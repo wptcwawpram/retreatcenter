@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyWebhookSignature, verifyPayment } from "@/lib/paystack";
 import { createServerClient } from "@supabase/ssr";
 import { sendSms, SMS_TEMPLATES } from "@/lib/hubtel-sms";
+import { notifyAdmin } from "@/lib/notify-admin";
 
 function createServiceClient() {
   return createServerClient(
@@ -72,6 +73,13 @@ export async function POST(request: NextRequest) {
               reference: verification.data.reference,
               notes: `Paystack webhook payment via ${verification.data.channel}`,
             });
+
+            // Notify admin of payment
+            notifyAdmin({
+              type: "payment",
+              subject: `Payment Received: ${bookingRef}`,
+              message: `${guestName || "Guest"} paid GH₵${amountPaid} for booking ${bookingRef}. Status: ${paymentStatus}.`,
+            }).catch(() => {});
 
             // Send confirmation SMS
             try {

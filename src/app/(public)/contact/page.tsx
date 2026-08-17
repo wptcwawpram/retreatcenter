@@ -37,15 +37,44 @@ export default function ContactPage() {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
+  const [sendError, setSendError] = useState("");
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSending(true);
     setSent(false);
-    await new Promise((r) => setTimeout(r, 1500));
-    setSending(false);
-    setSent(true);
-    (e.target as HTMLFormElement).reset();
-    setTimeout(() => setSent(false), 5000);
+    setSendError("");
+
+    const form = e.target as HTMLFormElement;
+    const data = new FormData(form);
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: data.get("firstName"),
+          lastName: data.get("lastName"),
+          email: data.get("email"),
+          phone: data.get("phone"),
+          subject: data.get("subject"),
+          message: data.get("message"),
+        }),
+      });
+
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || "Failed to send");
+      }
+
+      setSent(true);
+      form.reset();
+      setTimeout(() => setSent(false), 5000);
+    } catch (err) {
+      setSendError(err instanceof Error ? err.message : "Failed to send message");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -131,31 +160,38 @@ export default function ContactPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="firstName" className="text-warm-muted text-xs tracking-wide">First Name</Label>
-                        <Input id="firstName" placeholder="Your first name" className="bg-luxury border-gold/15 text-warm-white placeholder:text-warm-muted/40 focus-visible:ring-gold/30" />
+                        <Input id="firstName" name="firstName" required placeholder="Your first name" className="bg-luxury border-gold/15 text-warm-white placeholder:text-warm-muted/40 focus-visible:ring-gold/30" />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="lastName" className="text-warm-muted text-xs tracking-wide">Last Name</Label>
-                        <Input id="lastName" placeholder="Your last name" className="bg-luxury border-gold/15 text-warm-white placeholder:text-warm-muted/40 focus-visible:ring-gold/30" />
+                        <Input id="lastName" name="lastName" placeholder="Your last name" className="bg-luxury border-gold/15 text-warm-white placeholder:text-warm-muted/40 focus-visible:ring-gold/30" />
                       </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="email" className="text-warm-muted text-xs tracking-wide">Email</Label>
-                        <Input id="email" type="email" placeholder="your@email.com" className="bg-luxury border-gold/15 text-warm-white placeholder:text-warm-muted/40 focus-visible:ring-gold/30" />
+                        <Input id="email" name="email" type="email" placeholder="your@email.com" className="bg-luxury border-gold/15 text-warm-white placeholder:text-warm-muted/40 focus-visible:ring-gold/30" />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="phone" className="text-warm-muted text-xs tracking-wide">Phone</Label>
-                        <Input id="phone" type="tel" placeholder="+233 XXX XXX XXX" className="bg-luxury border-gold/15 text-warm-white placeholder:text-warm-muted/40 focus-visible:ring-gold/30" />
+                        <Input id="phone" name="phone" type="tel" placeholder="+233 XXX XXX XXX" className="bg-luxury border-gold/15 text-warm-white placeholder:text-warm-muted/40 focus-visible:ring-gold/30" />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="subject" className="text-warm-muted text-xs tracking-wide">Subject</Label>
-                      <Input id="subject" placeholder="What is this about?" className="bg-luxury border-gold/15 text-warm-white placeholder:text-warm-muted/40 focus-visible:ring-gold/30" />
+                      <Input id="subject" name="subject" placeholder="What is this about?" className="bg-luxury border-gold/15 text-warm-white placeholder:text-warm-muted/40 focus-visible:ring-gold/30" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="message" className="text-warm-muted text-xs tracking-wide">Message</Label>
-                      <Textarea id="message" placeholder="Tell us about your retreat plans, group size, preferred dates, or any questions..." rows={5} className="bg-luxury border-gold/15 text-warm-white placeholder:text-warm-muted/40 focus-visible:ring-gold/30 resize-none" />
+                      <Textarea id="message" name="message" required placeholder="Tell us about your retreat plans, group size, preferred dates, or any questions..." rows={5} className="bg-luxury border-gold/15 text-warm-white placeholder:text-warm-muted/40 focus-visible:ring-gold/30 resize-none" />
                     </div>
+
+                    {sendError && (
+                      <div className="flex items-center gap-2 p-3 border border-red-500/30 bg-red-500/10 text-sm text-red-300">
+                        <span className="shrink-0">!</span>
+                        {sendError}
+                      </div>
+                    )}
 
                     {sent && (
                       <div className="flex items-center gap-2 p-3 border border-gold/30 bg-gold/10 text-sm text-gold">

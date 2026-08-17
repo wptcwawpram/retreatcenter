@@ -31,6 +31,8 @@ const DEFAULTS: SettingsMap = {
   notif_checkin_reminder: "true",
   notif_low_inventory: "true",
   notif_complaint: "true",
+  admin_notif_phone: "",
+  admin_notif_email: "",
 };
 
 export default function SettingsPage() {
@@ -180,20 +182,37 @@ export default function SettingsPage() {
 
       {/* Notifications */}
       {activeTab === "notifications" && (
-        <div className="rounded-xl border border-border/60 bg-card p-5 space-y-4">
-          <h3 className="text-sm font-semibold">Notification Preferences</h3>
-          <div className="space-y-4">
-            {[
-              { key: "notif_new_booking", label: "New booking alert", desc: "Get notified when a new booking is created" },
-              { key: "notif_payment", label: "Payment received", desc: "Notification when payment is recorded" },
-              { key: "notif_checkin_reminder", label: "Check-in reminder", desc: "Remind staff about expected check-ins" },
-              { key: "notif_low_inventory", label: "Low inventory alert", desc: "Alert when supplies run low" },
-              { key: "notif_complaint", label: "Complaint alert", desc: "Immediate notification for new complaints" },
-            ].map((n) => (
-              <SwitchRow key={n.key} label={n.label} desc={n.desc} checked={settings[n.key] === "true"} onToggle={() => toggleSwitch(n.key)} />
-            ))}
+        <div className="space-y-5">
+          <div className="rounded-xl border border-border/60 bg-card p-5 space-y-4">
+            <h3 className="text-sm font-semibold">Admin Notification Contacts</h3>
+            <p className="text-xs text-muted-foreground -mt-2">Where to send booking, contact, and complaint alerts. Falls back to the property phone/email if left empty.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Admin Phone (SMS)</Label>
+                <Input value={settings.admin_notif_phone} onChange={(e) => update("admin_notif_phone", e.target.value)} placeholder="e.g. +233 546 802 414" className="h-9" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Admin Email</Label>
+                <Input value={settings.admin_notif_email} onChange={(e) => update("admin_notif_email", e.target.value)} placeholder="e.g. admin@wptc.com" className="h-9" />
+              </div>
+            </div>
           </div>
-          <SaveButton section="notifications" saving={saving} saved={saved} onClick={() => saveSection("notifications", ["notif_new_booking", "notif_payment", "notif_checkin_reminder", "notif_low_inventory", "notif_complaint"])} />
+
+          <div className="rounded-xl border border-border/60 bg-card p-5 space-y-4">
+            <h3 className="text-sm font-semibold">Notification Preferences</h3>
+            <div className="space-y-4">
+              {[
+                { key: "notif_new_booking", label: "New booking alert", desc: "Get notified when a new booking or contact form is submitted" },
+                { key: "notif_payment", label: "Payment received", desc: "Notification when payment is recorded" },
+                { key: "notif_checkin_reminder", label: "Check-in reminder", desc: "Remind staff about expected check-ins" },
+                { key: "notif_low_inventory", label: "Low inventory alert", desc: "Alert when supplies run low" },
+                { key: "notif_complaint", label: "Complaint alert", desc: "Immediate notification for new complaints" },
+              ].map((n) => (
+                <SwitchRow key={n.key} label={n.label} desc={n.desc} checked={settings[n.key] === "true"} onToggle={() => toggleSwitch(n.key)} />
+              ))}
+            </div>
+            <SaveButton section="notifications" saving={saving} saved={saved} onClick={() => saveSection("notifications", ["notif_new_booking", "notif_payment", "notif_checkin_reminder", "notif_low_inventory", "notif_complaint", "admin_notif_phone", "admin_notif_email"])} />
+          </div>
         </div>
       )}
     </div>
