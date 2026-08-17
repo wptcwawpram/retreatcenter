@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { PAYMENT_STATUS_CONFIG, PAYMENT_METHOD_LABELS } from "@/lib/constants";
 import { getPayments, getBookings, createPayment, deletePayment } from "@/lib/supabase/queries";
+import { createClient } from "@/lib/supabase/client";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { Search, Wallet, Clock, CreditCard, TrendingUp, Loader2, Trash2, AlertCircle } from "lucide-react";
@@ -73,16 +74,34 @@ export default function PaymentsPage() {
   ];
 
   const handleAdd = async (values: Record<string, unknown>) => {
+    const bookingId = values.booking_id as string;
+    const amount = Number(values.amount);
+    const method = values.method as "CASH" | "MOBILE_MONEY" | "CARD" | "BANK_TRANSFER" | "PAYSTACK";
+    const booking = allBookings.find((b) => b.id === bookingId);
+
     await createPayment({
-      booking_id: values.booking_id as string,
-      amount: Number(values.amount),
-      method: values.method as "CASH" | "MOBILE_MONEY" | "CARD" | "BANK_TRANSFER" | "PAYSTACK",
+      booking_id: bookingId,
+      amount,
+      method,
       status: (values.status as "PENDING" | "COMPLETED" | "FAILED" | "REFUNDED") || "COMPLETED",
       reference: `MAN-${Date.now()}`,
       paystack_reference: null,
       notes: (values.notes as string) || null,
       recorded_by: null,
     });
+
+    try {
+      const supabase = createClient();
+      await supabase.from("finance_records").insert({
+        type: "INCOME",
+        category: "Booking Payment",
+        description: `Manual ${PAYMENT_METHOD_LABELS[method] ?? method} payment for booking ${booking?.reference ?? bookingId}`,
+        amount,
+        date: new Date().toISOString().split("T")[0],
+        booking_id: bookingId,
+      });
+    } catch {}
+
     refetch();
   };
 

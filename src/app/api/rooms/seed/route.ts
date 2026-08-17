@@ -43,11 +43,12 @@ const SEED_ROOMS = [
     has_tv: false,
     has_fridge: false,
     description: null,
+    display_order: i + 1,
   })),
-  // Main Building: 4-in-1 (rooms 6-13)
-  ...Array.from({ length: 8 }, (_, i) => ({
-    number: String(i + 6),
-    name: `Room ${i + 6}`,
+  // Main Building: Room 6 (4-in-1)
+  {
+    number: "6",
+    name: "Room 6",
     type: "4_IN_1" as const,
     building: "Main Building",
     floor: 0,
@@ -60,6 +61,61 @@ const SEED_ROOMS = [
     has_tv: false,
     has_fridge: false,
     description: null,
+    display_order: 6,
+  },
+  // Suite 1 (between room 6 and 7)
+  {
+    number: "S1",
+    name: "Suite 1",
+    type: "SUITE_AC" as const,
+    building: "Main Building",
+    floor: 0,
+    capacity: 2,
+    beds: 1,
+    price_per_night: 500,
+    status: "AVAILABLE" as const,
+    amenities: ["Air Conditioning", "Private Washroom", "TV", "Fridge", "Seating Area"],
+    has_ac: true,
+    has_tv: true,
+    has_fridge: true,
+    description: "Premium suite with air conditioning and full amenities",
+    display_order: 7,
+  },
+  // Suite 2
+  {
+    number: "S2",
+    name: "Suite 2",
+    type: "SUITE_AC" as const,
+    building: "Main Building",
+    floor: 0,
+    capacity: 2,
+    beds: 1,
+    price_per_night: 500,
+    status: "AVAILABLE" as const,
+    amenities: ["Air Conditioning", "Private Washroom", "TV", "Fridge", "Seating Area"],
+    has_ac: true,
+    has_tv: true,
+    has_fridge: true,
+    description: "Premium suite with air conditioning and full amenities",
+    display_order: 8,
+  },
+  // Main Building: 4-in-1 (rooms 7-13)
+  ...Array.from({ length: 7 }, (_, i) => ({
+    number: String(i + 7),
+    name: `Room ${i + 7}`,
+    type: "4_IN_1" as const,
+    building: "Main Building",
+    floor: 0,
+    capacity: 4,
+    beds: 4,
+    price_per_night: 200,
+    status: "AVAILABLE" as const,
+    amenities: ["Washroom", "Built-in Desk", "Seating Area"],
+    has_ac: false,
+    has_tv: false,
+    has_fridge: false,
+    description: null,
+    display_order: 9 + i,
   })),
   // Main Building: 6-in-1 (rooms 14-21)
   ...Array.from({ length: 8 }, (_, i) => ({
@@ -77,6 +133,7 @@ const SEED_ROOMS = [
     has_tv: false,
     has_fridge: false,
     description: null,
+    display_order: 16 + i,
   })),
   // Holy Family: Room 1 (2-in-1)
   {
@@ -94,6 +151,7 @@ const SEED_ROOMS = [
     has_tv: true,
     has_fridge: true,
     description: "Holy Family Apartment - 2-in-1 bedroom",
+    display_order: 24,
   },
   // Holy Family: Room 2 (2-in-1)
   {
@@ -111,6 +169,7 @@ const SEED_ROOMS = [
     has_tv: true,
     has_fridge: true,
     description: "Holy Family Apartment - 2-in-1 bedroom",
+    display_order: 25,
   },
   // Holy Family: Room 3 (3-in-1)
   {
@@ -128,6 +187,7 @@ const SEED_ROOMS = [
     has_tv: true,
     has_fridge: true,
     description: "Holy Family Apartment - 3-in-1 bedroom",
+    display_order: 26,
   },
 ];
 

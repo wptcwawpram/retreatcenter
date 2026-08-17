@@ -3,9 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Bell, Menu, Search, User, LogOut, ChevronDown, Settings } from "lucide-react";
+import { Menu, LogOut, ChevronDown, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MobileSidebar } from "./mobile-sidebar";
 import { USER_ROLE_LABELS } from "@/lib/constants";
@@ -79,26 +78,10 @@ export function DashboardTopbar() {
         </SheetContent>
       </Sheet>
 
-      {/* Search */}
-      <div className="flex-1 max-w-sm">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search..."
-            className="pl-8 h-8 bg-muted/40 border-transparent text-sm focus-visible:border-border focus-visible:bg-background"
-          />
-        </div>
-      </div>
+      <div className="flex-1" />
 
       {/* Right side */}
       <div className="flex items-center gap-1.5 ml-auto">
-        {/* Notifications */}
-        <Button variant="ghost" size="icon-sm" className="relative text-muted-foreground hover:text-foreground">
-          <Bell className="h-4 w-4" />
-          <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-primary ring-2 ring-card" />
-        </Button>
-
         {/* User menu */}
         <div className="relative" ref={dropdownRef}>
           <button

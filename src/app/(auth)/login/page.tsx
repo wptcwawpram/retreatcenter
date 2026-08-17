@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { IMAGES } from "@/lib/images";
+import { useSiteLogo } from "@/lib/use-site-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +28,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") ?? "/dashboard";
+  const siteLogo = useSiteLogo();
 
   const [step, setStep] = useState<Step>("login");
   const [loginMode, setLoginMode] = useState<"phone" | "email">("phone");
@@ -503,11 +505,17 @@ function LoginForm() {
           <motion.div key="login" variants={containerVariants} initial="hidden" animate="visible" exit="exit" className="relative z-10 mx-4 w-full max-w-md">
             <div className={cardClass}>
               <div className="mb-8 text-center">
-                <motion.div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-gold/30 bg-gold/[0.08]"
+                <motion.div className="mx-auto mb-4"
                   initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.1, type: "spring", stiffness: 200 }}>
-                  <Church className="h-7 w-7 text-gold" />
+                  {siteLogo ? (
+                    <Image src={siteLogo} alt="WPTC" width={180} height={64} className="h-16 w-auto object-contain mx-auto" unoptimized />
+                  ) : (
+                    <div className="flex h-14 w-14 mx-auto items-center justify-center rounded-xl border border-gold/30 bg-gold/[0.08]">
+                      <Church className="h-7 w-7 text-gold" />
+                    </div>
+                  )}
                 </motion.div>
-                <h1 className="font-[family-name:var(--font-playfair)] text-xl font-bold tracking-tight text-warm-white">Warriors Prayer Tower Complex</h1>
+                {!siteLogo && <h1 className="font-[family-name:var(--font-playfair)] text-xl font-bold tracking-tight text-warm-white">Warriors Prayer Tower Complex</h1>}
                 <p className="mt-1 text-[11px] text-gold/60 tracking-[0.15em] uppercase">Staff Portal</p>
               </div>
 

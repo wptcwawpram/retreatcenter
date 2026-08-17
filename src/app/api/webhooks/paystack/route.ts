@@ -74,6 +74,18 @@ export async function POST(request: NextRequest) {
               notes: `Paystack webhook payment via ${verification.data.channel}`,
             });
 
+            // Record in finance
+            try {
+              await supabase.from("finance_records").insert({
+                type: "INCOME",
+                category: "Booking Payment",
+                description: `Paystack payment for booking ${bookingRef}${guestName ? ` — ${guestName}` : ""}`,
+                amount: amountPaid,
+                date: new Date().toISOString().split("T")[0],
+                booking_id: booking.id,
+              });
+            } catch {}
+
             // Notify admin of payment
             notifyAdmin({
               type: "payment",

@@ -82,6 +82,29 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error;
 
+    // Propagate pricing changes to rooms
+    const priceMap: Record<string, string[]> = {
+      price_2in1: ["2_IN_1"],
+      price_3in1: ["3_IN_1"],
+      price_4in1: ["4_IN_1"],
+      price_6in1: ["6_IN_1"],
+      price_suite_fan: ["SUITE_FAN"],
+      price_suite_ac: ["SUITE_AC"],
+      price_apartment: ["APARTMENT"],
+    };
+
+    for (const [key, types] of Object.entries(priceMap)) {
+      if (settings[key]) {
+        const price = Number(settings[key]);
+        if (!isNaN(price) && price >= 0) {
+          await supabase
+            .from("rooms")
+            .update({ price_per_night: price })
+            .in("type", types);
+        }
+      }
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Settings POST error:", error);

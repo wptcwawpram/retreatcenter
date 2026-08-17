@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       .upsert({
         id: userId,
         full_name: adminName,
-        role: "admin",
+        role: "super_admin",
         phone: adminPhone,
         is_active: true,
       }, { onConflict: "id" });

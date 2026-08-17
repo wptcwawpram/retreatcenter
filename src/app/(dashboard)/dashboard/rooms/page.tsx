@@ -124,7 +124,7 @@ export default function RoomsPage() {
       case "type": return list.sort((a, b) => typeOrder(a.type) - typeOrder(b.type) || numSort(a.number) - numSort(b.number));
       case "status": return list.sort((a, b) => a.status.localeCompare(b.status) || numSort(a.number) - numSort(b.number));
       case "building": return list.sort((a, b) => a.building.localeCompare(b.building) || numSort(a.number) - numSort(b.number));
-      default: return list.sort((a, b) => buildingOrder(a.building) - buildingOrder(b.building) || numSort(a.number) - numSort(b.number));
+      default: return list.sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999) || buildingOrder(a.building) - buildingOrder(b.building) || numSort(a.number) - numSort(b.number));
     }
   }, [allRooms, statusFilter, buildingFilter, search, sortBy]);
 

@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "receptionist" | "housekeeping" | "manager";
+export type UserRole = "super_admin" | "admin" | "receptionist" | "housekeeping" | "manager" | "accountant" | "maintenance";
 
 export interface Profile {
   id: string;
@@ -36,6 +36,7 @@ export interface Room {
   has_tv: boolean;
   has_fridge: boolean;
   description: string | null;
+  display_order: number | null;
   created_at: string;
   updated_at: string;
 }

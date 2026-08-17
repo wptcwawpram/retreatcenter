@@ -12,7 +12,7 @@ import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatCurrency } from "@/lib/format";
 import {
   Loader2, Edit2, Trash2, AlertCircle, Package, AlertTriangle,
-  Building2, ChefHat, Warehouse, Church, Home, ShowerHead, Users, Store,
+  Building2, ChefHat, Warehouse, Church, Home, ShowerHead, Users, Store, Car,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { InventoryItem } from "@/lib/supabase/types";
@@ -30,6 +30,7 @@ const LOCATIONS = [
   { value: "Reception Store", label: "Reception Store", icon: Store, description: "Store room in reception" },
   { value: "Public Washroom & Laundry", label: "Washroom & Laundry", icon: ShowerHead, description: "Public washroom and laundry block" },
   { value: "Workers Quarters", label: "Workers Quarters", icon: Users, description: "3 staff rooms and store" },
+  { value: "Garage", label: "Garage", icon: Car, description: "Vehicle parking and storage" },
 ] as const;
 
 const LOCATION_VALUES = LOCATIONS.filter((l) => l.value !== "All").map((l) => l.value);

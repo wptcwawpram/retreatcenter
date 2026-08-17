@@ -21,10 +21,11 @@ const DEFAULTS: SettingsMap = {
   booking_sms: "true",
   require_deposit: "true",
   price_2in1: "150",
+  price_3in1: "180",
   price_4in1: "200",
   price_6in1: "270",
   price_suite_fan: "350",
-  price_suite_ac: "750",
+  price_suite_ac: "500",
   price_apartment: "750",
   notif_new_booking: "true",
   notif_payment: "true",
@@ -161,6 +162,7 @@ export default function SettingsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
               { key: "price_2in1", label: "2 in 1 Room" },
+              { key: "price_3in1", label: "3 in 1 Room" },
               { key: "price_4in1", label: "4 in 1 Room" },
               { key: "price_6in1", label: "6 in 1 Room" },
               { key: "price_suite_fan", label: "Suite (Fan)" },
@@ -176,7 +178,8 @@ export default function SettingsPage() {
               </div>
             ))}
           </div>
-          <SaveButton section="pricing" saving={saving} saved={saved} onClick={() => saveSection("pricing", ["price_2in1", "price_4in1", "price_6in1", "price_suite_fan", "price_suite_ac", "price_apartment"])} />
+          <p className="text-[11px] text-muted-foreground">Saving will update all rooms of that type across the entire system.</p>
+          <SaveButton section="pricing" saving={saving} saved={saved} onClick={() => saveSection("pricing", ["price_2in1", "price_3in1", "price_4in1", "price_6in1", "price_suite_fan", "price_suite_ac", "price_apartment"])} />
         </div>
       )}
 

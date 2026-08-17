@@ -51,7 +51,7 @@ export async function getRoomById(id: string) {
   return data as Room;
 }
 
-export async function createRoom(room: Omit<Room, "id" | "created_at" | "updated_at">) {
+export async function createRoom(room: Omit<Room, "id" | "created_at" | "updated_at" | "display_order"> & { display_order?: number | null }) {
   const { data, error } = await supabase()
     .from("rooms")
     .insert(room)

@@ -54,7 +54,7 @@ export default function HousekeepingPage() {
   }
 
   const addFields: FormField[] = [
-    { name: "room_id", label: "Room", type: "select", required: true, options: allRooms.map((r) => ({ label: `${r.number} — ${r.name || r.type.replace(/_/g, " ")}`, value: r.id })), colSpan: 2 },
+    { name: "room_id", label: "Room", type: "select", required: true, options: [...allRooms].sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999)).map((r) => ({ label: `${r.number} — ${r.name || r.type.replace(/_/g, " ")}`, value: r.id })), colSpan: 2 },
     { name: "type", label: "Task Type", type: "select", required: true, options: [
       { label: "Cleaning", value: "CLEANING" }, { label: "Deep Clean", value: "DEEP_CLEAN" },
       { label: "Maintenance", value: "MAINTENANCE" }, { label: "Inspection", value: "INSPECTION" },
