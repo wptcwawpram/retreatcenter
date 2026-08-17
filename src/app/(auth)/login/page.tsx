@@ -29,7 +29,9 @@ function LoginForm() {
   const redirectTo = searchParams.get("redirect") ?? "/dashboard";
 
   const [step, setStep] = useState<Step>("login");
+  const [loginMode, setLoginMode] = useState<"phone" | "email">("phone");
   const [email, setEmail] = useState("");
+  const [loginPhone, setLoginPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,13 +59,35 @@ function LoginForm() {
     setLoading(true);
 
     try {
+      let loginEmail = email;
+
+      if (loginMode === "phone") {
+        if (!loginPhone || loginPhone.replace(/\D/g, "").length < 9) {
+          setError("Please enter a valid phone number.");
+          return;
+        }
+        const res = await fetch("/api/auth/phone-lookup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone: loginPhone }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error || "No staff account found with this phone number.");
+          return;
+        }
+        loginEmail = data.email;
+      }
+
       const supabase = createClient();
-      const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error: authError } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
 
       if (authError) {
         setError(
           authError.message === "Invalid login credentials"
-            ? "Invalid email or password. Please try again."
+            ? loginMode === "phone"
+              ? "Invalid phone number or password. Please try again."
+              : "Invalid email or password. Please try again."
             : authError.message,
         );
         return;
@@ -492,11 +516,31 @@ function LoginForm() {
               )}
 
               <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-warm-muted text-xs tracking-wide">Email address</Label>
-                  <Input id="email" type="email" placeholder="staff@wptc.org" value={email} onChange={(e) => setEmail(e.target.value)}
-                    required autoComplete="email" className={inputClass} />
+                {/* Phone / Email toggle */}
+                <div className="flex rounded-xl border border-white/[0.1] bg-white/[0.03] p-0.5">
+                  <button type="button" onClick={() => { setLoginMode("phone"); setError(null); }}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-[10px] text-[11px] tracking-[0.1em] uppercase transition-all duration-300 ${loginMode === "phone" ? "bg-gold/[0.12] text-gold border border-gold/20" : "text-warm-muted/50 hover:text-warm-muted border border-transparent"}`}>
+                    <Phone className="h-3 w-3" />Phone
+                  </button>
+                  <button type="button" onClick={() => { setLoginMode("email"); setError(null); }}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-[10px] text-[11px] tracking-[0.1em] uppercase transition-all duration-300 ${loginMode === "email" ? "bg-gold/[0.12] text-gold border border-gold/20" : "text-warm-muted/50 hover:text-warm-muted border border-transparent"}`}>
+                    <Mail className="h-3 w-3" />Email
+                  </button>
                 </div>
+
+                {loginMode === "phone" ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="login-phone" className="text-warm-muted text-xs tracking-wide">Phone number</Label>
+                    <Input id="login-phone" type="tel" placeholder="024 725 8161" value={loginPhone} onChange={(e) => setLoginPhone(e.target.value)}
+                      required autoComplete="tel" className={inputClass} />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-warm-muted text-xs tracking-wide">Email address</Label>
+                    <Input id="email" type="email" placeholder="staff@wptc.org" value={email} onChange={(e) => setEmail(e.target.value)}
+                      required autoComplete="email" className={inputClass} />
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="password" className="text-warm-muted text-xs tracking-wide">Password</Label>
