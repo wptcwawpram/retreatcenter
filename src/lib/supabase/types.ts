@@ -30,7 +30,7 @@ export interface Room {
   capacity: number;
   beds: number;
   price_per_night: number;
-  status: "AVAILABLE" | "OCCUPIED" | "MAINTENANCE" | "CLEANING" | "RESERVED";
+  status: "AVAILABLE" | "OCCUPIED" | "MAINTENANCE" | "CLEANING" | "RESERVED" | "BLOCKED" | "DIRTY" | "AWAITING_INSPECTION";
   amenities: string[];
   has_ac: boolean;
   has_tv: boolean;

@@ -69,7 +69,7 @@ create table if not exists rooms (
   beds            int not null default 1,
   price_per_night numeric(10,2) not null default 0,
   status          text not null default 'AVAILABLE'
-                  check (status in ('AVAILABLE','OCCUPIED','MAINTENANCE','CLEANING','RESERVED')),
+                  check (status in ('AVAILABLE','OCCUPIED','MAINTENANCE','CLEANING','RESERVED','BLOCKED','DIRTY','AWAITING_INSPECTION')),
   amenities       text[] not null default '{}',
   has_ac          boolean not null default false,
   has_tv          boolean not null default false,

@@ -1,0 +1,6 @@
+-- Add BLOCKED, DIRTY, AWAITING_INSPECTION to room status constraint
+-- Run in Supabase SQL editor
+
+ALTER TABLE rooms DROP CONSTRAINT IF EXISTS rooms_status_check;
+ALTER TABLE rooms ADD CONSTRAINT rooms_status_check
+  CHECK (status IN ('AVAILABLE','OCCUPIED','MAINTENANCE','CLEANING','RESERVED','BLOCKED','DIRTY','AWAITING_INSPECTION'));

@@ -37,6 +37,9 @@ const STATUS_DOT: Record<string, string> = {
   CLEANING: "bg-orange-400",
   MAINTENANCE: "bg-red-400",
   RESERVED: "bg-purple-400",
+  BLOCKED: "bg-gray-400",
+  DIRTY: "bg-amber-500",
+  AWAITING_INSPECTION: "bg-indigo-400",
 };
 
 const STATUS_CARD_BG: Record<string, string> = {
@@ -45,6 +48,9 @@ const STATUS_CARD_BG: Record<string, string> = {
   CLEANING: "border-orange-500/20 hover:border-orange-500/30",
   MAINTENANCE: "border-red-500/20 hover:border-red-500/30",
   RESERVED: "border-purple-500/20 hover:border-purple-500/30",
+  BLOCKED: "border-gray-500/20 hover:border-gray-500/30",
+  DIRTY: "border-amber-500/20 hover:border-amber-500/30",
+  AWAITING_INSPECTION: "border-indigo-500/20 hover:border-indigo-500/30",
 };
 
 const roomFields: FormField[] = [
@@ -307,7 +313,7 @@ export default function RoomsPage() {
 
                 {/* Quick actions */}
                 <div className="absolute top-2 right-2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {(room.status === "CLEANING" || room.status === "MAINTENANCE") && (
+                  {(room.status === "CLEANING" || room.status === "MAINTENANCE" || room.status === "DIRTY" || room.status === "AWAITING_INSPECTION" || room.status === "BLOCKED") && (
                     <Button
                       variant="ghost"
                       size="icon-xs"

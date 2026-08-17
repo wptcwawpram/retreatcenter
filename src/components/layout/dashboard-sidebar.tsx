@@ -23,6 +23,7 @@ import {
   Church,
   ImageIcon,
   ClipboardCheck,
+  Blocks,
 } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
@@ -73,6 +74,7 @@ const navGroups = [
   {
     label: "",
     items: [
+      { label: "Form Builder", href: "/dashboard/form-builder", icon: Blocks },
       { label: "Site Images", href: "/dashboard/images", icon: ImageIcon },
       { label: "Settings", href: "/dashboard/settings", icon: Settings },
     ],

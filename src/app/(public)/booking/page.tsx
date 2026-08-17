@@ -744,10 +744,9 @@ function BookingPage() {
                         <option value="">Select a room</option>
                         {ROOM_OPTIONS.map((r) => {
                           const count = availability[r.label];
-                          const avail = count !== undefined ? ` (${count} available)` : "";
                           return (
                             <option key={r.label} value={r.label} disabled={count === 0}>
-                              {r.label} — GH₵{r.price}/night{avail}
+                              {r.label} — GH₵{r.price}/night
                             </option>
                           );
                         })}

@@ -29,6 +29,11 @@ export const metadata: Metadata = {
   },
   description:
     "Warriors Prayer Tower Complex - Hybrid Retreat Centre Management System",
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({

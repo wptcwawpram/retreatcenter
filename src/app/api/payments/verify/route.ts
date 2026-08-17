@@ -37,29 +37,28 @@ export async function GET(request: NextRequest) {
       if (bookingRef) {
         const supabase = createServiceClient();
 
-        // Update booking payment status
-        await supabase
-          .from("bookings")
-          .update({
-            paid_amount: amountPaid,
-            balance: 0, // Will be recalculated if needed
-            payment_status: "DEPOSIT_PAID",
-            status: "CONFIRMED",
-          })
-          .eq("reference", bookingRef);
-
-        // Record the payment
+        // Fetch booking to get current paid amount and total
         const { data: bookingRecord } = await supabase
           .from("bookings")
-          .select("id, total_amount")
+          .select("id, total_amount, paid_amount")
           .eq("reference", bookingRef)
           .maybeSingle();
 
         if (bookingRecord) {
-          const remaining = Number(bookingRecord.total_amount) - amountPaid;
+          const existingPaid = Number(bookingRecord.paid_amount) || 0;
+          const totalPaid = existingPaid + amountPaid;
+          const totalAmount = Number(bookingRecord.total_amount) || 0;
+          const remaining = Math.max(0, totalAmount - totalPaid);
+          const paymentStatus = totalPaid >= totalAmount && totalAmount > 0 ? "PAID" : totalPaid > 0 ? "PARTIAL" : "UNPAID";
+
           await supabase
             .from("bookings")
-            .update({ balance: Math.max(0, remaining) })
+            .update({
+              paid_amount: totalPaid,
+              balance: remaining,
+              payment_status: paymentStatus,
+              status: "CONFIRMED",
+            })
             .eq("id", bookingRecord.id);
 
           // Insert payment record
