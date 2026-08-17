@@ -103,12 +103,17 @@ export default function RoomsPage() {
   const allRooms = rooms || [];
   const buildings = useMemo(() => [...new Set(allRooms.map((r) => r.building))], [allRooms]);
 
-  const filtered = useMemo(() => allRooms.filter((r) => {
-    if (statusFilter !== "ALL" && r.status !== statusFilter) return false;
-    if (buildingFilter !== "ALL" && r.building !== buildingFilter) return false;
-    if (search && !r.number.toLowerCase().includes(search.toLowerCase()) && !r.name?.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  }), [allRooms, statusFilter, buildingFilter, search]);
+  const filtered = useMemo(() => {
+    const numSort = (n: string) => { const m = n.match(/\d+/); return m ? parseInt(m[0], 10) : 9999; };
+    return allRooms
+      .filter((r) => {
+        if (statusFilter !== "ALL" && r.status !== statusFilter) return false;
+        if (buildingFilter !== "ALL" && r.building !== buildingFilter) return false;
+        if (search && !r.number.toLowerCase().includes(search.toLowerCase()) && !r.name?.toLowerCase().includes(search.toLowerCase())) return false;
+        return true;
+      })
+      .sort((a, b) => a.building.localeCompare(b.building) || a.capacity - b.capacity || numSort(a.number) - numSort(b.number));
+  }, [allRooms, statusFilter, buildingFilter, search]);
 
   const statusCounts = useMemo(() => allRooms.reduce((acc, r) => {
     acc[r.status] = (acc[r.status] || 0) + 1;

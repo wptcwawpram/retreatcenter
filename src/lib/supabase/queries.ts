@@ -24,6 +24,8 @@ export async function getRooms() {
   const { data, error } = await supabase()
     .from("rooms")
     .select("*")
+    .order("building")
+    .order("capacity")
     .order("number");
   if (error) throw error;
   return data as Room[];
