@@ -275,13 +275,13 @@ function BookingPage() {
       if (bookingType === "individual" && selectedRoom) {
         const avail = availability[selectedRoom];
         if (avail !== undefined && avail === 0) {
-          setSubmitError(`Sorry, ${selectedRoom} rooms are fully booked for your selected dates. Please choose a different room type or contact us at ${CONTACT_NUMBERS[0]} for assistance.`);
+          setSubmitError(`Sorry, ${selectedRoom} rooms are fully booked for your selected dates. Please choose a different room type or contact us at ${CONTACT_NUMBERS[1]} for assistance.`);
           return;
         }
       } else if (bookingType === "group") {
         const fullRooms = ROOM_OPTIONS.filter((r) => (roomQuantities[r.label] || 0) > 0 && availability[r.label] === 0);
         if (fullRooms.length > 0) {
-          setSubmitError(`Sorry, ${fullRooms.map((r) => r.label).join(", ")} rooms are fully booked for your selected dates. Please adjust your selection or contact us at ${CONTACT_NUMBERS[0]}.`);
+          setSubmitError(`Sorry, ${fullRooms.map((r) => r.label).join(", ")} rooms are fully booked for your selected dates. Please adjust your selection or contact us at ${CONTACT_NUMBERS[1]}.`);
           return;
         }
         const overbooked = ROOM_OPTIONS.filter((r) => {
@@ -290,7 +290,7 @@ function BookingPage() {
           return qty > 0 && avail !== undefined && qty > avail;
         });
         if (overbooked.length > 0) {
-          setSubmitError(`You've selected more rooms than available: ${overbooked.map((r) => `${r.label} (${availability[r.label]} available, ${roomQuantities[r.label]} selected)`).join(", ")}. Please adjust or contact us at ${CONTACT_NUMBERS[0]}.`);
+          setSubmitError(`You've selected more rooms than available: ${overbooked.map((r) => `${r.label} (${availability[r.label]} available, ${roomQuantities[r.label]} selected)`).join(", ")}. Please adjust or contact us at ${CONTACT_NUMBERS[1]}.`);
           return;
         }
       }

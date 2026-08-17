@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
 
         // Send SMS to admin
         try {
-          const adminPhone = process.env.ADMIN_PHONE || "+233247258161";
+          const adminPhone = process.env.ADMIN_PHONE || "+233546802414";
           await sendSms({
             to: adminPhone,
             message: `WPTC: Payment received! ${guestName || "Guest"} paid GH₵${amountPaid} for booking ${bookingRef}. Check-in: ${checkIn || "N/A"}. Phone: ${guestPhone || "N/A"}.`,
