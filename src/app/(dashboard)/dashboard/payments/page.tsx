@@ -10,8 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { PAYMENT_STATUS_CONFIG, PAYMENT_METHOD_LABELS } from "@/lib/constants";
-import { getPayments, getBookings, createPayment, deletePayment } from "@/lib/supabase/queries";
-import { createClient } from "@/lib/supabase/client";
+import { getPayments, getBookings, createPayment, deletePayment, createFinanceRecord, getFinanceAccounts } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { Search, Wallet, Clock, CreditCard, TrendingUp, Loader2, Trash2, AlertCircle } from "lucide-react";
@@ -32,6 +31,7 @@ type PaymentRow = {
 export default function PaymentsPage() {
   const { data: payments, loading, refetch } = useSupabaseQuery(() => getPayments(), []);
   const { data: bookings } = useSupabaseQuery(() => getBookings(), []);
+  const { data: finAccounts } = useSupabaseQuery(() => getFinanceAccounts(), []);
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [methodFilter, setMethodFilter] = useState("ALL");
   const [search, setSearch] = useState("");
@@ -63,12 +63,16 @@ export default function PaymentsPage() {
     return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
+  const activeAccounts = (finAccounts || []).filter((a: { is_active: boolean }) => a.is_active);
   const addFields: FormField[] = [
     { name: "booking_id", label: "Booking", type: "select", required: true, colSpan: 2,
       options: allBookings.map((b) => ({ label: `${b.reference} — ${(b as { guest?: { full_name: string } }).guest?.full_name ?? "Unknown"}`, value: b.id }))
     },
     { name: "amount", label: "Amount (GH₵)", type: "number", required: true, min: 0, step: 0.01 },
     { name: "method", label: "Payment Method", type: "select", required: true, options: Object.entries(PAYMENT_METHOD_LABELS).map(([k, v]) => ({ label: v, value: k })) },
+    { name: "account_id", label: "Deposit To Account", type: "select",
+      options: [{ label: "-- No account --", value: "" }, ...activeAccounts.map((a: { id: string; name: string; type: string }) => ({ label: `${a.name} (${a.type})`, value: a.id }))]
+    },
     { name: "status", label: "Status", type: "select", required: true, defaultValue: "COMPLETED", options: Object.entries(PAYMENT_STATUS_CONFIG).map(([k, v]) => ({ label: v.label, value: k })) },
     { name: "notes", label: "Notes", type: "textarea", colSpan: 2, placeholder: "Payment notes" },
   ];
@@ -91,14 +95,18 @@ export default function PaymentsPage() {
     });
 
     try {
-      const supabase = createClient();
-      await supabase.from("finance_records").insert({
+      await createFinanceRecord({
         type: "INCOME",
         category: "Booking Payment",
         description: `Manual ${PAYMENT_METHOD_LABELS[method] ?? method} payment for booking ${booking?.reference ?? bookingId}`,
         amount,
         date: new Date().toISOString().split("T")[0],
         booking_id: bookingId,
+        recorded_by: null,
+        account_id: (values.account_id as string) || null,
+        category_id: null,
+        reference: null,
+        payment_method: method,
       });
     } catch {}
 

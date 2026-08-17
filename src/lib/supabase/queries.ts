@@ -9,6 +9,9 @@ import type {
   InventoryItem,
   Event,
   FinanceRecord,
+  FinanceAccount,
+  FinanceCategory,
+  FinanceTransfer,
   Profile,
 } from "./types";
 
@@ -377,17 +380,113 @@ export async function getFinanceRecords() {
 }
 
 export async function createFinanceRecord(record: Omit<FinanceRecord, "id" | "created_at">) {
-  const { data, error } = await supabase()
-    .from("finance_records")
-    .insert(record)
-    .select()
-    .single();
-  if (error) throw error;
-  return data as FinanceRecord;
+  const res = await fetch("/api/finance/records", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(record),
+  });
+  if (!res.ok) {
+    const d = await res.json();
+    throw new Error(d.error || "Failed to create record");
+  }
+  return (await res.json()).data as FinanceRecord;
 }
 
 export async function deleteFinanceRecord(id: string) {
   await adminDelete("finance_records", id);
+}
+
+// ── Finance Accounts ─────────────────────────────────────────
+
+export async function getFinanceAccounts() {
+  const { data, error } = await supabase()
+    .from("finance_accounts")
+    .select("*")
+    .order("is_default", { ascending: false })
+    .order("name");
+  if (error) throw error;
+  return data as FinanceAccount[];
+}
+
+export async function createFinanceAccount(account: Omit<FinanceAccount, "id" | "created_at" | "updated_at">) {
+  const res = await fetch("/api/finance/accounts", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(account),
+  });
+  if (!res.ok) {
+    const d = await res.json();
+    throw new Error(d.error || "Failed to create account");
+  }
+  return (await res.json()).data as FinanceAccount;
+}
+
+export async function updateFinanceAccount(id: string, updates: Partial<FinanceAccount>) {
+  const res = await fetch("/api/finance/accounts", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, ...updates }),
+  });
+  if (!res.ok) {
+    const d = await res.json();
+    throw new Error(d.error || "Failed to update account");
+  }
+}
+
+export async function deleteFinanceAccount(id: string) {
+  await adminDelete("finance_accounts", id);
+}
+
+// ── Finance Categories ───────────────────────────────────────
+
+export async function getFinanceCategories() {
+  const { data, error } = await supabase()
+    .from("finance_categories")
+    .select("*")
+    .order("sort_order");
+  if (error) throw error;
+  return data as FinanceCategory[];
+}
+
+export async function createFinanceCategory(cat: Omit<FinanceCategory, "id" | "created_at">) {
+  const res = await fetch("/api/finance/categories", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(cat),
+  });
+  if (!res.ok) {
+    const d = await res.json();
+    throw new Error(d.error || "Failed to create category");
+  }
+  return (await res.json()).data as FinanceCategory;
+}
+
+export async function deleteFinanceCategory(id: string) {
+  await adminDelete("finance_categories", id);
+}
+
+// ── Finance Transfers ────────────────────────────────────────
+
+export async function getFinanceTransfers() {
+  const { data, error } = await supabase()
+    .from("finance_transfers")
+    .select("*, from_account:finance_accounts!from_account_id(*), to_account:finance_accounts!to_account_id(*)")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data as FinanceTransfer[];
+}
+
+export async function createFinanceTransfer(transfer: { from_account_id: string; to_account_id: string; amount: number; description?: string }) {
+  const res = await fetch("/api/finance/transfers", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(transfer),
+  });
+  if (!res.ok) {
+    const d = await res.json();
+    throw new Error(d.error || "Transfer failed");
+  }
+  return (await res.json()).data as FinanceTransfer;
 }
 
 // ═══════════════════════════════════════════════════════════════

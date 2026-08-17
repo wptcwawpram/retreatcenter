@@ -176,5 +176,48 @@ export interface FinanceRecord {
   date: string;
   recorded_by: string | null;
   booking_id: string | null;
+  account_id: string | null;
+  category_id: string | null;
+  reference: string | null;
+  payment_method: string | null;
   created_at: string;
+}
+
+export interface FinanceAccount {
+  id: string;
+  name: string;
+  type: "BANK" | "MOMO" | "CASH" | "PETTY_CASH" | "OTHER";
+  provider: string | null;
+  account_number: string | null;
+  balance: number;
+  currency: string;
+  is_default: boolean;
+  is_active: boolean;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FinanceCategory {
+  id: string;
+  name: string;
+  type: "INCOME" | "EXPENSE";
+  icon: string | null;
+  color: string | null;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface FinanceTransfer {
+  id: string;
+  from_account_id: string;
+  to_account_id: string;
+  amount: number;
+  description: string | null;
+  reference: string | null;
+  transferred_by: string | null;
+  created_at: string;
+  from_account?: FinanceAccount;
+  to_account?: FinanceAccount;
 }

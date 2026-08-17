@@ -28,7 +28,7 @@ function serviceClient() {
   );
 }
 
-const ALLOWED_TABLES = ["bookings", "guests", "payments", "complaints", "rooms", "events", "housekeeping_tasks", "inventory_items", "finance_records", "profiles"];
+const ALLOWED_TABLES = ["bookings", "guests", "payments", "complaints", "rooms", "events", "housekeeping_tasks", "inventory_items", "finance_records", "finance_accounts", "finance_categories", "finance_transfers", "profiles"];
 
 export async function POST(request: NextRequest) {
   try {
