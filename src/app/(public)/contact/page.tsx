@@ -101,10 +101,19 @@ export default function ContactPage() {
                 ))}
               </div>
 
-              <div className="mt-8 relative h-[220px] overflow-hidden border border-gold/10">
-                <Image src={img(siteImages, "hero.home")} alt="WPTC" fill className="object-cover" style={imgBlurStyle(siteBlurs, "hero.home")} sizes="(max-width: 1024px) 100vw, 40vw" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute bottom-4 left-4">
+              <div className="mt-8 relative h-[280px] overflow-hidden border border-gold/10">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3963.0!2d-1.702644!3d6.670574!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xfdb99c63ee25aab%3A0xbfb33496556159fc!2sWarriors%20Prayer%20Tower%20Complex%20(Daniel&#39;s%20Christian%20Centre)!5e0!3m2!1sen!2sgh!4v1"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Warriors Prayer Tower Complex Location"
+                  className="grayscale-[30%] contrast-[1.1]"
+                />
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-luxury/80 to-transparent p-4">
                   <p className="text-sm font-semibold text-warm-white">{SITE.address}</p>
                   <p className="text-xs text-warm-white/50">Ghana, West Africa</p>
                 </div>
@@ -174,6 +183,20 @@ export default function ContactPage() {
             </FadeIn>
           </div>
         </div>
+      </section>
+
+      {/* Full-width Map */}
+      <section className="relative h-[400px] md:h-[500px] border-t border-gold/10">
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3963.0!2d-1.702644!3d6.670574!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xfdb99c63ee25aab%3A0xbfb33496556159fc!2sWarriors%20Prayer%20Tower%20Complex%20(Daniel&#39;s%20Christian%20Centre)!5e0!3m2!1sen!2sgh!4v1"
+          width="100%"
+          height="100%"
+          style={{ border: 0 }}
+          allowFullScreen
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          title="Warriors Prayer Tower Complex on Google Maps"
+        />
       </section>
     </>
   );
