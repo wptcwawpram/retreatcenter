@@ -12,6 +12,18 @@ import type {
   Profile,
 } from "./types";
 
+async function adminDelete(table: string, id: string) {
+  const res = await fetch("/api/admin/delete", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ table, id }),
+  });
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.error || "Delete failed");
+  }
+}
+
 function supabase() {
   return createClient();
 }
@@ -24,8 +36,6 @@ export async function getRooms() {
   const { data, error } = await supabase()
     .from("rooms")
     .select("*")
-    .order("building")
-    .order("capacity")
     .order("number");
   if (error) throw error;
   return data as Room[];
@@ -68,11 +78,7 @@ export async function updateRoomStatus(id: string, status: Room["status"]) {
 }
 
 export async function deleteRoom(id: string) {
-  const { error } = await supabase()
-    .from("rooms")
-    .delete()
-    .eq("id", id);
-  if (error) throw error;
+  await adminDelete("rooms", id);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -107,11 +113,7 @@ export async function updateGuest(id: string, updates: Partial<Omit<Guest, "id" 
 }
 
 export async function deleteGuest(id: string) {
-  const { error } = await supabase()
-    .from("guests")
-    .delete()
-    .eq("id", id);
-  if (error) throw error;
+  await adminDelete("guests", id);
 }
 
 export async function getGuestByPhone(phone: string) {
@@ -181,11 +183,7 @@ export async function updateBookingPayment(id: string, paidAmount: number, payme
 }
 
 export async function deleteBooking(id: string) {
-  const { error } = await supabase()
-    .from("bookings")
-    .delete()
-    .eq("id", id);
-  if (error) throw error;
+  await adminDelete("bookings", id);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -212,11 +210,7 @@ export async function createPayment(payment: Omit<Payment, "id" | "created_at">)
 }
 
 export async function deletePayment(id: string) {
-  const { error } = await supabase()
-    .from("payments")
-    .delete()
-    .eq("id", id);
-  if (error) throw error;
+  await adminDelete("payments", id);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -253,11 +247,7 @@ export async function updateHousekeepingStatus(id: string, status: HousekeepingT
 }
 
 export async function deleteHousekeepingTask(id: string) {
-  const { error } = await supabase()
-    .from("housekeeping_tasks")
-    .delete()
-    .eq("id", id);
-  if (error) throw error;
+  await adminDelete("housekeeping_tasks", id);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -292,11 +282,7 @@ export async function updateComplaint(id: string, updates: Partial<Omit<Complain
 }
 
 export async function deleteComplaint(id: string) {
-  const { error } = await supabase()
-    .from("complaints")
-    .delete()
-    .eq("id", id);
-  if (error) throw error;
+  await adminDelete("complaints", id);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -331,11 +317,7 @@ export async function updateInventoryItem(id: string, updates: Partial<Omit<Inve
 }
 
 export async function deleteInventoryItem(id: string) {
-  const { error } = await supabase()
-    .from("inventory_items")
-    .delete()
-    .eq("id", id);
-  if (error) throw error;
+  await adminDelete("inventory_items", id);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -370,11 +352,7 @@ export async function updateEvent(id: string, updates: Partial<Omit<Event, "id" 
 }
 
 export async function deleteEvent(id: string) {
-  const { error } = await supabase()
-    .from("events")
-    .delete()
-    .eq("id", id);
-  if (error) throw error;
+  await adminDelete("events", id);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -401,11 +379,7 @@ export async function createFinanceRecord(record: Omit<FinanceRecord, "id" | "cr
 }
 
 export async function deleteFinanceRecord(id: string) {
-  const { error } = await supabase()
-    .from("finance_records")
-    .delete()
-    .eq("id", id);
-  if (error) throw error;
+  await adminDelete("finance_records", id);
 }
 
 // ═══════════════════════════════════════════════════════════════

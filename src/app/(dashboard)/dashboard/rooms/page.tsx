@@ -103,17 +103,30 @@ export default function RoomsPage() {
   const allRooms = rooms || [];
   const buildings = useMemo(() => [...new Set(allRooms.map((r) => r.building))], [allRooms]);
 
+  const [sortBy, setSortBy] = useState<"default" | "type" | "status" | "building">("default");
+
   const filtered = useMemo(() => {
     const numSort = (n: string) => { const m = n.match(/\d+/); return m ? parseInt(m[0], 10) : 9999; };
-    return allRooms
-      .filter((r) => {
-        if (statusFilter !== "ALL" && r.status !== statusFilter) return false;
-        if (buildingFilter !== "ALL" && r.building !== buildingFilter) return false;
-        if (search && !r.number.toLowerCase().includes(search.toLowerCase()) && !r.name?.toLowerCase().includes(search.toLowerCase())) return false;
-        return true;
-      })
-      .sort((a, b) => a.building.localeCompare(b.building) || a.capacity - b.capacity || numSort(a.number) - numSort(b.number));
-  }, [allRooms, statusFilter, buildingFilter, search]);
+    const buildingOrder = (b: string) => b === "Holy Family" ? 2 : b === "Main Building" ? 0 : 1;
+    const typeOrder = (t: string) => {
+      const order: Record<string, number> = { "2_IN_1": 0, "3_IN_1": 1, "4_IN_1": 2, "SUITE_FAN": 3, "SUITE_AC": 4, "6_IN_1": 5, "APARTMENT": 6, "KITCHEN": 7 };
+      return order[t] ?? 99;
+    };
+
+    const list = allRooms.filter((r) => {
+      if (statusFilter !== "ALL" && r.status !== statusFilter) return false;
+      if (buildingFilter !== "ALL" && r.building !== buildingFilter) return false;
+      if (search && !r.number.toLowerCase().includes(search.toLowerCase()) && !r.name?.toLowerCase().includes(search.toLowerCase())) return false;
+      return true;
+    });
+
+    switch (sortBy) {
+      case "type": return list.sort((a, b) => typeOrder(a.type) - typeOrder(b.type) || numSort(a.number) - numSort(b.number));
+      case "status": return list.sort((a, b) => a.status.localeCompare(b.status) || numSort(a.number) - numSort(b.number));
+      case "building": return list.sort((a, b) => a.building.localeCompare(b.building) || numSort(a.number) - numSort(b.number));
+      default: return list.sort((a, b) => buildingOrder(a.building) - buildingOrder(b.building) || numSort(a.number) - numSort(b.number));
+    }
+  }, [allRooms, statusFilter, buildingFilter, search, sortBy]);
 
   const statusCounts = useMemo(() => allRooms.reduce((acc, r) => {
     acc[r.status] = (acc[r.status] || 0) + 1;
@@ -230,6 +243,15 @@ export default function RoomsPage() {
           <SelectContent>
             <SelectItem value="ALL">All Buildings</SelectItem>
             {buildings.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+          <SelectTrigger className="w-[150px] h-9"><SelectValue placeholder="Sort by" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="default">By Number</SelectItem>
+            <SelectItem value="type">By Type</SelectItem>
+            <SelectItem value="status">By Status</SelectItem>
+            <SelectItem value="building">By Building</SelectItem>
           </SelectContent>
         </Select>
         <div className="flex border border-border/60 rounded-lg overflow-hidden">
