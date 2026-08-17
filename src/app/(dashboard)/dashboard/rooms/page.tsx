@@ -170,15 +170,15 @@ export default function RoomsPage() {
     <div className="space-y-5">
       <PageHeader title="Rooms" description="Manage room status, availability, and assignments" action={{ label: "Add Room", onClick: () => setShowAdd(true) }} />
 
-      {allRooms.length === 0 && !loading && (
-        <div className="text-center py-16 border border-dashed border-border/60 rounded-xl bg-card">
-          <Database className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No rooms configured</h3>
-          <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
-            Seed the database with the actual WPTC room inventory: 21 main rooms (2-in-1, 4-in-1, 6-in-1) plus 3 Holy Family rooms.
+      {allRooms.length < 24 && !loading && (
+        <div className="text-center py-10 border border-dashed border-border/60 rounded-xl bg-card">
+          <Database className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+          <h3 className="text-lg font-semibold mb-1">{allRooms.length === 0 ? "No rooms configured" : `Only ${allRooms.length} room${allRooms.length > 1 ? "s" : ""} found`}</h3>
+          <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
+            {allRooms.length > 0 ? "Replace with" : "Seed"} the full WPTC room inventory: 21 main rooms (2-in-1, 4-in-1, 6-in-1) + 3 Holy Family apartments.
           </p>
           <Button onClick={handleSeed} disabled={seeding} className="gap-2">
-            {seeding ? <><Loader2 className="h-4 w-4 animate-spin" />Seeding rooms...</> : <><Database className="h-4 w-4" />Seed Room Inventory</>}
+            {seeding ? <><Loader2 className="h-4 w-4 animate-spin" />Seeding rooms...</> : <><Database className="h-4 w-4" />{allRooms.length > 0 ? "Replace with Full Inventory" : "Seed Room Inventory"}</>}
           </Button>
         </div>
       )}

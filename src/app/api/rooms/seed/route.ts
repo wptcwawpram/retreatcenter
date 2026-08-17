@@ -139,11 +139,8 @@ export async function POST() {
 
     const supabase = createServiceClient();
 
-    // Check if rooms already exist
-    const { data: existing } = await supabase.from("rooms").select("id").limit(1);
-    if (existing && existing.length > 0) {
-      return NextResponse.json({ error: "Rooms already exist. Delete existing rooms first if you want to re-seed." }, { status: 400 });
-    }
+    // Clear existing rooms and re-seed
+    await supabase.from("rooms").delete().neq("id", "00000000-0000-0000-0000-000000000000");
 
     const { data, error } = await supabase.from("rooms").insert(SEED_ROOMS).select();
     if (error) throw error;
