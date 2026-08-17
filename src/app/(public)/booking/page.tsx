@@ -149,6 +149,15 @@ function BookingPage() {
   const [showRoomBreakdown, setShowRoomBreakdown] = useState(false);
   const [showHallBreakdown, setShowHallBreakdown] = useState(false);
 
+  const [formData, setFormData] = useState({
+    name: "", email: "", phone: "", address: "",
+    denomination: "", ageRange: "", relationship: "",
+    altContactName: "", altContactRelationship: "", altContactPhone: "",
+    idType: "", idNumber: "",
+    fromDate: "", toDate: "", startTime: "", endTime: "",
+    specialRequests: "",
+  });
+
   const [availability, setAvailability] = useState<Record<string, number>>({});
   const [loadingAvailability, setLoadingAvailability] = useState(false);
 
@@ -176,15 +185,6 @@ function BookingPage() {
       .catch(() => setAvailability({}))
       .finally(() => setLoadingAvailability(false));
   }, [formData.fromDate, formData.toDate]);
-
-  const [formData, setFormData] = useState({
-    name: "", email: "", phone: "", address: "",
-    denomination: "", ageRange: "", relationship: "",
-    altContactName: "", altContactRelationship: "", altContactPhone: "",
-    idType: "", idNumber: "",
-    fromDate: "", toDate: "", startTime: "", endTime: "",
-    specialRequests: "",
-  });
 
   const handleTypeSelect = useCallback((type: "individual" | "group") => {
     setBookingType(type);
