@@ -371,12 +371,19 @@ export async function deleteEvent(id: string) {
 // ═══════════════════════════════════════════════════════════════
 
 export async function getFinanceRecords() {
-  const { data, error } = await supabase()
-    .from("finance_records")
-    .select("*")
-    .order("date", { ascending: false });
-  if (error) throw error;
-  return data as FinanceRecord[];
+  try {
+    const { data, error } = await supabase()
+      .from("finance_records")
+      .select("*")
+      .order("date", { ascending: false });
+    if (error) {
+      console.error("Finance records query error:", error.message);
+      return [] as FinanceRecord[];
+    }
+    return data as FinanceRecord[];
+  } catch {
+    return [] as FinanceRecord[];
+  }
 }
 
 export async function createFinanceRecord(record: Omit<FinanceRecord, "id" | "created_at">) {
@@ -399,13 +406,17 @@ export async function deleteFinanceRecord(id: string) {
 // ── Finance Accounts ─────────────────────────────────────────
 
 export async function getFinanceAccounts() {
-  const { data, error } = await supabase()
-    .from("finance_accounts")
-    .select("*")
-    .order("is_default", { ascending: false })
-    .order("name");
-  if (error) throw error;
-  return data as FinanceAccount[];
+  try {
+    const { data, error } = await supabase()
+      .from("finance_accounts")
+      .select("*")
+      .order("is_default", { ascending: false })
+      .order("name");
+    if (error) return [] as FinanceAccount[];
+    return data as FinanceAccount[];
+  } catch {
+    return [] as FinanceAccount[];
+  }
 }
 
 export async function createFinanceAccount(account: Omit<FinanceAccount, "id" | "created_at" | "updated_at">) {
@@ -440,12 +451,16 @@ export async function deleteFinanceAccount(id: string) {
 // ── Finance Categories ───────────────────────────────────────
 
 export async function getFinanceCategories() {
-  const { data, error } = await supabase()
-    .from("finance_categories")
-    .select("*")
-    .order("sort_order");
-  if (error) throw error;
-  return data as FinanceCategory[];
+  try {
+    const { data, error } = await supabase()
+      .from("finance_categories")
+      .select("*")
+      .order("sort_order");
+    if (error) return [] as FinanceCategory[];
+    return data as FinanceCategory[];
+  } catch {
+    return [] as FinanceCategory[];
+  }
 }
 
 export async function createFinanceCategory(cat: Omit<FinanceCategory, "id" | "created_at">) {
@@ -468,12 +483,16 @@ export async function deleteFinanceCategory(id: string) {
 // ── Finance Transfers ────────────────────────────────────────
 
 export async function getFinanceTransfers() {
-  const { data, error } = await supabase()
-    .from("finance_transfers")
-    .select("*, from_account:finance_accounts!from_account_id(*), to_account:finance_accounts!to_account_id(*)")
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return data as FinanceTransfer[];
+  try {
+    const { data, error } = await supabase()
+      .from("finance_transfers")
+      .select("*, from_account:finance_accounts!from_account_id(*), to_account:finance_accounts!to_account_id(*)")
+      .order("created_at", { ascending: false });
+    if (error) return [] as FinanceTransfer[];
+    return data as FinanceTransfer[];
+  } catch {
+    return [] as FinanceTransfer[];
+  }
 }
 
 export async function createFinanceTransfer(transfer: { from_account_id: string; to_account_id: string; amount: number; description?: string }) {

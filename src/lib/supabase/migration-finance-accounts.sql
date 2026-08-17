@@ -58,6 +58,17 @@ create table if not exists finance_transfers (
   created_at      timestamptz not null default now()
 );
 
+-- ── Fix existing finance_records RLS to include super_admin ──
+drop policy if exists "Admins and managers can read finance" on finance_records;
+create policy "Admins and managers can read finance"
+  on finance_records for select to authenticated
+  using (auth_user_role() in ('admin','super_admin','manager','accountant'));
+
+drop policy if exists "Admins and managers can manage finance" on finance_records;
+create policy "Admins and managers can manage finance"
+  on finance_records for all to authenticated
+  using (auth_user_role() in ('admin','super_admin','manager','accountant'));
+
 -- ── RLS ──────────────────────────────────────────────────
 alter table finance_accounts enable row level security;
 alter table finance_categories enable row level security;

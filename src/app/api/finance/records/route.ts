@@ -34,26 +34,45 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Valid amount is required" }, { status: 400 });
     }
 
-    // Insert finance record
-    const { data, error } = await supabase
+    // Insert finance record — try with new columns, fall back if migration not run yet
+    const baseRecord = {
+      type: body.type,
+      category: body.category,
+      description: body.description,
+      amount,
+      date: body.date || new Date().toISOString().split("T")[0],
+      recorded_by: user.id,
+      booking_id: body.booking_id || null,
+    };
+
+    let data;
+    const fullRecord = {
+      ...baseRecord,
+      account_id: body.account_id || null,
+      category_id: body.category_id || null,
+      reference: body.reference || null,
+      payment_method: body.payment_method || null,
+    };
+
+    const { data: d1, error: e1 } = await supabase
       .from("finance_records")
-      .insert({
-        type: body.type,
-        category: body.category,
-        description: body.description,
-        amount,
-        date: body.date || new Date().toISOString().split("T")[0],
-        recorded_by: user.id,
-        booking_id: body.booking_id || null,
-        account_id: body.account_id || null,
-        category_id: body.category_id || null,
-        reference: body.reference || null,
-        payment_method: body.payment_method || null,
-      })
+      .insert(fullRecord)
       .select()
       .single();
 
-    if (error) throw error;
+    if (e1 && e1.message?.includes("column")) {
+      const { data: d2, error: e2 } = await supabase
+        .from("finance_records")
+        .insert(baseRecord)
+        .select()
+        .single();
+      if (e2) throw e2;
+      data = d2;
+    } else if (e1) {
+      throw e1;
+    } else {
+      data = d1;
+    }
 
     // Update account balance if an account is specified
     if (body.account_id) {

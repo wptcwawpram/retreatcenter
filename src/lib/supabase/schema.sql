@@ -541,13 +541,13 @@ drop policy if exists "Admins and managers can read finance" on finance_records;
 create policy "Admins and managers can read finance"
   on finance_records for select
   to authenticated
-  using (auth_user_role() in ('admin', 'manager'));
+  using (auth_user_role() in ('admin', 'super_admin', 'manager', 'accountant'));
 
 drop policy if exists "Admins and managers can manage finance" on finance_records;
 create policy "Admins and managers can manage finance"
   on finance_records for all
   to authenticated
-  using (auth_user_role() in ('admin', 'manager'));
+  using (auth_user_role() in ('admin', 'super_admin', 'manager', 'accountant'));
 
 -- ── Messages ──────────────────────────────────────────────
 drop policy if exists "Staff can read messages" on messages;
