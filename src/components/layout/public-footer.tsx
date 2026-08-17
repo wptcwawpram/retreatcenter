@@ -87,7 +87,7 @@ export function PublicFooter() {
 
       <div className="border-t border-gold/8">
         <div className="container mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-xs text-warm-muted/50">{SITE.copyright}</p>
+          <a href="/admin" className="text-xs text-warm-muted/50 hover:text-warm-muted/70 transition-colors">{SITE.copyright}</a>
         </div>
       </div>
     </footer>

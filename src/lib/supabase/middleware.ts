@@ -29,10 +29,24 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const path = request.nextUrl.pathname;
+
+  // /admin shortcut — redirect to dashboard if logged in, login if not
+  if (path === "/admin") {
+    if (user) return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  // Logged-in users visiting /login — send them to dashboard
+  if (user && path === "/login") {
+    const redirect = request.nextUrl.searchParams.get("redirect") || "/dashboard";
+    return NextResponse.redirect(new URL(redirect, request.url));
+  }
+
   // Protect dashboard routes — redirect to login if not authenticated
-  if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
+  if (!user && path.startsWith("/dashboard")) {
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("redirect", request.nextUrl.pathname);
+    loginUrl.searchParams.set("redirect", path);
     return NextResponse.redirect(loginUrl);
   }
 
