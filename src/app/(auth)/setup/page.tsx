@@ -18,7 +18,11 @@ export default function SetupPage() {
 
     setSeedStatus("running");
     try {
-      const seedRes = await fetch("/api/rooms/seed", { method: "POST" });
+      const seedRes = await fetch("/api/rooms/seed", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ secret: "WPTC-SETUP-2024" }),
+      });
       const seedData = await seedRes.json();
       if (seedRes.ok) {
         setSeedStatus("done");

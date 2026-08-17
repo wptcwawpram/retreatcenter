@@ -191,11 +191,22 @@ const SEED_ROOMS = [
   },
 ];
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
-    const auth = await createAuthClient();
-    const { data: { user } } = await auth.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    let authorized = false;
+
+    // Check for setup secret (used by /setup page)
+    try {
+      const body = await request.clone().json();
+      if (body?.secret === "WPTC-SETUP-2024") authorized = true;
+    } catch {}
+
+    // Otherwise check for logged-in user
+    if (!authorized) {
+      const auth = await createAuthClient();
+      const { data: { user } } = await auth.auth.getUser();
+      if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const supabase = createServiceClient();
 
