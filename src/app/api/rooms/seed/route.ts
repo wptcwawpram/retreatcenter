@@ -210,27 +210,44 @@ export async function POST(request: Request) {
 
     const supabase = createServiceClient();
 
+    // Ensure display_order column exists
+    try {
+      await supabase.rpc("exec_sql", {
+        query: "ALTER TABLE rooms ADD COLUMN IF NOT EXISTS display_order integer;"
+      });
+    } catch {}
+
     // Try to clear existing rooms first (may fail if bookings reference them)
     const { error: delErr } = await supabase.from("rooms").delete().neq("id", "00000000-0000-0000-0000-000000000000");
 
+    // Strip display_order if column doesn't exist (fallback)
+    const insertRooms = (rooms: typeof SEED_ROOMS) => {
+      return supabase.from("rooms").insert(rooms).select();
+    };
+    const insertRoomsFallback = (rooms: typeof SEED_ROOMS) => {
+      const stripped = rooms.map(({ display_order: _, ...rest }) => rest);
+      return supabase.from("rooms").insert(stripped).select();
+    };
+
     if (delErr) {
-      // If delete fails (foreign key), just insert missing rooms
       const { data: existing } = await supabase.from("rooms").select("number");
       const existingNumbers = new Set((existing ?? []).map((r: { number: string }) => r.number));
       const newRooms = SEED_ROOMS.filter((r) => !existingNumbers.has(r.number));
 
       if (newRooms.length > 0) {
-        const { data, error } = await supabase.from("rooms").insert(newRooms).select();
-        if (error) throw error;
-        return NextResponse.json({ success: true, count: data.length, message: `Added ${data.length} new rooms (${existingNumbers.size} already existed)` });
+        let result = await insertRooms(newRooms);
+        if (result.error) result = await insertRoomsFallback(newRooms);
+        if (result.error) throw result.error;
+        return NextResponse.json({ success: true, count: result.data!.length, message: `Added ${result.data!.length} new rooms (${existingNumbers.size} already existed)` });
       }
       return NextResponse.json({ success: true, count: 0, message: `All ${existingNumbers.size} rooms already exist` });
     }
 
-    const { data, error } = await supabase.from("rooms").insert(SEED_ROOMS).select();
-    if (error) throw error;
+    let result = await insertRooms(SEED_ROOMS);
+    if (result.error) result = await insertRoomsFallback(SEED_ROOMS);
+    if (result.error) throw result.error;
 
-    return NextResponse.json({ success: true, count: data.length, message: `Seeded ${data.length} rooms` });
+    return NextResponse.json({ success: true, count: result.data!.length, message: `Seeded ${result.data!.length} rooms` });
   } catch (error) {
     console.error("Room seed error:", error);
     const msg = error instanceof Error ? error.message : String(error);

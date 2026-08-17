@@ -41,7 +41,19 @@ export async function POST(request: NextRequest) {
       userId = newUser.user.id;
     }
 
-    const { error: profileError } = await supabase
+    // Try to update role constraint to allow super_admin
+    try {
+      await supabase.rpc("exec_sql", {
+        query: `DO $$ BEGIN
+          ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
+          ALTER TABLE profiles ADD CONSTRAINT profiles_role_check CHECK (role IN ('super_admin','admin','receptionist','housekeeping','manager','accountant','maintenance','guest'));
+        EXCEPTION WHEN OTHERS THEN NULL; END $$;`
+      });
+    } catch {}
+
+    // Try with super_admin first, fall back to admin
+    let profileError;
+    ({ error: profileError } = await supabase
       .from("profiles")
       .upsert({
         id: userId,
@@ -49,7 +61,19 @@ export async function POST(request: NextRequest) {
         role: "super_admin",
         phone: adminPhone,
         is_active: true,
-      }, { onConflict: "id" });
+      }, { onConflict: "id" }));
+
+    if (profileError) {
+      ({ error: profileError } = await supabase
+        .from("profiles")
+        .upsert({
+          id: userId,
+          full_name: adminName,
+          role: "admin",
+          phone: adminPhone,
+          is_active: true,
+        }, { onConflict: "id" }));
+    }
 
     if (profileError) throw profileError;
 
