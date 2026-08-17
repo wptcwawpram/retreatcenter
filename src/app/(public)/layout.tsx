@@ -8,10 +8,10 @@ export default async function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { images, logo, blurs } = await getSiteImages();
+  const { images, logo, blurs, slides } = await getSiteImages();
 
   return (
-    <SiteImagesProvider serverImages={images} serverLogo={logo} serverBlurs={blurs}>
+    <SiteImagesProvider serverImages={images} serverLogo={logo} serverBlurs={blurs} serverSlides={slides}>
       <div className="flex flex-col min-h-screen">
         <PublicNavbar />
         <main className="flex-1">{children}</main>

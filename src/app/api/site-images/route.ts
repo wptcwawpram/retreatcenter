@@ -52,12 +52,16 @@ export async function GET() {
     const { data } = await supabase
       .from("settings")
       .select("key, value")
-      .or("key.like.site_image:%,key.like.site_image_blur:%");
+      .or("key.like.site_image:%,key.like.site_image_blur:%,key.like.site_slider:%");
 
     const overrides: Record<string, string> = {};
     const blurs: Record<string, number> = {};
+    const slides: Record<string, unknown> = {};
     data?.forEach((row: { key: string; value: string }) => {
-      if (row.key.startsWith("site_image_blur:")) {
+      if (row.key.startsWith("site_slider:")) {
+        const idx = row.key.replace("site_slider:", "");
+        try { slides[idx] = JSON.parse(row.value); } catch {}
+      } else if (row.key.startsWith("site_image_blur:")) {
         blurs[row.key.replace("site_image_blur:", "")] = Number(row.value) || 0;
       } else if (row.key.startsWith("site_image:")) {
         overrides[row.key.replace("site_image:", "")] = row.value;
@@ -71,7 +75,7 @@ export async function GET() {
       merged[path] = overrides[path] || defaultUrl;
     }
 
-    return NextResponse.json({ images: merged, overrides, blurs });
+    return NextResponse.json({ images: merged, overrides, blurs, slides });
   } catch (error) {
     console.error("Site images GET error:", error);
     return NextResponse.json({ error: "Failed to fetch images" }, { status: 500 });
@@ -85,13 +89,29 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
-    const { path, url, blur } = body as { path: string; url?: string; blur?: number };
+    const { path, url, blur, slideIndex, slideContent } = body as {
+      path?: string; url?: string; blur?: number;
+      slideIndex?: number; slideContent?: Record<string, string>;
+    };
+
+    const supabase = createServiceClient();
+
+    if (slideIndex !== undefined && slideContent) {
+      const { error } = await supabase
+        .from("settings")
+        .upsert({
+          key: `site_slider:${slideIndex}`,
+          value: JSON.stringify(slideContent),
+          updated_by: user.id,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "key" });
+      if (error) throw error;
+      return NextResponse.json({ success: true });
+    }
 
     if (!path) {
       return NextResponse.json({ error: "Path required" }, { status: 400 });
     }
-
-    const supabase = createServiceClient();
 
     if (url) {
       const { error } = await supabase

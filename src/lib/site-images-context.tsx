@@ -1,17 +1,20 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import type { SlideContent } from "@/lib/get-site-images";
 
 interface SiteImagesValue {
   images: Record<string, string>;
   logo: string | null;
   blurs: Record<string, number>;
+  slides: Record<string, SlideContent>;
 }
 
 const SiteImagesContext = createContext<SiteImagesValue>({
   images: {},
   logo: null,
   blurs: {},
+  slides: {},
 });
 
 export function SiteImagesProvider({
@@ -19,15 +22,18 @@ export function SiteImagesProvider({
   serverImages,
   serverLogo,
   serverBlurs,
+  serverSlides,
 }: {
   children: ReactNode;
   serverImages: Record<string, string>;
   serverLogo: string | null;
   serverBlurs: Record<string, number>;
+  serverSlides: Record<string, SlideContent>;
 }) {
   const [images, setImages] = useState<Record<string, string>>(serverImages);
   const [logo, setLogo] = useState<string | null>(serverLogo);
   const [blurs, setBlurs] = useState<Record<string, number>>(serverBlurs);
+  const [slides, setSlides] = useState<Record<string, SlideContent>>(serverSlides);
 
   useEffect(() => {
     fetch("/api/site-images")
@@ -44,12 +50,15 @@ export function SiteImagesProvider({
         if (data.blurs && typeof data.blurs === "object") {
           setBlurs(data.blurs);
         }
+        if (data.slides && typeof data.slides === "object") {
+          setSlides(data.slides);
+        }
       })
       .catch(() => {});
   }, []);
 
   return (
-    <SiteImagesContext.Provider value={{ images, logo, blurs }}>
+    <SiteImagesContext.Provider value={{ images, logo, blurs, slides }}>
       {children}
     </SiteImagesContext.Provider>
   );

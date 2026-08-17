@@ -32,6 +32,11 @@ export function useSiteBlurs() {
   return blurs;
 }
 
+export function useSiteSlides() {
+  const { slides } = useSiteImagesCtx();
+  return slides;
+}
+
 export function img(images: Record<string, string>, path: string): string {
   return images[path] || defaults[path] || "";
 }

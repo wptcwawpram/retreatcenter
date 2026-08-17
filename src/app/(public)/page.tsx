@@ -6,7 +6,7 @@ import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useRef, useState, useEffect, useCallback, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { SITE, ROOMS } from "@/lib/site-data";
-import { useSiteImages, useSiteBlurs, img, imgBlurStyle } from "@/lib/use-site-images";
+import { useSiteImages, useSiteBlurs, useSiteSlides, img, imgBlurStyle } from "@/lib/use-site-images";
 import {
   ArrowRight,
   BedDouble,
@@ -55,12 +55,12 @@ function CountUp({ target, suffix = "" }: { target: number; suffix?: string }) {
   return <span ref={ref}>{count}{suffix}</span>;
 }
 
-const HERO_SLIDE_DATA = [
-  { key: "hero.home", title: "A Place of Peace,\nPower & Purpose", subtitle: "Your luxury Christian retreat in the heart of Ghana" },
-  { key: "amenities.serene", title: "Serene Grounds\n& Gardens", subtitle: "Lush landscapes designed for prayer, meditation and rest" },
-  { key: "hero.rooms", title: "Premium Rooms\n& Suites", subtitle: "Comfortable accommodation for individuals, families and groups" },
-  { key: "venues.faithHall", title: "World-Class\nEvent Venues", subtitle: "Conference halls, pavilions and worship spaces for any occasion" },
-  { key: "gallery.grounds[0]", title: "A Sanctuary\nfor Renewal", subtitle: "Come as you are. Leave transformed." },
+const DEFAULT_SLIDES = [
+  { key: "hero.home", title: "Welcome to Warriors\nPrayer Tower Complex", subtitle: "Daniel's Christian Centre", buttonText: "Book Your Stay", buttonLink: "/booking", button2Text: "View Rooms", button2Link: "/rooms" },
+  { key: "amenities.serene", title: "Serene Grounds\n& Gardens", subtitle: "Lush landscapes designed for prayer, meditation and rest", buttonText: "Explore Amenities", buttonLink: "/amenities", button2Text: "Gallery", button2Link: "/gallery" },
+  { key: "hero.rooms", title: "Premium Rooms\n& Suites", subtitle: "Comfortable accommodation for individuals, families and groups", buttonText: "Book a Room", buttonLink: "/booking", button2Text: "View Rooms", button2Link: "/rooms" },
+  { key: "venues.faithHall", title: "World-Class\nEvent Venues", subtitle: "Conference halls, pavilions and worship spaces for any occasion", buttonText: "Book Now", buttonLink: "/booking", button2Text: "Contact Us", button2Link: "/contact" },
+  { key: "gallery.grounds[0]", title: "A Sanctuary\nfor Renewal", subtitle: "Come as you are. Leave transformed.", buttonText: "Plan Your Visit", buttonLink: "/booking", button2Text: "Learn More", button2Link: "/about" },
 ];
 
 const PILLARS = [
@@ -81,7 +81,21 @@ const FACILITIES = [
 export default function HomePage() {
   const siteImages = useSiteImages();
   const siteBlurs = useSiteBlurs();
-  const heroSlides = HERO_SLIDE_DATA.map((s) => ({ ...s, src: img(siteImages, s.key), blurStyle: imgBlurStyle(siteBlurs, s.key) }));
+  const siteSlides = useSiteSlides();
+  const heroSlides = DEFAULT_SLIDES.map((s, i) => {
+    const override = siteSlides[String(i)];
+    return {
+      key: s.key,
+      title: override?.title || s.title,
+      subtitle: override?.subtitle || s.subtitle,
+      buttonText: override?.buttonText || s.buttonText,
+      buttonLink: override?.buttonLink || s.buttonLink,
+      button2Text: override?.button2Text || s.button2Text,
+      button2Link: override?.button2Link || s.button2Link,
+      src: img(siteImages, s.key),
+      blurStyle: imgBlurStyle(siteBlurs, s.key),
+    };
+  });
   const [slide, setSlide] = useState(0);
   const [direction, setDirection] = useState(1);
 
@@ -154,14 +168,14 @@ export default function HomePage() {
               </motion.div>
             </AnimatePresence>
             <div className="flex items-center gap-4">
-              <Link href="/booking">
+              <Link href={current.buttonLink}>
                 <Button size="lg" className="bg-gold/90 text-luxury hover:bg-gold font-semibold h-12 px-8 text-[11px] tracking-[0.15em] uppercase shadow-lg shadow-black/30">
-                  Book Your Stay
+                  {current.buttonText}
                 </Button>
               </Link>
-              <Link href="/rooms">
+              <Link href={current.button2Link}>
                 <Button size="lg" variant="ghost" className="text-warm-white hover:text-gold bg-white/10 backdrop-blur-sm hover:bg-white/15 font-medium h-12 px-6 text-[11px] tracking-[0.15em] uppercase gap-2 border border-white/20">
-                  View Rooms <ArrowRight className="h-3.5 w-3.5" />
+                  {current.button2Text} <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
               </Link>
             </div>

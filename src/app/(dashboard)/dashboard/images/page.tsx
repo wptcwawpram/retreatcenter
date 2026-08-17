@@ -11,6 +11,9 @@ import {
   ChevronDown,
   ChevronRight,
   Upload,
+  SlidersHorizontal,
+  Save,
+  Type,
 } from "lucide-react";
 
 type ImageValue = string | string[] | Record<string, string | string[]>;
@@ -189,6 +192,19 @@ export default function SiteImagesPage() {
   const [error, setError] = useState("");
   const blurTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
+  interface SlideData { title: string; subtitle: string; buttonText: string; buttonLink: string; button2Text: string; button2Link: string }
+  const DEFAULT_SLIDES: SlideData[] = [
+    { title: "Welcome to Warriors\nPrayer Tower Complex", subtitle: "Daniel's Christian Centre", buttonText: "Book Your Stay", buttonLink: "/booking", button2Text: "View Rooms", button2Link: "/rooms" },
+    { title: "Serene Grounds\n& Gardens", subtitle: "Lush landscapes designed for prayer, meditation and rest", buttonText: "Explore Amenities", buttonLink: "/amenities", button2Text: "Gallery", button2Link: "/gallery" },
+    { title: "Premium Rooms\n& Suites", subtitle: "Comfortable accommodation for individuals, families and groups", buttonText: "Book a Room", buttonLink: "/booking", button2Text: "View Rooms", button2Link: "/rooms" },
+    { title: "World-Class\nEvent Venues", subtitle: "Conference halls, pavilions and worship spaces for any occasion", buttonText: "Book Now", buttonLink: "/booking", button2Text: "Contact Us", button2Link: "/contact" },
+    { title: "A Sanctuary\nfor Renewal", subtitle: "Come as you are. Leave transformed.", buttonText: "Plan Your Visit", buttonLink: "/booking", button2Text: "Learn More", button2Link: "/about" },
+  ];
+  const [slideData, setSlideData] = useState<SlideData[]>(DEFAULT_SLIDES);
+  const [slideSaving, setSlideSaving] = useState<Record<number, boolean>>({});
+  const [slideSaved, setSlideSaved] = useState<Record<number, boolean>>({});
+  const [slidesExpanded, setSlidesExpanded] = useState(false);
+
   const fetchImages = useCallback(async () => {
     try {
       const res = await fetch("/api/site-images");
@@ -201,6 +217,14 @@ export default function SiteImagesPage() {
         merged[path] = data.overrides?.[path] || defaults[path];
       }
       setCurrentUrls(merged);
+      if (data.slides) {
+        setSlideData((prev) =>
+          prev.map((s, i) => {
+            const override = data.slides[String(i)];
+            return override ? { ...s, ...override } : s;
+          })
+        );
+      }
     } catch {
       setCurrentUrls({ ...defaults });
     } finally {
@@ -271,6 +295,28 @@ export default function SiteImagesPage() {
         setError(`Failed to save blur for ${path}`);
       }
     }, 500);
+  };
+
+  const handleSlideUpdate = (index: number, field: keyof SlideData, value: string) => {
+    setSlideData((prev) => prev.map((s, i) => i === index ? { ...s, [field]: value } : s));
+  };
+
+  const handleSlideSave = async (index: number) => {
+    setSlideSaving((p) => ({ ...p, [index]: true }));
+    try {
+      const res = await fetch("/api/site-images", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slideIndex: index, slideContent: slideData[index] }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      setSlideSaved((p) => ({ ...p, [index]: true }));
+      setTimeout(() => setSlideSaved((p) => ({ ...p, [index]: false })), 2500);
+    } catch {
+      setError(`Failed to save slide ${index + 1}`);
+    } finally {
+      setSlideSaving((p) => ({ ...p, [index]: false }));
+    }
   };
 
   const toggleCategory = (cat: string) => {
@@ -378,6 +424,105 @@ export default function SiteImagesPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Hero Slider Content */}
+      <div className="border border-border/50 rounded-lg overflow-hidden bg-card/50">
+        <button
+          onClick={() => setSlidesExpanded(!slidesExpanded)}
+          className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <SlidersHorizontal className="h-4 w-4 text-sidebar-primary" />
+            <span className="font-semibold text-sm">Hero Slider Content</span>
+            <span className="text-xs text-muted-foreground">{slideData.length} slides</span>
+          </div>
+          {slidesExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+        </button>
+
+        {slidesExpanded && (
+          <div className="border-t border-border/50 divide-y divide-border/30">
+            {slideData.map((s, i) => (
+              <div key={i} className="p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Type className="h-3.5 w-3.5 text-sidebar-primary" />
+                    <span className="text-sm font-medium">Slide {i + 1}</span>
+                  </div>
+                  <button
+                    onClick={() => handleSlideSave(i)}
+                    disabled={!!slideSaving[i]}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-sidebar-primary/10 text-sidebar-primary hover:bg-sidebar-primary/20 transition-colors disabled:opacity-50"
+                  >
+                    {slideSaving[i] ? (
+                      <><Loader2 className="h-3 w-3 animate-spin" />Saving...</>
+                    ) : slideSaved[i] ? (
+                      <><Check className="h-3 w-3" />Saved!</>
+                    ) : (
+                      <><Save className="h-3 w-3" />Save</>
+                    )}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">Title</label>
+                    <textarea
+                      value={s.title}
+                      onChange={(e) => handleSlideUpdate(i, "title", e.target.value)}
+                      rows={2}
+                      className="w-full rounded-md border border-border/50 bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-sidebar-primary/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">Subtitle</label>
+                    <textarea
+                      value={s.subtitle}
+                      onChange={(e) => handleSlideUpdate(i, "subtitle", e.target.value)}
+                      rows={2}
+                      className="w-full rounded-md border border-border/50 bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-sidebar-primary/50"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div>
+                    <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">Button 1 Text</label>
+                    <input
+                      value={s.buttonText}
+                      onChange={(e) => handleSlideUpdate(i, "buttonText", e.target.value)}
+                      className="w-full rounded-md border border-border/50 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-sidebar-primary/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">Button 1 Link</label>
+                    <input
+                      value={s.buttonLink}
+                      onChange={(e) => handleSlideUpdate(i, "buttonLink", e.target.value)}
+                      className="w-full rounded-md border border-border/50 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-sidebar-primary/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">Button 2 Text</label>
+                    <input
+                      value={s.button2Text}
+                      onChange={(e) => handleSlideUpdate(i, "button2Text", e.target.value)}
+                      className="w-full rounded-md border border-border/50 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-sidebar-primary/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">Button 2 Link</label>
+                    <input
+                      value={s.button2Link}
+                      onChange={(e) => handleSlideUpdate(i, "button2Link", e.target.value)}
+                      className="w-full rounded-md border border-border/50 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-sidebar-primary/50"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="space-y-3">
