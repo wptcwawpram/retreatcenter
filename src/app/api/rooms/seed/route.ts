@@ -210,15 +210,30 @@ export async function POST(request: Request) {
 
     const supabase = createServiceClient();
 
-    // Clear existing rooms and re-seed
-    await supabase.from("rooms").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    // Try to clear existing rooms first (may fail if bookings reference them)
+    const { error: delErr } = await supabase.from("rooms").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+
+    if (delErr) {
+      // If delete fails (foreign key), just insert missing rooms
+      const { data: existing } = await supabase.from("rooms").select("number");
+      const existingNumbers = new Set((existing ?? []).map((r: { number: string }) => r.number));
+      const newRooms = SEED_ROOMS.filter((r) => !existingNumbers.has(r.number));
+
+      if (newRooms.length > 0) {
+        const { data, error } = await supabase.from("rooms").insert(newRooms).select();
+        if (error) throw error;
+        return NextResponse.json({ success: true, count: data.length, message: `Added ${data.length} new rooms (${existingNumbers.size} already existed)` });
+      }
+      return NextResponse.json({ success: true, count: 0, message: `All ${existingNumbers.size} rooms already exist` });
+    }
 
     const { data, error } = await supabase.from("rooms").insert(SEED_ROOMS).select();
     if (error) throw error;
 
-    return NextResponse.json({ success: true, count: data.length });
+    return NextResponse.json({ success: true, count: data.length, message: `Seeded ${data.length} rooms` });
   } catch (error) {
     console.error("Room seed error:", error);
-    return NextResponse.json({ error: "Failed to seed rooms" }, { status: 500 });
+    const msg = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: "Failed to seed rooms", details: msg }, { status: 500 });
   }
 }

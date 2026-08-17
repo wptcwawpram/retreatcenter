@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Admin setup error:", error);
-    return NextResponse.json({ error: "Setup failed" }, { status: 500 });
+    const msg = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: "Setup failed", details: msg }, { status: 500 });
   }
 }

@@ -29,11 +29,11 @@ export default function SetupPage() {
         setSeedMsg(seedData.message || `Seeded ${seedData.count ?? ""} rooms`);
       } else {
         setSeedStatus("error");
-        setSeedMsg(seedData.error || "Failed to seed rooms");
+        setSeedMsg(seedData.error || seedData.details || `Failed (${seedRes.status})`);
       }
-    } catch {
+    } catch (e) {
       setSeedStatus("error");
-      setSeedMsg("Network error");
+      setSeedMsg(String(e));
     }
 
     setAdminStatus("running");
@@ -49,11 +49,11 @@ export default function SetupPage() {
         setAdminMsg(adminData.message || "Super admin configured");
       } else {
         setAdminStatus("error");
-        setAdminMsg(adminData.error || "Failed to setup admin");
+        setAdminMsg(adminData.error || adminData.details || `Failed (${adminRes.status})`);
       }
-    } catch {
+    } catch (e) {
       setAdminStatus("error");
-      setAdminMsg("Network error");
+      setAdminMsg(String(e));
     }
 
     setRunning(false);
