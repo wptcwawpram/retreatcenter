@@ -149,6 +149,34 @@ function BookingPage() {
   const [showRoomBreakdown, setShowRoomBreakdown] = useState(false);
   const [showHallBreakdown, setShowHallBreakdown] = useState(false);
 
+  const [availability, setAvailability] = useState<Record<string, number>>({});
+  const [loadingAvailability, setLoadingAvailability] = useState(false);
+
+  useEffect(() => {
+    if (!formData.fromDate || !formData.toDate) {
+      setAvailability({});
+      return;
+    }
+    setLoadingAvailability(true);
+    fetch(`/api/rooms/availability?check_in=${formData.fromDate}&check_out=${formData.toDate}`)
+      .then((res) => res.json())
+      .then((data) => {
+        const counts: Record<string, number> = {};
+        (data.available || []).forEach((r: { type: string }) => {
+          const typeMap: Record<string, string> = {
+            "2_IN_1": "2 IN 1", "4_IN_1": "4 IN 1", "6_IN_1": "6 IN 1",
+            "SUITE_FAN": "Suite (Fan)", "SUITE_AC": "Suite (AC)",
+            "APARTMENT": "Holy Family Apartment",
+          };
+          const label = typeMap[r.type] || r.type;
+          counts[label] = (counts[label] || 0) + 1;
+        });
+        setAvailability(counts);
+      })
+      .catch(() => setAvailability({}))
+      .finally(() => setLoadingAvailability(false));
+  }, [formData.fromDate, formData.toDate]);
+
   const [formData, setFormData] = useState({
     name: "", email: "", phone: "", address: "",
     denomination: "", ageRange: "", relationship: "",
@@ -646,34 +674,69 @@ function BookingPage() {
 
               {isLodging === "yes" && (
                 <div className="space-y-6">
+                  {formData.fromDate && formData.toDate && (
+                    <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm">
+                      {loadingAvailability ? (
+                        <span className="text-xs text-warm-muted flex items-center gap-1.5"><Loader2 className="h-3 w-3 animate-spin" />Checking availability...</span>
+                      ) : Object.keys(availability).length > 0 ? (
+                        ROOM_OPTIONS.map((r) => {
+                          const count = availability[r.label] || 0;
+                          return (
+                            <span key={r.label} className={`text-[11px] px-2.5 py-1 rounded-full border ${count > 0 ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400" : "border-red-500/20 bg-red-500/10 text-red-400"}`}>
+                              {r.label}: {count > 0 ? `${count} available` : "Full"}
+                            </span>
+                          );
+                        })
+                      ) : (
+                        <span className="text-xs text-warm-muted">Select dates to check availability</span>
+                      )}
+                    </div>
+                  )}
+
                   {bookingType === "individual" ? (
                     <div className="space-y-2">
                       <Label htmlFor="roomType" className={labelClass}>Room Type</Label>
                       <select id="roomType" value={selectedRoom} onChange={(e) => setSelectedRoom(e.target.value)} className={selectClass}>
                         <option value="">Select a room</option>
-                        {ROOM_OPTIONS.map((r) => (
-                          <option key={r.label} value={r.label}>{r.label} — GH₵{r.price}/night</option>
-                        ))}
+                        {ROOM_OPTIONS.map((r) => {
+                          const count = availability[r.label];
+                          const avail = count !== undefined ? ` (${count} available)` : "";
+                          return (
+                            <option key={r.label} value={r.label} disabled={count === 0}>
+                              {r.label} — GH₵{r.price}/night{avail}
+                            </option>
+                          );
+                        })}
                       </select>
                     </div>
                   ) : (
                     <div className="space-y-4">
                       <Label className={labelClass}>Room Quantities</Label>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {ROOM_OPTIONS.map((r) => (
-                          <div key={r.label} className="flex items-center justify-between p-3 border border-gold/10 bg-luxury">
-                            <div>
-                              <p className="text-sm font-medium text-warm-white">{r.label}</p>
-                              <p className="text-xs text-warm-muted">GH₵{r.price}/night</p>
+                        {ROOM_OPTIONS.map((r) => {
+                          const count = availability[r.label];
+                          return (
+                            <div key={r.label} className="flex items-center justify-between p-3 rounded-lg border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm">
+                              <div>
+                                <p className="text-sm font-medium text-warm-white">{r.label}</p>
+                                <p className="text-xs text-warm-muted">
+                                  GH₵{r.price}/night
+                                  {count !== undefined && (
+                                    <span className={count > 0 ? " text-emerald-400" : " text-red-400"}>
+                                      {" "}· {count > 0 ? `${count} available` : "Full"}
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
+                              <NumberStepper
+                                value={roomQuantities[r.label] || 0}
+                                onChange={(val) => setRoomQuantities((prev) => ({ ...prev, [r.label]: val }))}
+                                min={0}
+                                max={count !== undefined ? count : 20}
+                              />
                             </div>
-                            <NumberStepper
-                              value={roomQuantities[r.label] || 0}
-                              onChange={(val) => setRoomQuantities((prev) => ({ ...prev, [r.label]: val }))}
-                              min={0}
-                              max={20}
-                            />
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}

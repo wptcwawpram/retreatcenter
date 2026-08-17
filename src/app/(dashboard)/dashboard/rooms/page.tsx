@@ -10,12 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { ROOM_STATUS_CONFIG } from "@/lib/constants";
-import { getRooms, createRoom, updateRoom, deleteRoom } from "@/lib/supabase/queries";
+import { getRooms, createRoom, updateRoom, updateRoomStatus, deleteRoom } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatCurrency } from "@/lib/format";
 import {
   BedDouble, LayoutGrid, List, Search, Loader2, Edit2, Trash2, AlertCircle,
-  Wind, Tv, Refrigerator, Users,
+  Wind, Tv, Refrigerator, Users, CheckCircle, Database,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Room } from "@/lib/supabase/types";
@@ -72,6 +72,33 @@ export default function RoomsPage() {
   const [editItem, setEditItem] = useState<Room | null>(null);
   const [deleteItem, setDeleteItem] = useState<Room | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [seeding, setSeeding] = useState(false);
+
+  const handleSeed = async () => {
+    setSeeding(true);
+    try {
+      const res = await fetch("/api/rooms/seed", { method: "POST" });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Failed to seed rooms");
+        return;
+      }
+      refetch();
+    } catch {
+      alert("Failed to seed rooms");
+    } finally {
+      setSeeding(false);
+    }
+  };
+
+  const handleQuickStatus = async (room: Room, status: Room["status"]) => {
+    try {
+      await updateRoomStatus(room.id, status);
+      refetch();
+    } catch {
+      alert("Failed to update status");
+    }
+  };
 
   const allRooms = rooms || [];
   const buildings = useMemo(() => [...new Set(allRooms.map((r) => r.building))], [allRooms]);
@@ -142,6 +169,19 @@ export default function RoomsPage() {
   return (
     <div className="space-y-5">
       <PageHeader title="Rooms" description="Manage room status, availability, and assignments" action={{ label: "Add Room", onClick: () => setShowAdd(true) }} />
+
+      {allRooms.length === 0 && !loading && (
+        <div className="text-center py-16 border border-dashed border-border/60 rounded-xl bg-card">
+          <Database className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No rooms configured</h3>
+          <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+            Seed the database with the actual WPTC room inventory: 21 main rooms (2-in-1, 4-in-1, 6-in-1) plus 3 Holy Family rooms.
+          </p>
+          <Button onClick={handleSeed} disabled={seeding} className="gap-2">
+            {seeding ? <><Loader2 className="h-4 w-4 animate-spin" />Seeding rooms...</> : <><Database className="h-4 w-4" />Seed Room Inventory</>}
+          </Button>
+        </div>
+      )}
 
       {/* Status pills */}
       <div className="flex flex-wrap gap-1.5">
@@ -237,15 +277,39 @@ export default function RoomsPage() {
                   {room.has_fridge && <Refrigerator className="h-3 w-3 text-muted-foreground" />}
                 </div>
 
-                {/* Delete button */}
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-red-600 transition-opacity"
-                  onClick={(e) => { e.stopPropagation(); setDeleteItem(room); }}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
+                {/* Quick actions */}
+                <div className="absolute top-2 right-2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {(room.status === "CLEANING" || room.status === "MAINTENANCE") && (
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      className="text-teal-500"
+                      title="Mark Available"
+                      onClick={(e) => { e.stopPropagation(); handleQuickStatus(room, "AVAILABLE"); }}
+                    >
+                      <CheckCircle className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                  {room.status === "AVAILABLE" && (
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      className="text-orange-500"
+                      title="Mark Cleaning"
+                      onClick={(e) => { e.stopPropagation(); handleQuickStatus(room, "CLEANING"); }}
+                    >
+                      <BedDouble className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    className="text-red-600"
+                    onClick={(e) => { e.stopPropagation(); setDeleteItem(room); }}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
             );
           })}
