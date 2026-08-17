@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { ROOM_STATUS_CONFIG } from "@/lib/constants";
 import { getRooms, createRoom, updateRoom, updateRoomStatus, deleteRoom } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, roomSortKey } from "@/lib/format";
 import {
   BedDouble, LayoutGrid, List, Search, Loader2, Edit2, Trash2, AlertCircle,
   Wind, Tv, Refrigerator, Users, CheckCircle, Database,
@@ -106,7 +106,7 @@ export default function RoomsPage() {
   const [sortBy, setSortBy] = useState<"default" | "type" | "status" | "building">("default");
 
   const filtered = useMemo(() => {
-    const numSort = (n: string) => { const m = n.match(/\d+/); return m ? parseInt(m[0], 10) : 9999; };
+    const numSort = roomSortKey;
     const buildingOrder = (b: string) => b === "Holy Family" ? 2 : b === "Main Building" ? 0 : 1;
     const typeOrder = (t: string) => {
       const order: Record<string, number> = { "2_IN_1": 0, "3_IN_1": 1, "4_IN_1": 2, "SUITE_FAN": 3, "SUITE_AC": 4, "6_IN_1": 5, "APARTMENT": 6, "KITCHEN": 7 };

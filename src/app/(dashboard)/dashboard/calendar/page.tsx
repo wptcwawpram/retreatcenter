@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { getRooms, getBookings } from "@/lib/supabase/queries";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, sortRooms } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -113,15 +113,7 @@ export default function CalendarPage() {
 
   const sortedRooms = useMemo(() => {
     if (!rooms) return [];
-    return [...rooms]
-      .filter((r) => r.type !== "KITCHEN")
-      .sort((a, b) => {
-        const typeOrder = ["2_IN_1", "4_IN_1", "6_IN_1", "3_IN_1", "SUITE_FAN", "SUITE_AC", "APARTMENT"];
-        const ai = typeOrder.indexOf(a.type);
-        const bi = typeOrder.indexOf(b.type);
-        if (ai !== bi) return ai - bi;
-        return a.number.localeCompare(b.number);
-      });
+    return sortRooms(rooms.filter((r) => r.type !== "KITCHEN"));
   }, [rooms]);
 
   const bookingsByRoom = useMemo(() => {

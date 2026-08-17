@@ -37,3 +37,14 @@ export function formatTime(date: Date | string): string {
     minute: "2-digit",
   });
 }
+
+export function roomSortKey(number: string): number {
+  if (/^ST(\d+)$/i.test(number)) return 6 + parseFloat("0." + number.replace(/\D/g, ""));
+  if (/^HF(\d+)$/i.test(number)) return 100 + parseInt(number.replace(/\D/g, ""), 10);
+  const m = number.match(/\d+/);
+  return m ? parseInt(m[0], 10) : 9999;
+}
+
+export function sortRooms<T extends { number: string }>(rooms: T[]): T[] {
+  return [...rooms].sort((a, b) => roomSortKey(a.number) - roomSortKey(b.number));
+}

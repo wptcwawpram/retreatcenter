@@ -10,6 +10,7 @@ import { getHousekeepingTasks, createHousekeepingTask, updateHousekeepingStatus,
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { BedDouble, Clock, User, CheckCircle, Loader2, Trash2, ArrowRight, AlertCircle, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { sortRooms } from "@/lib/format";
 
 const STATUS_COLS = [
   { key: "PENDING", label: "Pending", dotColor: "bg-amber-400", headerBg: "bg-amber-500/10", icon: Clock },
@@ -54,7 +55,7 @@ export default function HousekeepingPage() {
   }
 
   const addFields: FormField[] = [
-    { name: "room_id", label: "Room", type: "select", required: true, options: [...allRooms].sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999)).map((r) => ({ label: `${r.number} — ${r.name || r.type.replace(/_/g, " ")}`, value: r.id })), colSpan: 2 },
+    { name: "room_id", label: "Room", type: "select", required: true, options: sortRooms(allRooms).map((r) => ({ label: `${r.number} — ${r.name || r.type.replace(/_/g, " ")}`, value: r.id })), colSpan: 2 },
     { name: "type", label: "Task Type", type: "select", required: true, options: [
       { label: "Cleaning", value: "CLEANING" }, { label: "Deep Clean", value: "DEEP_CLEAN" },
       { label: "Maintenance", value: "MAINTENANCE" }, { label: "Inspection", value: "INSPECTION" },

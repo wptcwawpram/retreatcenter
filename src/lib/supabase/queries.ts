@@ -62,19 +62,27 @@ export async function createRoom(room: Omit<Room, "id" | "created_at" | "updated
 }
 
 export async function updateRoom(id: string, updates: Partial<Omit<Room, "id" | "created_at" | "updated_at">>) {
-  const { error } = await supabase()
-    .from("rooms")
-    .update(updates)
-    .eq("id", id);
-  if (error) throw error;
+  const res = await fetch("/api/rooms/update", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, updates }),
+  });
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.error || "Update failed");
+  }
 }
 
 export async function updateRoomStatus(id: string, status: Room["status"]) {
-  const { error } = await supabase()
-    .from("rooms")
-    .update({ status })
-    .eq("id", id);
-  if (error) throw error;
+  const res = await fetch("/api/rooms/update", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, updates: { status } }),
+  });
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.error || "Status update failed");
+  }
 }
 
 export async function deleteRoom(id: string) {
