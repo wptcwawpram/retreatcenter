@@ -15,7 +15,6 @@ import {
   Church,
   UtensilsCrossed,
   TreePine,
-  Wifi,
   Phone,
   ChevronLeft,
   ChevronRight,
@@ -74,7 +73,6 @@ const FACILITIES = [
   { icon: BedDouble, label: "30+ Rooms" },
   { icon: UtensilsCrossed, label: "Dining Hall" },
   { icon: TreePine, label: "Prayer Gardens" },
-  { icon: Wifi, label: "Free Wi-Fi" },
   { icon: Star, label: "Premium Suites" },
 ];
 
@@ -362,8 +360,8 @@ export default function HomePage() {
             {[
               { value: 10, suffix: "+", label: "Years" },
               { value: 30, suffix: "+", label: "Rooms" },
-              { value: 5, suffix: "", label: "Venues" },
-              { value: 1000, suffix: "+", label: "Guests Served" },
+              { value: 3, suffix: "", label: "Venues" },
+              { value: 5000, suffix: "+", label: "Guests Served" },
             ].map((stat, i) => (
               <FadeIn key={stat.label} delay={i * 0.08} className="text-center">
                 <div className="font-[family-name:var(--font-playfair)] text-3xl md:text-4xl font-bold text-gold mb-1">
