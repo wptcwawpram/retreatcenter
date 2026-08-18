@@ -96,7 +96,6 @@ export async function POST(request: NextRequest) {
         phone: phoneFormatted,
         role: role || "receptionist",
         is_active: true,
-        needs_onboarding: true,
       });
 
     if (profileError) {
