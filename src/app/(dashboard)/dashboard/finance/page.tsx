@@ -5,8 +5,8 @@ import { PageHeader } from "@/components/dashboard/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { DataTable, type Column } from "@/components/dashboard/data-table";
 import { FormDialog, type FormField } from "@/components/dashboard/form-dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+// Using native select to avoid base-ui Select useMemo issue
+// Badge replaced with inline span to avoid base-ui useRender/useMemo issue
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import {
   getFinanceRecords, createFinanceRecord, deleteFinanceRecord,
@@ -248,10 +248,10 @@ export default function FinancePage() {
   const recordColumns: Column<FinanceRecord>[] = [
     { header: "Date", accessor: (f) => <span className="text-xs text-muted-foreground">{s(f.date ? formatDate(f.date) : "—")}</span> },
     { header: "Type", accessor: (f) => (
-      <Badge className={cn("text-[10px] border gap-0.5", f.type === "INCOME" ? "bg-teal-500/10 text-teal-400 border-teal-500/20" : "bg-red-500/10 text-red-400 border-red-500/20")}>
+      <span className={cn("inline-flex items-center gap-0.5 text-[10px] font-medium border rounded-full px-2 py-0.5", f.type === "INCOME" ? "bg-teal-500/10 text-teal-400 border-teal-500/20" : "bg-red-500/10 text-red-400 border-red-500/20")}>
         {f.type === "INCOME" ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
         {s(f.type)}
-      </Badge>
+      </span>
     )},
     { header: "Category", accessor: (f) => <span className="font-medium text-sm">{s(f.category)}</span> },
     { header: "Description", accessor: (f) => <span className="text-xs text-muted-foreground line-clamp-1 max-w-[200px] block">{s(f.description)}</span> },
@@ -332,14 +332,15 @@ export default function FinancePage() {
       {tab === "records" && (
         <>
           <div className="flex gap-2">
-            <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v ?? "ALL")}>
-              <SelectTrigger className="w-[150px] h-9"><SelectValue placeholder="Type" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">All Records</SelectItem>
-                <SelectItem value="INCOME">Income</SelectItem>
-                <SelectItem value="EXPENSE">Expenses</SelectItem>
-              </SelectContent>
-            </Select>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="h-9 w-[150px] rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="ALL">All Records</option>
+              <option value="INCOME">Income</option>
+              <option value="EXPENSE">Expenses</option>
+            </select>
           </div>
           <DataTable columns={recordColumns} data={filtered} keyExtractor={(f) => f.id} total={filtered.length} emptyMessage="No records found" />
         </>
@@ -360,7 +361,7 @@ export default function FinancePage() {
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-sm truncate">{s(account.name)}</h3>
                       {account.is_default === true && (
-                        <Badge className="text-[9px] bg-primary/10 text-primary border-primary/20">Default</Badge>
+                        <span className="text-[9px] font-medium bg-primary/10 text-primary border border-primary/20 rounded-full px-1.5 py-0.5">Default</span>
                       )}
                     </div>
                     <p className="text-[11px] text-muted-foreground mt-0.5">
