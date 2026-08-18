@@ -206,7 +206,7 @@ export default function FinancePage() {
   };
 
   const openEditAccount = (a: FinanceAccount) => {
-    setEditAccountData(a); setAaName(ss(a.name)); setAaType(ss(a.type)); setAaProvider(ss(a.provider)); setAaNumber(ss(a.account_number)); setAaNotes(ss(a.notes)); setAaErr("");
+    setEditAccountData(a); setAaName(ss(a.name)); setAaType(ss(a.type)); setAaProvider(ss(a.provider)); setAaNumber(ss(a.account_number)); setAaBal(String(a.balance ?? "")); setAaNotes(ss(a.notes)); setAaErr("");
     setModal("editAccount");
   };
 
@@ -214,7 +214,7 @@ export default function FinancePage() {
     if (!editAccountData) return;
     setSaving(true);
     try {
-      await updateFinanceAccount(editAccountData.id, { name: aaName, type: aaType as FinanceAccount["type"], provider: aaProvider || null, account_number: aaNumber || null, notes: aaNotes || null });
+      await updateFinanceAccount(editAccountData.id, { name: aaName, type: aaType as FinanceAccount["type"], provider: aaProvider || null, account_number: aaNumber || null, balance: Number(aaBal) || 0, notes: aaNotes || null });
       setModal("none"); setEditAccountData(null); refetchAccounts();
     } catch (err) { setAaErr(err instanceof Error ? err.message : "Failed"); }
     finally { setSaving(false); }
@@ -617,6 +617,7 @@ export default function FinancePage() {
               <div><Label className="text-xs mb-1 block">{"Provider"}</Label><Input value={aaProvider} onChange={(e) => setAaProvider(e.target.value)} className="h-9" /></div>
               <div><Label className="text-xs mb-1 block">{"Account Number"}</Label><Input value={aaNumber} onChange={(e) => setAaNumber(e.target.value)} className="h-9" /></div>
             </div>
+            <div><Label className="text-xs mb-1 block">{"Balance (₵)"}</Label><Input type="number" step={0.01} value={aaBal} onChange={(e) => setAaBal(e.target.value)} className="h-9" /></div>
             <div><Label className="text-xs mb-1 block">{"Notes"}</Label><Textarea value={aaNotes} onChange={(e) => setAaNotes(e.target.value)} rows={2} /></div>
             {aaErr && <div className="flex items-start gap-2 p-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400"><AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />{aaErr}</div>}
             <div className="-mx-5 -mb-5 flex gap-2 justify-end rounded-b-xl border-t bg-muted/50 p-4">

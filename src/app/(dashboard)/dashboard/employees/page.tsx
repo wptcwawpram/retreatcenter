@@ -6,16 +6,14 @@ import { DataTable, type Column } from "@/components/dashboard/data-table";
 import { FormDialog, type FormField } from "@/components/dashboard/form-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { USER_ROLE_LABELS } from "@/lib/constants";
+import { USER_ROLE_LABELS, ASSIGNABLE_ROLES } from "@/lib/constants";
 import { getProfiles } from "@/lib/supabase/queries";
 import { createClient } from "@/lib/supabase/client";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
-import { Loader2, Edit2, Shield, Phone, Trash2, AlertCircle, UserPlus, Download } from "lucide-react";
+import { Loader2, Edit2, Shield, Phone, Trash2, AlertCircle, UserPlus, Download, X } from "lucide-react";
 import { downloadCSV } from "@/lib/export-csv";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { Profile } from "@/lib/supabase/types";
 
@@ -28,10 +26,6 @@ const ROLE_COLORS: Record<string, string> = {
   accountant: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
   maintenance: "bg-orange-500/10 text-orange-600 border-orange-500/20",
 };
-
-const ASSIGNABLE_ROLES = Object.entries(USER_ROLE_LABELS)
-  .filter(([k]) => k !== "SUPER_ADMIN" && k !== "GUEST")
-  .map(([k, v]) => ({ label: v, value: k.toLowerCase() }));
 
 const editFields: FormField[] = [
   { name: "full_name", label: "Full Name", required: true },
@@ -47,23 +41,26 @@ export default function EmployeesPage() {
   const [addName, setAddName] = useState("");
   const [addPhone, setAddPhone] = useState("");
   const [addRole, setAddRole] = useState("receptionist");
+  const [customRole, setCustomRole] = useState("");
   const [adding, setAdding] = useState(false);
   const [deleteItem, setDeleteItem] = useState<Profile | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   const handleAddEmployee = async () => {
     if (!addName || !addPhone) return;
+    const finalRole = addRole === "__custom__" ? customRole.trim().toLowerCase() : addRole;
+    if (!finalRole) return;
     setAdding(true);
     try {
       const res = await fetch("/api/employees/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ full_name: addName, phone: addPhone, role: addRole }),
+        body: JSON.stringify({ full_name: addName, phone: addPhone, role: finalRole }),
       });
       const data = await res.json();
       if (!res.ok) { alert(data.error || "Failed to add employee"); return; }
       setShowAdd(false);
-      setAddName(""); setAddPhone(""); setAddRole("receptionist");
+      setAddName(""); setAddPhone(""); setAddRole("receptionist"); setCustomRole("");
       refetch();
     } catch { alert("Failed to add employee"); }
     finally { setAdding(false); }
@@ -171,7 +168,6 @@ export default function EmployeesPage() {
         </Button>
       </PageHeader>
 
-      {/* Summary */}
       <div className="flex items-center gap-4 text-sm text-muted-foreground">
         <span><strong className="text-foreground">{allEmployees.length}</strong> total staff</span>
         <span className="h-1 w-1 rounded-full bg-border" />
@@ -190,55 +186,71 @@ export default function EmployeesPage() {
         <FormDialog open={!!editItem} onOpenChange={(o) => !o && setEditItem(null)} title={`Edit ${editItem.full_name}`} fields={editFields} initialValues={editItem} onSubmit={handleEdit} isEdit />
       )}
 
-      {/* Add Employee Dialog */}
-      <Dialog open={showAdd} onOpenChange={(o) => { if (!o) setShowAdd(false); }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><UserPlus className="h-4 w-4" />Add Employee</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Full Name</Label>
-              <Input value={addName} onChange={(e) => setAddName(e.target.value)} placeholder="e.g. Kwame Asante" className="h-9" />
+      {/* Add Employee Dialog — pure HTML modal */}
+      {showAdd && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) setShowAdd(false); }}>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px]" />
+          <div className="relative z-10 w-full max-w-[calc(100%-2rem)] sm:max-w-md rounded-xl bg-popover p-5 text-sm text-popover-foreground ring-1 ring-foreground/10 shadow-xl animate-in fade-in-0 zoom-in-95">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-heading text-base font-semibold flex items-center gap-2"><UserPlus className="h-4 w-4" />Add Employee</h2>
+              <button onClick={() => setShowAdd(false)} className="rounded-md p-1 hover:bg-muted transition-colors"><X className="h-4 w-4" /></button>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Phone Number</Label>
-              <Input value={addPhone} onChange={(e) => setAddPhone(e.target.value)} placeholder="e.g. 024 725 8161" type="tel" className="h-9" />
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Full Name</Label>
+                <Input value={addName} onChange={(e) => setAddName(e.target.value)} placeholder="e.g. Kwame Asante" className="h-9" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Phone Number</Label>
+                <Input value={addPhone} onChange={(e) => setAddPhone(e.target.value)} placeholder="e.g. 024 725 8161" type="tel" className="h-9" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Role</Label>
+                <select value={addRole} onChange={(e) => setAddRole(e.target.value)} className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                  {ASSIGNABLE_ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+                  <option value="__custom__">Custom role...</option>
+                </select>
+              </div>
+              {addRole === "__custom__" && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Custom Role Name</Label>
+                  <Input value={customRole} onChange={(e) => setCustomRole(e.target.value)} placeholder="e.g. security, driver, cook" className="h-9" />
+                </div>
+              )}
+              <p className="text-[11px] text-muted-foreground">An SMS invitation will be sent to the employee. They visit the link to verify their number and set a password.</p>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Role</Label>
-              <Select value={addRole} onValueChange={(v) => v && setAddRole(v)}>
-                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {ASSIGNABLE_ROLES.map((r) => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
+            <div className="-mx-5 -mb-5 mt-4 flex gap-2 justify-end rounded-b-xl border-t bg-muted/50 p-4">
+              <Button variant="outline" onClick={() => setShowAdd(false)} disabled={adding}>Cancel</Button>
+              <Button onClick={handleAddEmployee} disabled={adding || !addName || !addPhone || (addRole === "__custom__" && !customRole.trim())}>
+                {adding ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" />Adding...</> : "Add Employee"}
+              </Button>
             </div>
-            <p className="text-[11px] text-muted-foreground">An SMS will be sent to the employee. They log in with their phone number and set up a password.</p>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAdd(false)} disabled={adding}>Cancel</Button>
-            <Button onClick={handleAddEmployee} disabled={adding || !addName || !addPhone}>
-              {adding ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" />Adding...</> : "Add Employee"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
 
-      {/* Delete Confirmation */}
-      <Dialog open={!!deleteItem} onOpenChange={(o) => !o && setDeleteItem(null)}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader><DialogTitle>Remove Employee</DialogTitle></DialogHeader>
-          <div className="flex items-start gap-3 text-sm">
-            <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
-            <p>Are you sure you want to remove <strong>{deleteItem?.full_name}</strong>? This will deactivate their account.</p>
+      {/* Delete Confirmation — pure HTML modal */}
+      {deleteItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) setDeleteItem(null); }}>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px]" />
+          <div className="relative z-10 w-full max-w-[calc(100%-2rem)] sm:max-w-sm rounded-xl bg-popover p-5 text-sm text-popover-foreground ring-1 ring-foreground/10 shadow-xl animate-in fade-in-0 zoom-in-95">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-heading text-base font-semibold">Remove Employee</h2>
+              <button onClick={() => setDeleteItem(null)} className="rounded-md p-1 hover:bg-muted transition-colors"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="flex items-start gap-3 text-sm mb-4">
+              <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+              <p>Are you sure you want to remove <strong>{deleteItem.full_name}</strong>? This will deactivate their account.</p>
+            </div>
+            <div className="-mx-5 -mb-5 flex gap-2 justify-end rounded-b-xl border-t bg-muted/50 p-4">
+              <Button variant="outline" onClick={() => setDeleteItem(null)} disabled={deleting}>Cancel</Button>
+              <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+                {deleting ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" />Removing...</> : "Remove"}
+              </Button>
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteItem(null)} disabled={deleting}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" />Removing...</> : "Remove"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </div>
   );
 }

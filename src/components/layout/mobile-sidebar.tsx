@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Church } from "lucide-react";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { ROLE_DASHBOARD_ACCESS } from "@/lib/constants";
 import {
   LayoutDashboard, BedDouble, CalendarCheck, SprayCan, Users,
   CreditCard, TrendingUp, MessageSquareWarning, Zap, Package,
@@ -53,8 +55,16 @@ const navGroups = [
   },
 ];
 
+function getPageKey(href: string): string {
+  const parts = href.replace("/dashboard", "").split("/").filter(Boolean);
+  return parts[0] || "dashboard";
+}
+
 export function MobileSidebar() {
   const pathname = usePathname();
+  const { role } = useCurrentUser();
+  const allowedPages = ROLE_DASHBOARD_ACCESS[role || "super_admin"] || ["*"];
+  const canAccess = (href: string) => allowedPages.includes("*") || allowedPages.includes(getPageKey(href));
 
   return (
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
@@ -71,7 +81,10 @@ export function MobileSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 px-2.5 space-y-5">
-        {navGroups.map((group) => (
+        {navGroups.map((group) => {
+          const visibleItems = group.items.filter((item) => canAccess(item.href));
+          if (visibleItems.length === 0) return null;
+          return (
           <div key={group.label || "bottom"}>
             {group.label && (
               <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
@@ -80,7 +93,7 @@ export function MobileSidebar() {
             )}
             {!group.label && <div className="border-t border-sidebar-border pt-3 mt-2" />}
             <div className="space-y-0.5">
-              {group.items.map((item) => {
+              {visibleItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = item.href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.href);
                 return (
@@ -102,7 +115,8 @@ export function MobileSidebar() {
               })}
             </div>
           </div>
-        ))}
+          );
+        })}
       </nav>
     </div>
   );

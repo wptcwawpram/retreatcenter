@@ -160,22 +160,33 @@ export const COMPLAINT_CATEGORY_LABELS: Record<string, string> = {
 // ─── User Role Labels ───────────────────────────────────────────────────────
 
 export const USER_ROLE_LABELS: Record<string, string> = {
-  SUPER_ADMIN: "Super Admin",
   super_admin: "Super Admin",
-  ADMIN: "Administrator",
-  admin: "Super Admin",
-  MANAGER: "Manager",
+  admin: "Administrator",
   manager: "Manager",
-  RECEPTIONIST: "Receptionist",
   receptionist: "Receptionist",
-  HOUSEKEEPER: "Housekeeper",
   housekeeping: "Housekeeping",
-  ACCOUNTANT: "Accountant",
   accountant: "Accountant",
-  MAINTENANCE: "Maintenance",
   maintenance: "Maintenance",
-  GUEST: "Guest",
   guest: "Guest",
+};
+
+export const ASSIGNABLE_ROLES = [
+  { value: "admin", label: "Administrator" },
+  { value: "manager", label: "Manager" },
+  { value: "receptionist", label: "Receptionist" },
+  { value: "housekeeping", label: "Housekeeping" },
+  { value: "accountant", label: "Accountant" },
+  { value: "maintenance", label: "Maintenance" },
+];
+
+export const ROLE_DASHBOARD_ACCESS: Record<string, string[]> = {
+  super_admin: ["*"],
+  admin: ["*"],
+  manager: ["dashboard", "rooms", "bookings", "checkin", "calendar", "guests", "housekeeping", "events", "finance", "payments", "reports", "complaints", "inventory", "employees", "utilities", "messaging", "settings"],
+  receptionist: ["dashboard", "rooms", "bookings", "checkin", "calendar", "guests", "payments"],
+  housekeeping: ["dashboard", "housekeeping", "rooms", "inventory"],
+  accountant: ["dashboard", "finance", "payments", "reports"],
+  maintenance: ["dashboard", "utilities", "inventory", "housekeeping"],
 };
 
 // ─── Currency ───────────────────────────────────────────────────────────────

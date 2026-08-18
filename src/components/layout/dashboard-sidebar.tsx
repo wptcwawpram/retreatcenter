@@ -28,6 +28,13 @@ import {
 import { useState } from "react";
 import Image from "next/image";
 import { useSiteLogo } from "@/lib/use-site-logo";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { ROLE_DASHBOARD_ACCESS } from "@/lib/constants";
+
+function getPageKey(href: string): string {
+  const parts = href.replace("/dashboard", "").split("/").filter(Boolean);
+  return parts[0] || "dashboard";
+}
 
 const navGroups = [
   {
@@ -85,6 +92,9 @@ export function DashboardSidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const siteLogo = useSiteLogo();
+  const { role } = useCurrentUser();
+  const allowedPages = ROLE_DASHBOARD_ACCESS[role || "super_admin"] || ["*"];
+  const canAccess = (href: string) => allowedPages.includes("*") || allowedPages.includes(getPageKey(href));
 
   return (
     <aside
@@ -124,7 +134,10 @@ export function DashboardSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 px-2.5 space-y-5 scrollbar-thin">
-        {navGroups.map((group) => (
+        {navGroups.map((group) => {
+          const visibleItems = group.items.filter((item) => canAccess(item.href));
+          if (visibleItems.length === 0) return null;
+          return (
           <div key={group.label || "bottom"}>
             {group.label && !collapsed && (
               <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
@@ -135,7 +148,7 @@ export function DashboardSidebar() {
               <div className="border-t border-sidebar-border pt-3 mt-2" />
             )}
             <div className="space-y-0.5">
-              {group.items.map((item) => {
+              {visibleItems.map((item) => {
                 const Icon = item.icon;
                 const isActive =
                   item.href === "/dashboard"
@@ -165,7 +178,8 @@ export function DashboardSidebar() {
               })}
             </div>
           </div>
-        ))}
+          );
+        })}
       </nav>
 
       {/* Version tag */}
