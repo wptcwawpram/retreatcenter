@@ -56,11 +56,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "An employee with this phone number already exists" }, { status: 400 });
     }
 
-    // Create a temporary email from phone (employee will use phone to log in)
     const tempEmail = `staff_${last9}@wptc.local`;
     const tempPassword = `WPTC_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const phoneFormatted = normalized.startsWith("233") ? `+${normalized}` : `+233${last9}`;
 
-    // Create auth user
+    // Check if auth user already exists (from a previous failed attempt)
+    const { data: existingUsers } = await supabase.auth.admin.listUsers({ perPage: 1, page: 1 });
+    let authUserId: string;
+
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: tempEmail,
       password: tempPassword,
@@ -68,14 +71,26 @@ export async function POST(request: NextRequest) {
       user_metadata: { full_name, phone },
     });
 
-    if (authError) throw authError;
+    if (authError) {
+      if (authError.message?.includes("already") || authError.message?.includes("exists") || authError.message?.includes("registered")) {
+        // Auth user exists from a previous attempt — look them up by email
+        const { data: listData } = await supabase.auth.admin.listUsers({ perPage: 50, page: 1 });
+        const found = listData?.users?.find((u) => u.email === tempEmail);
+        if (!found) {
+          return NextResponse.json({ error: `Auth conflict: ${authError.message}. Try a different phone number.` }, { status: 400 });
+        }
+        authUserId = found.id;
+      } else {
+        return NextResponse.json({ error: authError.message || "Failed to create auth user" }, { status: 500 });
+      }
+    } else {
+      authUserId = authData.user.id;
+    }
 
-    // Create profile
-    const phoneFormatted = normalized.startsWith("233") ? `+${normalized}` : `+233${last9}`;
     const { error: profileError } = await supabase
       .from("profiles")
       .upsert({
-        id: authData.user.id,
+        id: authUserId,
         email: tempEmail,
         full_name,
         phone: phoneFormatted,
@@ -84,15 +99,12 @@ export async function POST(request: NextRequest) {
         needs_onboarding: true,
       });
 
-    if (profileError) throw profileError;
+    if (profileError) {
+      return NextResponse.json({ error: `Profile creation failed: ${profileError.message}` }, { status: 500 });
+    }
 
-    // Send SMS invite via Hubtel
+    // Send SMS invite via Hubtel (non-fatal)
     try {
-      const smsRes = await fetch("https://smsc.hubtel.com/v1/messages/send", {
-        method: "GET",
-        headers: { Authorization: `Basic ${Buffer.from(`${process.env.HUBTEL_CLIENT_ID}:${process.env.HUBTEL_CLIENT_SECRET}`).toString("base64")}` },
-      });
-      // Build SMS URL with params
       const smsUrl = new URL("https://smsc.hubtel.com/v1/messages/send");
       smsUrl.searchParams.set("From", "WPTC");
       smsUrl.searchParams.set("To", phoneFormatted);
@@ -102,15 +114,16 @@ export async function POST(request: NextRequest) {
         headers: { Authorization: `Basic ${Buffer.from(`${process.env.HUBTEL_CLIENT_ID}:${process.env.HUBTEL_CLIENT_SECRET}`).toString("base64")}` },
       });
     } catch {
-      // SMS send failure is non-fatal
+      // SMS failure is non-fatal
     }
 
     return NextResponse.json({
       success: true,
-      employee: { id: authData.user.id, full_name, phone: phoneFormatted, role: role || "receptionist" },
+      employee: { id: authUserId, full_name, phone: phoneFormatted, role: role || "receptionist" },
     });
   } catch (error) {
-    console.error("Employee creation error:", error);
-    return NextResponse.json({ error: "Failed to create employee" }, { status: 500 });
+    const msg = error instanceof Error ? error.message : "Unknown error";
+    console.error("Employee creation error:", msg, error);
+    return NextResponse.json({ error: `Failed to create employee: ${msg}` }, { status: 500 });
   }
 }

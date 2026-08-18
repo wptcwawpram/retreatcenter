@@ -112,6 +112,51 @@ export async function PATCH(request: NextRequest) {
     if (!id) return NextResponse.json({ error: "Record ID required" }, { status: 400 });
 
     const supabase = serviceClient();
+
+    // If account_id is changing, adjust balances on old and new accounts
+    if ("account_id" in updates) {
+      const { data: oldRecord } = await supabase
+        .from("finance_records")
+        .select("account_id, amount, type")
+        .eq("id", id)
+        .single();
+
+      if (oldRecord) {
+        const amount = Number(oldRecord.amount);
+        const delta = oldRecord.type === "INCOME" ? amount : -amount;
+
+        // Remove from old account
+        if (oldRecord.account_id) {
+          const { data: oldAcct } = await supabase
+            .from("finance_accounts")
+            .select("balance")
+            .eq("id", oldRecord.account_id)
+            .single();
+          if (oldAcct) {
+            await supabase
+              .from("finance_accounts")
+              .update({ balance: Number(oldAcct.balance) - delta, updated_at: new Date().toISOString() })
+              .eq("id", oldRecord.account_id);
+          }
+        }
+
+        // Add to new account
+        if (updates.account_id) {
+          const { data: newAcct } = await supabase
+            .from("finance_accounts")
+            .select("balance")
+            .eq("id", updates.account_id)
+            .single();
+          if (newAcct) {
+            await supabase
+              .from("finance_accounts")
+              .update({ balance: Number(newAcct.balance) + delta, updated_at: new Date().toISOString() })
+              .eq("id", updates.account_id);
+          }
+        }
+      }
+    }
+
     const { data, error } = await supabase
       .from("finance_records")
       .update(updates)
