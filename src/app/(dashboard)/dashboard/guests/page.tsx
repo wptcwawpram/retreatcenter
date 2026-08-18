@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { getGuests, createGuest, updateGuest, deleteGuest } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatDate } from "@/lib/format";
-import { Search, Loader2, Edit2, Trash2, AlertCircle, Users, Phone, Mail } from "lucide-react";
+import { Search, Loader2, Edit2, Trash2, AlertCircle, Users, Phone, Mail, Download } from "lucide-react";
+import { downloadCSV } from "@/lib/export-csv";
 import { cn } from "@/lib/utils";
 import type { Guest } from "@/lib/supabase/types";
 
@@ -129,7 +130,15 @@ export default function GuestsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Guests" description="View and manage guest records" action={{ label: "Add Guest", onClick: () => setShowAdd(true) }} />
+      <PageHeader title="Guests" description="View and manage guest records" action={{ label: "Add Guest", onClick: () => setShowAdd(true) }}>
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
+          downloadCSV("guests", ["Name", "Phone", "Email", "Nationality", "ID Type", "ID Number", "Address", "Registered"], filtered.map((g) => [
+            g.full_name, g.phone, g.email ?? "", g.nationality ?? "", g.id_type ?? "", g.id_number ?? "", g.address ?? "", g.created_at,
+          ]));
+        }}>
+          <Download className="h-3.5 w-3.5" />Export CSV
+        </Button>
+      </PageHeader>
 
       {/* Summary bar */}
       <div className="flex items-center gap-4">

@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { formatCurrency, formatDate } from "@/lib/format";
 import { getEvents, createEvent, updateEvent, deleteEvent, getVenues } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
-import { Calendar, MapPin, Users, Loader2, Edit2, Trash2, AlertCircle } from "lucide-react";
+import { Calendar, MapPin, Users, Loader2, Edit2, Trash2, AlertCircle, Download } from "lucide-react";
+import { downloadCSV } from "@/lib/export-csv";
 import { cn } from "@/lib/utils";
 import type { Event } from "@/lib/supabase/types";
 
@@ -140,7 +141,15 @@ export default function EventsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Events" description="Manage hall and venue bookings" action={{ label: "New Event", onClick: () => setShowAdd(true) }} />
+      <PageHeader title="Events" description="Manage hall and venue bookings" action={{ label: "New Event", onClick: () => setShowAdd(true) }}>
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
+          downloadCSV("events", ["Name", "Organizer", "Venue", "Start Date", "End Date", "Attendees", "Amount", "Status"], allEvents.map((e) => [
+            e.name, e.organizer, e.venue?.name ?? "", e.start_date, e.end_date, e.attendees, Number(e.amount), e.status,
+          ]));
+        }}>
+          <Download className="h-3.5 w-3.5" />Export CSV
+        </Button>
+      </PageHeader>
 
       {/* Venue Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

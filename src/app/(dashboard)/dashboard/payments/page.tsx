@@ -13,7 +13,8 @@ import { PAYMENT_STATUS_CONFIG, PAYMENT_METHOD_LABELS } from "@/lib/constants";
 import { getPayments, getBookings, createPayment, deletePayment, createFinanceRecord, getFinanceAccounts } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { Search, Wallet, Clock, CreditCard, TrendingUp, Loader2, Trash2, AlertCircle } from "lucide-react";
+import { Search, Wallet, Clock, CreditCard, TrendingUp, Loader2, Trash2, AlertCircle, Download } from "lucide-react";
+import { downloadCSV } from "@/lib/export-csv";
 import { Button } from "@/components/ui/button";
 
 type PaymentRow = {
@@ -141,7 +142,15 @@ export default function PaymentsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Payments" description="Track all payments and transactions" action={{ label: "Record Payment", onClick: () => setShowAdd(true) }} />
+      <PageHeader title="Payments" description="Track all payments and transactions" action={{ label: "Record Payment", onClick: () => setShowAdd(true) }}>
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
+          downloadCSV("payments", ["Reference", "Booking Ref", "Guest", "Amount", "Method", "Status", "Date"], filtered.map((p) => [
+            p.reference, p.booking?.reference ?? "", p.booking?.guest?.full_name ?? "", Number(p.amount), p.method, p.status, p.created_at,
+          ]));
+        }}>
+          <Download className="h-3.5 w-3.5" />Export CSV
+        </Button>
+      </PageHeader>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard title="Total Collected" value={formatCurrency(totalCompleted)} icon={Wallet} iconClassName="bg-teal-500/10 text-teal-500" />

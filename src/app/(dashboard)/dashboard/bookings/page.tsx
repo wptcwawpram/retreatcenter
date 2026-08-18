@@ -20,8 +20,9 @@ import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatCurrency, formatDate } from "@/lib/format";
 import {
   Search, Loader2, Eye, Edit2, Trash2, AlertCircle, CheckCircle,
-  BedDouble, Church, Users, User, ChevronDown,
+  BedDouble, Church, Users, User, ChevronDown, Download,
 } from "lucide-react";
+import { downloadCSV } from "@/lib/export-csv";
 import type { Booking, Guest } from "@/lib/supabase/types";
 
 type BookingWithGuest = Booking & { guest: Guest };
@@ -713,7 +714,15 @@ export default function BookingsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Bookings" description="Manage all guest bookings and reservations" action={{ label: "New Booking", onClick: () => setShowAdd(true) }} />
+      <PageHeader title="Bookings" description="Manage all guest bookings and reservations" action={{ label: "New Booking", onClick: () => setShowAdd(true) }}>
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
+          downloadCSV("bookings", ["Reference", "Guest", "Phone", "Check-in", "Check-out", "Nights", "Status", "Total", "Paid", "Balance"], filtered.map((b) => [
+            b.reference, b.guest?.full_name ?? "", b.guest?.phone ?? "", b.check_in, b.check_out, b.nights, b.status, Number(b.total_amount), Number(b.paid_amount), Number(b.balance),
+          ]));
+        }}>
+          <Download className="h-3.5 w-3.5" />Export CSV
+        </Button>
+      </PageHeader>
 
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">

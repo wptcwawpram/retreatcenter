@@ -15,8 +15,9 @@ import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatCurrency, roomSortKey } from "@/lib/format";
 import {
   BedDouble, LayoutGrid, List, Search, Loader2, Edit2, Trash2, AlertCircle,
-  Wind, Tv, Refrigerator, Users, CheckCircle, Database,
+  Wind, Tv, Refrigerator, Users, CheckCircle, Database, Download,
 } from "lucide-react";
+import { downloadCSV } from "@/lib/export-csv";
 import { cn } from "@/lib/utils";
 import type { Room } from "@/lib/supabase/types";
 
@@ -193,7 +194,15 @@ export default function RoomsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Rooms" description="Manage room status, availability, and assignments" action={{ label: "Add Room", onClick: () => setShowAdd(true) }} />
+      <PageHeader title="Rooms" description="Manage room status, availability, and assignments" action={{ label: "Add Room", onClick: () => setShowAdd(true) }}>
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
+          downloadCSV("rooms", ["Number", "Name", "Type", "Building", "Floor", "Status", "Capacity", "Beds", "Price/Night", "AC", "TV", "Fridge"], filtered.map((r) => [
+            r.number, r.name ?? "", r.type, r.building, r.floor, r.status, r.capacity, r.beds, Number(r.price_per_night), r.has_ac ? "Yes" : "No", r.has_tv ? "Yes" : "No", r.has_fridge ? "Yes" : "No",
+          ]));
+        }}>
+          <Download className="h-3.5 w-3.5" />Export CSV
+        </Button>
+      </PageHeader>
 
       {allRooms.length < 24 && !loading && (
         <div className="text-center py-10 border border-dashed border-border/60 rounded-xl bg-card">

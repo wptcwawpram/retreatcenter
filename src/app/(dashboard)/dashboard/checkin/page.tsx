@@ -10,8 +10,9 @@ import { formatCurrency, formatDate } from "@/lib/format";
 import { BOOKING_STATUS_CONFIG } from "@/lib/constants";
 import {
   Loader2, LogIn, LogOut, Search, AlertCircle, CheckCircle,
-  BedDouble, Clock, Phone, RefreshCw,
+  BedDouble, Clock, Phone, RefreshCw, Download,
 } from "lucide-react";
+import { downloadCSV } from "@/lib/export-csv";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -179,7 +180,15 @@ export default function CheckInPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Check-in / Check-out" description="Manage guest arrivals and departures" />
+      <PageHeader title="Check-in / Check-out" description="Manage guest arrivals and departures">
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
+          downloadCSV("checkin", ["Guest", "Phone", "Reference", "Room(s)", "Check-in", "Check-out", "Nights", "Status", "Total", "Paid", "Balance"], filtered.map((b) => [
+            b.guest?.full_name ?? "", b.guest?.phone ?? "", b.reference, (b.booking_rooms ?? []).map((br) => br.room.number).join(", "), b.check_in, b.check_out, b.nights, b.status, Number(b.total_amount), Number(b.paid_amount), Number(b.balance),
+          ]));
+        }}>
+          <Download className="h-3.5 w-3.5" />Export CSV
+        </Button>
+      </PageHeader>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
