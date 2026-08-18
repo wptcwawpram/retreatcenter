@@ -69,6 +69,12 @@ export default function FinancePage() {
   const allCategories = (categories || []) as FinanceCategory[];
   const allTransfers = (transfers || []) as FinanceTransfer[];
 
+  const s = (v: unknown): string => {
+    if (v === null || v === undefined) return "";
+    if (typeof v === "object") return JSON.stringify(v);
+    return String(v);
+  };
+
   const incomeCategories = useMemo(() => allCategories.filter((c) => c.type === "INCOME" && c.is_active), [allCategories]);
   const expenseCategories = useMemo(() => allCategories.filter((c) => c.type === "EXPENSE" && c.is_active), [allCategories]);
   const activeAccounts = useMemo(() => allAccounts.filter((a) => a.is_active), [allAccounts]);
@@ -240,16 +246,16 @@ export default function FinancePage() {
   }, [allAccounts]);
 
   const recordColumns: Column<FinanceRecord>[] = [
-    { header: "Date", accessor: (f) => <span className="text-xs text-muted-foreground">{formatDate(f.date)}</span> },
+    { header: "Date", accessor: (f) => <span className="text-xs text-muted-foreground">{s(f.date ? formatDate(f.date) : "—")}</span> },
     { header: "Type", accessor: (f) => (
       <Badge className={cn("text-[10px] border gap-0.5", f.type === "INCOME" ? "bg-teal-500/10 text-teal-400 border-teal-500/20" : "bg-red-500/10 text-red-400 border-red-500/20")}>
         {f.type === "INCOME" ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-        {f.type}
+        {s(f.type)}
       </Badge>
     )},
-    { header: "Category", accessor: (f) => <span className="font-medium text-sm">{f.category}</span> },
-    { header: "Description", accessor: (f) => <span className="text-xs text-muted-foreground line-clamp-1 max-w-[200px] block">{f.description}</span> },
-    { header: "Account", accessor: (f) => <span className="text-xs text-muted-foreground">{f.account_id ? accountMap[f.account_id] || "—" : "—"}</span> },
+    { header: "Category", accessor: (f) => <span className="font-medium text-sm">{s(f.category)}</span> },
+    { header: "Description", accessor: (f) => <span className="text-xs text-muted-foreground line-clamp-1 max-w-[200px] block">{s(f.description)}</span> },
+    { header: "Account", accessor: (f) => <span className="text-xs text-muted-foreground">{f.account_id ? s(accountMap[f.account_id]) || "—" : "—"}</span> },
     { header: "Amount", accessor: (f) => (
       <span className={cn("font-semibold text-sm tabular-nums", f.type === "INCOME" ? "text-teal-500" : "text-red-600")}>
         {f.type === "INCOME" ? "+" : "-"}{formatCurrency(Number(f.amount))}
@@ -265,13 +271,13 @@ export default function FinancePage() {
   // ── Transfer Columns ────────────────────────────────────────
 
   const transferColumns: Column<FinanceTransfer>[] = [
-    { header: "Date", accessor: (t) => <span className="text-xs text-muted-foreground">{formatDate(t.created_at)}</span> },
-    { header: "From", accessor: (t) => <span className="text-sm font-medium">{t.from_account?.name || "—"}</span> },
+    { header: "Date", accessor: (t) => <span className="text-xs text-muted-foreground">{s(t.created_at ? formatDate(t.created_at) : "—")}</span> },
+    { header: "From", accessor: (t) => <span className="text-sm font-medium">{s(typeof t.from_account === "object" && t.from_account ? t.from_account.name : t.from_account) || "—"}</span> },
     { header: "", accessor: () => <ArrowRightLeft className="h-4 w-4 text-muted-foreground mx-auto" /> },
-    { header: "To", accessor: (t) => <span className="text-sm font-medium">{t.to_account?.name || "—"}</span> },
+    { header: "To", accessor: (t) => <span className="text-sm font-medium">{s(typeof t.to_account === "object" && t.to_account ? t.to_account.name : t.to_account) || "—"}</span> },
     { header: "Amount", accessor: (t) => <span className="font-semibold text-sm tabular-nums">{formatCurrency(Number(t.amount))}</span> },
-    { header: "Description", accessor: (t) => <span className="text-xs text-muted-foreground line-clamp-1">{t.description || "—"}</span> },
-    { header: "Ref", accessor: (t) => <span className="font-mono text-[10px] text-muted-foreground">{t.reference || "—"}</span> },
+    { header: "Description", accessor: (t) => <span className="text-xs text-muted-foreground line-clamp-1">{s(t.description) || "—"}</span> },
+    { header: "Ref", accessor: (t) => <span className="font-mono text-[10px] text-muted-foreground">{s(t.reference) || "—"}</span> },
   ];
 
   // ── Tab buttons ─────────────────────────────────────────────
@@ -352,17 +358,17 @@ export default function FinancePage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-sm truncate">{account.name}</h3>
-                      {account.is_default && (
+                      <h3 className="font-semibold text-sm truncate">{s(account.name)}</h3>
+                      {account.is_default === true && (
                         <Badge className="text-[9px] bg-primary/10 text-primary border-primary/20">Default</Badge>
                       )}
                     </div>
                     <p className="text-[11px] text-muted-foreground mt-0.5">
-                      {ACCOUNT_TYPE_LABELS[account.type]}
-                      {account.provider && ` — ${account.provider}`}
+                      {s(ACCOUNT_TYPE_LABELS[account.type] || account.type)}
+                      {account.provider ? ` — ${s(account.provider)}` : ""}
                     </p>
                     {account.account_number && (
-                      <p className="text-[10px] text-muted-foreground/60 font-mono mt-0.5">{account.account_number}</p>
+                      <p className="text-[10px] text-muted-foreground/60 font-mono mt-0.5">{s(account.account_number)}</p>
                     )}
                   </div>
                 </div>
@@ -403,7 +409,7 @@ export default function FinancePage() {
               {allCategories.filter((c) => c.type === "INCOME").map((cat) => (
                 <div key={cat.id} className="flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-muted/30 transition-colors group">
                   <Tag className="h-3.5 w-3.5 text-teal-500" />
-                  <span className={cn("text-sm flex-1", !cat.is_active && "text-muted-foreground line-through")}>{cat.name}</span>
+                  <span className={cn("text-sm flex-1", !cat.is_active && "text-muted-foreground line-through")}>{s(cat.name)}</span>
                   <Button variant="ghost" size="icon-xs" className="text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={() => setDeleteItem({ id: cat.id, type: "category", label: cat.name })}>
                     <Trash2 className="h-3 w-3" />
@@ -424,7 +430,7 @@ export default function FinancePage() {
               {allCategories.filter((c) => c.type === "EXPENSE").map((cat) => (
                 <div key={cat.id} className="flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-muted/30 transition-colors group">
                   <Tag className="h-3.5 w-3.5 text-red-500" />
-                  <span className={cn("text-sm flex-1", !cat.is_active && "text-muted-foreground line-through")}>{cat.name}</span>
+                  <span className={cn("text-sm flex-1", !cat.is_active && "text-muted-foreground line-through")}>{s(cat.name)}</span>
                   <Button variant="ghost" size="icon-xs" className="text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={() => setDeleteItem({ id: cat.id, type: "category", label: cat.name })}>
                     <Trash2 className="h-3 w-3" />
@@ -488,7 +494,7 @@ export default function FinancePage() {
               >
                 <option value="">Select source account</option>
                 {activeAccounts.map((a) => (
-                  <option key={a.id} value={a.id}>{a.name} ({ACCOUNT_TYPE_LABELS[a.type]}) — {formatCurrency(Number(a.balance))}</option>
+                  <option key={a.id} value={a.id}>{s(a.name)} ({s(ACCOUNT_TYPE_LABELS[a.type])}) — {formatCurrency(Number(a.balance))}</option>
                 ))}
               </select>
             </div>
@@ -501,7 +507,7 @@ export default function FinancePage() {
               >
                 <option value="">Select destination account</option>
                 {activeAccounts.filter((a) => a.id !== transferForm.from).map((a) => (
-                  <option key={a.id} value={a.id}>{a.name} ({ACCOUNT_TYPE_LABELS[a.type]}) — {formatCurrency(Number(a.balance))}</option>
+                  <option key={a.id} value={a.id}>{s(a.name)} ({s(ACCOUNT_TYPE_LABELS[a.type])}) — {formatCurrency(Number(a.balance))}</option>
                 ))}
               </select>
             </div>
