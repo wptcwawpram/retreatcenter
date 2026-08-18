@@ -9,6 +9,7 @@ interface CurrentUser {
   role: string;
   phone: string | null;
   avatar_url: string | null;
+  dashboard_access: string[] | null;
 }
 
 export function useCurrentUser() {
@@ -23,5 +24,5 @@ export function useCurrentUser() {
       .finally(() => setLoading(false));
   }, []);
 
-  return { user, loading, role: user?.role ?? null };
+  return { user, loading, role: user?.role ?? null, dashboardAccess: user?.dashboard_access ?? null };
 }

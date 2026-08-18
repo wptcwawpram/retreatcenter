@@ -1,4 +1,4 @@
-export type UserRole = "super_admin" | "admin" | "receptionist" | "housekeeping" | "manager" | "accountant" | "maintenance";
+export type UserRole = "super_admin" | "admin" | "receptionist" | "housekeeping" | "manager" | "accountant" | "maintenance" | string;
 
 export interface Profile {
   id: string;
@@ -8,6 +8,7 @@ export interface Profile {
   phone: string | null;
   avatar_url: string | null;
   is_active: boolean;
+  dashboard_access: string[] | null;
   created_at: string;
   updated_at: string;
 }

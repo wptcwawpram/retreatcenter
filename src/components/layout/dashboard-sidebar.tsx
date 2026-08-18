@@ -92,8 +92,8 @@ export function DashboardSidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const siteLogo = useSiteLogo();
-  const { role } = useCurrentUser();
-  const allowedPages = ROLE_DASHBOARD_ACCESS[role || "super_admin"] || ["*"];
+  const { role, dashboardAccess } = useCurrentUser();
+  const allowedPages = dashboardAccess || ROLE_DASHBOARD_ACCESS[role || "super_admin"] || ["*"];
   const canAccess = (href: string) => allowedPages.includes("*") || allowedPages.includes(getPageKey(href));
 
   return (

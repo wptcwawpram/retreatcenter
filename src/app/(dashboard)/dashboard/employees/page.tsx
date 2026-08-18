@@ -3,14 +3,13 @@
 import { useState } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { DataTable, type Column } from "@/components/dashboard/data-table";
-import { FormDialog, type FormField } from "@/components/dashboard/form-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { USER_ROLE_LABELS, ASSIGNABLE_ROLES } from "@/lib/constants";
+import { USER_ROLE_LABELS, ASSIGNABLE_ROLES, ROLE_DASHBOARD_ACCESS, ALL_DASHBOARD_PAGES } from "@/lib/constants";
 import { getProfiles } from "@/lib/supabase/queries";
 import { createClient } from "@/lib/supabase/client";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
-import { Loader2, Edit2, Shield, Phone, Trash2, AlertCircle, UserPlus, Download, X } from "lucide-react";
+import { Loader2, Edit2, Shield, Phone, Trash2, AlertCircle, UserPlus, Download, X, ChevronDown, ChevronUp } from "lucide-react";
 import { downloadCSV } from "@/lib/export-csv";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,24 +26,104 @@ const ROLE_COLORS: Record<string, string> = {
   maintenance: "bg-orange-500/10 text-orange-600 border-orange-500/20",
 };
 
-const editFields: FormField[] = [
-  { name: "full_name", label: "Full Name", required: true },
-  { name: "phone", label: "Phone", type: "tel" },
-  { name: "role", label: "Role", type: "select", required: true, options: ASSIGNABLE_ROLES },
-  { name: "is_active", label: "Active", type: "checkbox" },
-];
+function isCustomRole(role: string) {
+  return !ROLE_DASHBOARD_ACCESS[role];
+}
+
+function getDefaultAccess(role: string): string[] {
+  return ROLE_DASHBOARD_ACCESS[role] || ["dashboard"];
+}
+
+function PageAccessSelector({ selectedPages, onChange, role }: { selectedPages: string[]; onChange: (pages: string[]) => void; role: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const isPredefined = !!ROLE_DASHBOARD_ACCESS[role] && role !== "admin" && role !== "super_admin";
+  const isAdmin = role === "admin" || role === "super_admin";
+
+  if (isAdmin) return null;
+
+  return (
+    <div className="space-y-1.5">
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center justify-between w-full text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <span>Page Access ({selectedPages.length} pages)</span>
+        {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+      </button>
+      {expanded && (
+        <div className="grid grid-cols-2 gap-1.5 p-2.5 rounded-lg border border-border bg-muted/30">
+          {isPredefined && (
+            <p className="col-span-2 text-[10px] text-muted-foreground mb-1">Default for {USER_ROLE_LABELS[role] || role}. Override by changing selections.</p>
+          )}
+          {ALL_DASHBOARD_PAGES.map((page) => (
+            <label key={page.key} className="flex items-center gap-1.5 text-xs cursor-pointer hover:bg-muted/50 rounded px-1.5 py-1">
+              <input
+                type="checkbox"
+                checked={selectedPages.includes(page.key)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    onChange([...selectedPages, page.key]);
+                  } else {
+                    onChange(selectedPages.filter((p) => p !== page.key));
+                  }
+                }}
+                className="h-3.5 w-3.5 rounded border-border text-sidebar-primary focus:ring-sidebar-primary"
+              />
+              <span>{page.label}</span>
+            </label>
+          ))}
+          <div className="col-span-2 flex gap-2 mt-1">
+            <button type="button" onClick={() => onChange(ALL_DASHBOARD_PAGES.map((p) => p.key))} className="text-[10px] text-sidebar-primary hover:underline">Select all</button>
+            <button type="button" onClick={() => onChange(["dashboard"])} className="text-[10px] text-red-400 hover:underline">Clear</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function EmployeesPage() {
   const { data: employees, loading, refetch } = useSupabaseQuery(() => getProfiles(), []);
-  const [editItem, setEditItem] = useState<Profile | null>(null);
+
+  // Add Employee state
   const [showAdd, setShowAdd] = useState(false);
   const [addName, setAddName] = useState("");
   const [addPhone, setAddPhone] = useState("");
   const [addRole, setAddRole] = useState("receptionist");
   const [customRole, setCustomRole] = useState("");
+  const [addAccess, setAddAccess] = useState<string[]>(getDefaultAccess("receptionist"));
   const [adding, setAdding] = useState(false);
+
+  // Edit Employee state
+  const [editItem, setEditItem] = useState<Profile | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editRole, setEditRole] = useState("");
+  const [editCustomRole, setEditCustomRole] = useState("");
+  const [editActive, setEditActive] = useState(true);
+  const [editAccess, setEditAccess] = useState<string[]>([]);
+  const [editing, setEditing] = useState(false);
+
+  // Delete state
   const [deleteItem, setDeleteItem] = useState<Profile | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const openEdit = (emp: Profile) => {
+    setEditItem(emp);
+    setEditName(emp.full_name);
+    setEditPhone(emp.phone || "");
+    const knownRole = ASSIGNABLE_ROLES.find((r) => r.value === emp.role);
+    if (knownRole) {
+      setEditRole(emp.role);
+      setEditCustomRole("");
+    } else {
+      setEditRole("__custom__");
+      setEditCustomRole(emp.role);
+    }
+    setEditActive(emp.is_active);
+    setEditAccess(emp.dashboard_access || getDefaultAccess(emp.role));
+  };
 
   const handleAddEmployee = async () => {
     if (!addName || !addPhone) return;
@@ -52,18 +131,49 @@ export default function EmployeesPage() {
     if (!finalRole) return;
     setAdding(true);
     try {
+      const accessToSend = addRole === "__custom__" || JSON.stringify(addAccess) !== JSON.stringify(getDefaultAccess(finalRole))
+        ? addAccess : null;
       const res = await fetch("/api/employees/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ full_name: addName, phone: addPhone, role: finalRole }),
+        body: JSON.stringify({ full_name: addName, phone: addPhone, role: finalRole, dashboard_access: accessToSend }),
       });
       const data = await res.json();
       if (!res.ok) { alert(data.error || "Failed to add employee"); return; }
       setShowAdd(false);
-      setAddName(""); setAddPhone(""); setAddRole("receptionist"); setCustomRole("");
+      setAddName(""); setAddPhone(""); setAddRole("receptionist"); setCustomRole(""); setAddAccess(getDefaultAccess("receptionist"));
       refetch();
     } catch { alert("Failed to add employee"); }
     finally { setAdding(false); }
+  };
+
+  const handleEditEmployee = async () => {
+    if (!editItem || !editName) return;
+    const finalRole = editRole === "__custom__" ? editCustomRole.trim().toLowerCase() : editRole;
+    if (!finalRole) return;
+    setEditing(true);
+    try {
+      const supabase = createClient();
+      const accessToSave = finalRole === "admin" || finalRole === "super_admin"
+        ? null
+        : JSON.stringify(editAccess) !== JSON.stringify(getDefaultAccess(finalRole))
+          ? editAccess
+          : null;
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          full_name: editName,
+          phone: editPhone || null,
+          role: finalRole,
+          is_active: editActive,
+          dashboard_access: accessToSave,
+        })
+        .eq("id", editItem.id);
+      if (error) { alert(error.message); return; }
+      setEditItem(null);
+      refetch();
+    } catch { alert("Failed to update employee"); }
+    finally { setEditing(false); }
   };
 
   const handleDelete = async () => {
@@ -77,6 +187,7 @@ export default function EmployeesPage() {
       });
       if (!res.ok) { alert("Failed to delete employee"); return; }
       setDeleteItem(null);
+      setEditItem(null);
       refetch();
     } finally { setDeleting(false); }
   };
@@ -87,23 +198,6 @@ export default function EmployeesPage() {
 
   const allEmployees = employees || [];
   const activeCount = allEmployees.filter((e) => e.is_active).length;
-
-  const handleEdit = async (values: Record<string, unknown>) => {
-    if (!editItem) return;
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        full_name: values.full_name as string,
-        phone: (values.phone as string) || null,
-        role: values.role as Profile["role"],
-        is_active: !!values.is_active,
-      })
-      .eq("id", editItem.id);
-    if (error) throw error;
-    setEditItem(null);
-    refetch();
-  };
 
   const columns: Column<Profile>[] = [
     { header: "Staff", accessor: (e) => (
@@ -128,7 +222,7 @@ export default function EmployeesPage() {
         <Phone className="h-3 w-3 text-muted-foreground" />
         {e.phone}
       </div>
-    ) : <span className="text-muted-foreground text-xs">—</span>
+    ) : <span className="text-muted-foreground text-xs">---</span>
     },
     { header: "Status", accessor: (e) => (
       <div className="flex items-center gap-1.5">
@@ -140,7 +234,7 @@ export default function EmployeesPage() {
     )},
     { header: "", accessor: (e) => (
       <div className="flex items-center gap-0.5">
-        <Button variant="ghost" size="icon-xs" onClick={(e2) => { e2.stopPropagation(); setEditItem(e); }}>
+        <Button variant="ghost" size="icon-xs" onClick={(e2) => { e2.stopPropagation(); openEdit(e); }}>
           <Edit2 className="h-3.5 w-3.5" />
         </Button>
         {e.role !== "super_admin" && (
@@ -151,6 +245,9 @@ export default function EmployeesPage() {
       </div>
     )},
   ];
+
+  const effectiveAddRole = addRole === "__custom__" ? customRole.trim().toLowerCase() : addRole;
+  const effectiveEditRole = editRole === "__custom__" ? editCustomRole.trim().toLowerCase() : editRole;
 
   return (
     <div className="space-y-5">
@@ -182,15 +279,11 @@ export default function EmployeesPage() {
 
       <DataTable columns={columns} data={allEmployees} keyExtractor={(e) => e.id} total={allEmployees.length} emptyMessage="No employees" />
 
-      {editItem && (
-        <FormDialog open={!!editItem} onOpenChange={(o) => !o && setEditItem(null)} title={`Edit ${editItem.full_name}`} fields={editFields} initialValues={editItem} onSubmit={handleEdit} isEdit />
-      )}
-
-      {/* Add Employee Dialog — pure HTML modal */}
+      {/* Add Employee Modal */}
       {showAdd && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) setShowAdd(false); }}>
           <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px]" />
-          <div className="relative z-10 w-full max-w-[calc(100%-2rem)] sm:max-w-md rounded-xl bg-popover p-5 text-sm text-popover-foreground ring-1 ring-foreground/10 shadow-xl animate-in fade-in-0 zoom-in-95">
+          <div className="relative z-10 w-full max-w-[calc(100%-2rem)] sm:max-w-md rounded-xl bg-popover p-5 text-sm text-popover-foreground ring-1 ring-foreground/10 shadow-xl animate-in fade-in-0 zoom-in-95 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-heading text-base font-semibold flex items-center gap-2"><UserPlus className="h-4 w-4" />Add Employee</h2>
               <button onClick={() => setShowAdd(false)} className="rounded-md p-1 hover:bg-muted transition-colors"><X className="h-4 w-4" /></button>
@@ -206,7 +299,14 @@ export default function EmployeesPage() {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Role</Label>
-                <select value={addRole} onChange={(e) => setAddRole(e.target.value)} className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                <select value={addRole} onChange={(e) => {
+                  setAddRole(e.target.value);
+                  if (e.target.value !== "__custom__") {
+                    setAddAccess(getDefaultAccess(e.target.value));
+                  } else {
+                    setAddAccess(["dashboard"]);
+                  }
+                }} className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
                   {ASSIGNABLE_ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
                   <option value="__custom__">Custom role...</option>
                 </select>
@@ -217,7 +317,8 @@ export default function EmployeesPage() {
                   <Input value={customRole} onChange={(e) => setCustomRole(e.target.value)} placeholder="e.g. security, driver, cook" className="h-9" />
                 </div>
               )}
-              <p className="text-[11px] text-muted-foreground">An SMS invitation will be sent to the employee. They visit the link to verify their number and set a password.</p>
+              <PageAccessSelector selectedPages={addAccess} onChange={setAddAccess} role={effectiveAddRole} />
+              <p className="text-[11px] text-muted-foreground">An SMS invitation will be sent to the employee.</p>
             </div>
             <div className="-mx-5 -mb-5 mt-4 flex gap-2 justify-end rounded-b-xl border-t bg-muted/50 p-4">
               <Button variant="outline" onClick={() => setShowAdd(false)} disabled={adding}>Cancel</Button>
@@ -229,9 +330,74 @@ export default function EmployeesPage() {
         </div>
       )}
 
-      {/* Delete Confirmation — pure HTML modal */}
+      {/* Edit Employee Modal */}
+      {editItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) setEditItem(null); }}>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px]" />
+          <div className="relative z-10 w-full max-w-[calc(100%-2rem)] sm:max-w-md rounded-xl bg-popover p-5 text-sm text-popover-foreground ring-1 ring-foreground/10 shadow-xl animate-in fade-in-0 zoom-in-95 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-heading text-base font-semibold flex items-center gap-2"><Edit2 className="h-4 w-4" />Edit {editItem.full_name}</h2>
+              <button onClick={() => setEditItem(null)} className="rounded-md p-1 hover:bg-muted transition-colors"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Full Name <span className="text-red-500">*</span></Label>
+                  <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="h-9" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Phone</Label>
+                  <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} type="tel" className="h-9" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 items-start">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Role <span className="text-red-500">*</span></Label>
+                  <select value={editRole} onChange={(e) => {
+                    setEditRole(e.target.value);
+                    if (e.target.value !== "__custom__") {
+                      setEditAccess(getDefaultAccess(e.target.value));
+                    } else {
+                      setEditAccess(["dashboard"]);
+                    }
+                  }} className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                    {ASSIGNABLE_ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+                    <option value="__custom__">Custom role...</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-2 pt-6">
+                  <input type="checkbox" id="edit-active" checked={editActive} onChange={(e) => setEditActive(e.target.checked)} className="h-4 w-4 rounded border-border text-sidebar-primary focus:ring-sidebar-primary" />
+                  <Label htmlFor="edit-active" className="cursor-pointer text-xs">Active</Label>
+                </div>
+              </div>
+              {editRole === "__custom__" && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Custom Role Name</Label>
+                  <Input value={editCustomRole} onChange={(e) => setEditCustomRole(e.target.value)} placeholder="e.g. security, driver, cook" className="h-9" />
+                </div>
+              )}
+              <PageAccessSelector selectedPages={editAccess} onChange={setEditAccess} role={effectiveEditRole} />
+            </div>
+            <div className="-mx-5 -mb-5 mt-4 flex items-center rounded-b-xl border-t bg-muted/50 p-4">
+              {editItem.role !== "super_admin" && (
+                <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-500/10 gap-1.5" onClick={() => setDeleteItem(editItem)}>
+                  <Trash2 className="h-3.5 w-3.5" />Delete
+                </Button>
+              )}
+              <div className="ml-auto flex gap-2">
+                <Button variant="outline" onClick={() => setEditItem(null)} disabled={editing}>Cancel</Button>
+                <Button onClick={handleEditEmployee} disabled={editing || !editName || (editRole === "__custom__" && !editCustomRole.trim())}>
+                  {editing ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" />Saving...</> : "Update"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
       {deleteItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) setDeleteItem(null); }}>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) setDeleteItem(null); }}>
           <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px]" />
           <div className="relative z-10 w-full max-w-[calc(100%-2rem)] sm:max-w-sm rounded-xl bg-popover p-5 text-sm text-popover-foreground ring-1 ring-foreground/10 shadow-xl animate-in fade-in-0 zoom-in-95">
             <div className="flex items-center justify-between mb-4">

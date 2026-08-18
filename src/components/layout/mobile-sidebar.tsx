@@ -62,8 +62,8 @@ function getPageKey(href: string): string {
 
 export function MobileSidebar() {
   const pathname = usePathname();
-  const { role } = useCurrentUser();
-  const allowedPages = ROLE_DASHBOARD_ACCESS[role || "super_admin"] || ["*"];
+  const { role, dashboardAccess } = useCurrentUser();
+  const allowedPages = dashboardAccess || ROLE_DASHBOARD_ACCESS[role || "super_admin"] || ["*"];
   const canAccess = (href: string) => allowedPages.includes("*") || allowedPages.includes(getPageKey(href));
 
   return (

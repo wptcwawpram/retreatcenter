@@ -189,6 +189,26 @@ export const ROLE_DASHBOARD_ACCESS: Record<string, string[]> = {
   maintenance: ["dashboard", "utilities", "inventory", "housekeeping"],
 };
 
+export const ALL_DASHBOARD_PAGES = [
+  { key: "dashboard", label: "Dashboard" },
+  { key: "rooms", label: "Rooms" },
+  { key: "bookings", label: "Bookings" },
+  { key: "checkin", label: "Check-in/out" },
+  { key: "calendar", label: "Calendar" },
+  { key: "guests", label: "Guests" },
+  { key: "housekeeping", label: "Housekeeping" },
+  { key: "events", label: "Events" },
+  { key: "finance", label: "Accounting" },
+  { key: "payments", label: "Payments" },
+  { key: "reports", label: "Reports" },
+  { key: "complaints", label: "Complaints" },
+  { key: "inventory", label: "Inventory" },
+  { key: "employees", label: "Employees" },
+  { key: "utilities", label: "Utilities" },
+  { key: "messaging", label: "Messaging" },
+  { key: "settings", label: "Settings" },
+];
+
 // ─── Currency ───────────────────────────────────────────────────────────────
 
 export const CURRENCY = {

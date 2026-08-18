@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     const admin = await getAuthUser();
     if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { full_name, phone, role } = await request.json();
+    const { full_name, phone, role, dashboard_access } = await request.json();
 
     if (!full_name || !phone) {
       return NextResponse.json({ error: "Name and phone number are required" }, { status: 400 });
@@ -96,6 +96,7 @@ export async function POST(request: NextRequest) {
         phone: phoneFormatted,
         role: role || "receptionist",
         is_active: true,
+        dashboard_access: Array.isArray(dashboard_access) && dashboard_access.length > 0 ? dashboard_access : null,
       });
 
     if (profileError) {

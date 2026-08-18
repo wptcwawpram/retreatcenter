@@ -46,6 +46,7 @@ export async function GET() {
         phone: profile?.phone || null,
         avatar_url: profile?.avatar_url || null,
         is_active: profile?.is_active ?? true,
+        dashboard_access: profile?.dashboard_access || null,
       },
     });
   } catch (error) {
