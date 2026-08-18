@@ -69,16 +69,18 @@ export async function POST(request: NextRequest) {
       }
 
       // Log each message
-      await supabase.from("messages").insert({
-        to_phone: phone,
-        recipient_name: name,
-        channel: "SMS",
-        subject: subject || "Bulk Message",
-        body: personalizedMsg,
-        status,
-        error: smsError,
-        sent_by: user.id,
-      }).select().single().catch(() => {});
+      try {
+        await supabase.from("messages").insert({
+          to_phone: phone,
+          recipient_name: name,
+          channel: "SMS",
+          subject: subject || "Bulk Message",
+          body: personalizedMsg,
+          status,
+          error: smsError,
+          sent_by: user.id,
+        });
+      } catch {}
 
       // Small delay between sends to avoid rate limiting
       if (recipients.indexOf(r) < recipients.length - 1) {
