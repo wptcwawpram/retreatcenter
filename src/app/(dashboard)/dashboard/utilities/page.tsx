@@ -2,7 +2,9 @@
 
 import { PageHeader } from "@/components/dashboard/page-header";
 import { Badge } from "@/components/ui/badge";
-import { Zap, Droplets, Fuel, Clock } from "lucide-react";
+import { Zap, Droplets, Fuel, Clock, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { downloadCSV } from "@/lib/export-csv";
 import { cn } from "@/lib/utils";
 
 const UTILITY_CARDS = [
@@ -56,7 +58,18 @@ const LOGS = [
 export default function UtilitiesPage() {
   return (
     <div className="space-y-5">
-      <PageHeader title="Utilities" description="Monitor power, water, and generator usage" />
+      <PageHeader title="Utilities" description="Monitor power, water, and generator usage">
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
+          downloadCSV("utilities", ["Name", "Type", "Status", "Reading"], UTILITY_CARDS.map((c) => [
+            c.title,
+            c.title,
+            c.status,
+            c.details.find((d) => d.bold)?.value ?? "",
+          ]));
+        }}>
+          <Download className="h-3.5 w-3.5" />Export CSV
+        </Button>
+      </PageHeader>
 
       {/* Status Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

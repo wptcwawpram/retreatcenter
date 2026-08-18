@@ -51,8 +51,8 @@ const navGroups = [
   {
     label: "Financial",
     items: [
+      { label: "Accounting", href: "/dashboard/finance", icon: TrendingUp },
       { label: "Payments", href: "/dashboard/payments", icon: CreditCard },
-      { label: "Finance", href: "/dashboard/finance", icon: TrendingUp },
       { label: "Reports", href: "/dashboard/reports", icon: BarChart3 },
     ],
   },

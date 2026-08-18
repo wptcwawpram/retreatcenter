@@ -10,7 +10,8 @@ import { USER_ROLE_LABELS } from "@/lib/constants";
 import { getProfiles } from "@/lib/supabase/queries";
 import { createClient } from "@/lib/supabase/client";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
-import { Loader2, Edit2, Shield, Phone, Trash2, AlertCircle, UserPlus } from "lucide-react";
+import { Loader2, Edit2, Shield, Phone, Trash2, AlertCircle, UserPlus, Download } from "lucide-react";
+import { downloadCSV } from "@/lib/export-csv";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -156,7 +157,19 @@ export default function EmployeesPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Employees" description="Manage staff members and roles" action={{ label: "Add Employee", onClick: () => setShowAdd(true) }} />
+      <PageHeader title="Employees" description="Manage staff members and roles" action={{ label: "Add Employee", onClick: () => setShowAdd(true) }}>
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
+          downloadCSV("employees", ["Name", "Role", "Email", "Phone", "Status"], allEmployees.map((e) => [
+            e.full_name,
+            USER_ROLE_LABELS[e.role] ?? e.role,
+            e.email,
+            e.phone ?? "",
+            e.is_active ? "Active" : "Inactive",
+          ]));
+        }}>
+          <Download className="h-3.5 w-3.5" />Export CSV
+        </Button>
+      </PageHeader>
 
       {/* Summary */}
       <div className="flex items-center gap-4 text-sm text-muted-foreground">

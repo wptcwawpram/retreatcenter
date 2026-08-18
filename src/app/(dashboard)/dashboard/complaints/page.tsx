@@ -11,7 +11,8 @@ import { COMPLAINT_CATEGORY_LABELS } from "@/lib/constants";
 import { getComplaints, createComplaint, updateComplaint, deleteComplaint, getGuests } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatDate } from "@/lib/format";
-import { Loader2, Edit2, Trash2, AlertCircle, MessageSquareWarning } from "lucide-react";
+import { Loader2, Edit2, Trash2, AlertCircle, MessageSquareWarning, Download } from "lucide-react";
+import { downloadCSV } from "@/lib/export-csv";
 import { cn } from "@/lib/utils";
 import type { Complaint } from "@/lib/supabase/types";
 
@@ -149,7 +150,19 @@ export default function ComplaintsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Complaints" description="Track and resolve guest complaints" action={{ label: "Log Complaint", onClick: () => setShowAdd(true) }} />
+      <PageHeader title="Complaints" description="Track and resolve guest complaints" action={{ label: "Log Complaint", onClick: () => setShowAdd(true) }}>
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
+          downloadCSV("complaints", ["Date", "Guest", "Subject", "Status", "Priority"], filtered.map((c) => [
+            formatDate(c.created_at),
+            c.guest?.full_name ?? "",
+            c.subject,
+            STATUS_CFG[c.status]?.label ?? c.status,
+            c.priority,
+          ]));
+        }}>
+          <Download className="h-3.5 w-3.5" />Export CSV
+        </Button>
+      </PageHeader>
 
       {/* Open count alert */}
       {openCount > 0 && (

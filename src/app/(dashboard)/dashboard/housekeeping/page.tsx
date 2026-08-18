@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { getHousekeepingTasks, createHousekeepingTask, updateHousekeepingStatus, deleteHousekeepingTask, getRooms, getProfiles } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
-import { BedDouble, Clock, User, CheckCircle, Loader2, Trash2, ArrowRight, AlertCircle, Sparkles } from "lucide-react";
+import { BedDouble, Clock, User, CheckCircle, Loader2, Trash2, ArrowRight, AlertCircle, Sparkles, Download } from "lucide-react";
+import { downloadCSV } from "@/lib/export-csv";
 import { cn } from "@/lib/utils";
 import { sortRooms } from "@/lib/format";
 
@@ -99,7 +100,19 @@ export default function HousekeepingPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Housekeeping" description="Manage room cleaning tasks and assignments" action={{ label: "New Task", onClick: () => setShowAdd(true) }} />
+      <PageHeader title="Housekeeping" description="Manage room cleaning tasks and assignments" action={{ label: "New Task", onClick: () => setShowAdd(true) }}>
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
+          downloadCSV("housekeeping", ["Room", "Task", "Status", "Assigned To", "Date"], allTasks.map((t) => [
+            t.room?.number ?? "",
+            TYPE_LABELS[t.type] ?? t.type,
+            STATUS_COLS.find((s) => s.key === t.status)?.label ?? t.status,
+            t.assignee?.full_name ?? "",
+            String(t.created_at ?? ""),
+          ]));
+        }}>
+          <Download className="h-3.5 w-3.5" />Export CSV
+        </Button>
+      </PageHeader>
 
       {/* Kanban columns */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

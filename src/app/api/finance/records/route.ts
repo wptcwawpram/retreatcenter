@@ -101,3 +101,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Failed to create record" }, { status: 500 });
   }
 }
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const user = await getAuthUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const body = await request.json();
+    const { id, ...updates } = body;
+    if (!id) return NextResponse.json({ error: "Record ID required" }, { status: 400 });
+
+    const supabase = serviceClient();
+    const { data, error } = await supabase
+      .from("finance_records")
+      .update(updates)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return NextResponse.json({ success: true, data });
+  } catch (error) {
+    console.error("Update finance record error:", error);
+    return NextResponse.json({ error: "Failed to update record" }, { status: 500 });
+  }
+}

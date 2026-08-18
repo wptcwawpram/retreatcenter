@@ -12,8 +12,9 @@ import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatCurrency } from "@/lib/format";
 import {
   Loader2, Edit2, Trash2, AlertCircle, Package, AlertTriangle,
-  Building2, ChefHat, Warehouse, Church, Home, ShowerHead, Users, Store, Car,
+  Building2, ChefHat, Warehouse, Church, Home, ShowerHead, Users, Store, Car, Download,
 } from "lucide-react";
+import { downloadCSV } from "@/lib/export-csv";
 import { cn } from "@/lib/utils";
 import type { InventoryItem } from "@/lib/supabase/types";
 
@@ -178,7 +179,18 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Inventory" description="Track supplies across all WPTC blocks and locations" action={{ label: "Add Item", onClick: () => setShowAdd(true) }} />
+      <PageHeader title="Inventory" description="Track supplies across all WPTC blocks and locations" action={{ label: "Add Item", onClick: () => setShowAdd(true) }}>
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
+          downloadCSV("inventory", ["Item", "Location", "Quantity", "Status"], filteredItems.map((i) => [
+            i.name,
+            i.location,
+            `${i.quantity} ${i.unit}`,
+            i.quantity <= i.min_quantity ? "Low Stock" : "In Stock",
+          ]));
+        }}>
+          <Download className="h-3.5 w-3.5" />Export CSV
+        </Button>
+      </PageHeader>
 
       {/* Low stock alert */}
       {totalLowStock > 0 && (

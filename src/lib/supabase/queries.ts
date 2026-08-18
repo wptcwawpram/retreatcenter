@@ -399,6 +399,19 @@ export async function createFinanceRecord(record: Omit<FinanceRecord, "id" | "cr
   return (await res.json()).data as FinanceRecord;
 }
 
+export async function updateFinanceRecord(id: string, updates: Partial<FinanceRecord>) {
+  const res = await fetch("/api/finance/records", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, ...updates }),
+  });
+  if (!res.ok) {
+    const d = await res.json();
+    throw new Error(d.error || "Failed to update record");
+  }
+  return (await res.json()).data as FinanceRecord;
+}
+
 export async function deleteFinanceRecord(id: string) {
   await adminDelete("finance_records", id);
 }
@@ -442,6 +455,16 @@ export async function updateFinanceAccount(id: string, updates: Partial<FinanceA
     const d = await res.json();
     throw new Error(d.error || "Failed to update account");
   }
+}
+
+export async function setDefaultFinanceAccount(id: string) {
+  // Clear all defaults first, then set the one
+  const res = await fetch("/api/finance/accounts/set-default", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id }),
+  });
+  if (!res.ok) throw new Error("Failed to set default");
 }
 
 export async function deleteFinanceAccount(id: string) {
