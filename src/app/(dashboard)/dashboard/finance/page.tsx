@@ -77,6 +77,12 @@ export default function FinancePage() {
   const { data: categories, loading: l3, refetch: refetchCats } = useSupabaseQuery(() => getFinanceCategories(), []);
   const { data: transfers, loading: l4, refetch: refetchTransfers } = useSupabaseQuery(() => getFinanceTransfers(), []);
 
+  useEffect(() => {
+    fetch("/api/finance/categories/dedupe", { method: "POST" })
+      .then(() => refetchCats())
+      .catch(() => {});
+  }, []);
+
   // All modals/dialogs gated behind state — NONE render on first paint
   const [modal, setModal] = useState<"none" | "addRecord" | "addAccount" | "editAccount" | "addCategory" | "transfer" | "delete">("none");
   const [editAccountData, setEditAccountData] = useState<FinanceAccount | null>(null);
@@ -125,7 +131,16 @@ export default function FinancePage() {
   // Cast all data to arrays — defensive
   const allRecords = Array.isArray(finance) ? finance as FinanceRecord[] : [];
   const allAccounts = Array.isArray(accounts) ? accounts as FinanceAccount[] : [];
-  const allCategories = Array.isArray(categories) ? categories as FinanceCategory[] : [];
+  const allCategories = (() => {
+    const raw = Array.isArray(categories) ? categories as FinanceCategory[] : [];
+    const seen = new Set<string>();
+    return raw.filter((c) => {
+      const key = `${c.name}::${c.type}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  })();
   const allTransfers = Array.isArray(transfers) ? transfers as FinanceTransfer[] : [];
 
   const incomeCategories = allCategories.filter((c) => ss(c.type) === "INCOME" && c.is_active);

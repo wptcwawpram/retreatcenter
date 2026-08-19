@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
@@ -21,42 +21,39 @@ function serviceClient() {
   );
 }
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     const user = await getAuthUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const body = await request.json();
     const supabase = serviceClient();
-
-    const { data: existing } = await supabase
+    const { data: all } = await supabase
       .from("finance_categories")
-      .select("id")
-      .eq("name", body.name)
-      .eq("type", body.type)
-      .maybeSingle();
+      .select("*")
+      .order("sort_order")
+      .order("created_at");
 
-    if (existing) {
-      return NextResponse.json({ error: "A category with this name already exists" }, { status: 400 });
+    if (!all) return NextResponse.json({ removed: 0 });
+
+    const seen = new Map<string, string>();
+    const toDelete: string[] = [];
+
+    for (const cat of all) {
+      const key = `${cat.name}::${cat.type}`;
+      if (seen.has(key)) {
+        toDelete.push(cat.id);
+      } else {
+        seen.set(key, cat.id);
+      }
     }
 
-    const { data, error } = await supabase
-      .from("finance_categories")
-      .insert({
-        name: body.name,
-        type: body.type,
-        icon: body.icon || null,
-        color: body.color || null,
-        is_active: true,
-        sort_order: body.sort_order || 0,
-      })
-      .select()
-      .single();
+    if (toDelete.length > 0) {
+      await supabase.from("finance_categories").delete().in("id", toDelete);
+    }
 
-    if (error) throw error;
-    return NextResponse.json({ success: true, data });
+    return NextResponse.json({ removed: toDelete.length });
   } catch (error) {
-    console.error("Create finance category error:", error);
-    return NextResponse.json({ error: "Failed to create category" }, { status: 500 });
+    console.error("Dedupe error:", error);
+    return NextResponse.json({ error: "Failed to deduplicate" }, { status: 500 });
   }
 }

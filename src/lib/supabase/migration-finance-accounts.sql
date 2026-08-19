@@ -114,6 +114,9 @@ create index if not exists idx_finance_records_account on finance_records(accoun
 create index if not exists idx_finance_transfers_from on finance_transfers(from_account_id);
 create index if not exists idx_finance_transfers_to on finance_transfers(to_account_id);
 
+-- ── Unique constraint to prevent duplicate categories ────
+CREATE UNIQUE INDEX IF NOT EXISTS idx_finance_categories_name_type ON finance_categories(name, type);
+
 -- ── Seed default categories ─────────────────────────────
 INSERT INTO finance_categories (name, type, sort_order) VALUES
   ('Room Booking', 'INCOME', 1),
