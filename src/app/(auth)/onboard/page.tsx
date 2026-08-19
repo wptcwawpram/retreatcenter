@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { IMAGES } from "@/lib/images";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Eye, EyeOff, Check, X, CheckCircle, Shield, Phone, KeyRound, UserCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSiteLogo } from "@/lib/use-site-logo";
 
 const PASSWORD_RULES = [
   { label: "8 or more characters", test: (p: string) => p.length >= 8 },
@@ -25,6 +26,62 @@ interface InviteInfo {
   full_name: string;
   role: string;
   phone: string | null;
+}
+
+function OtpInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const digits = value.padEnd(6, "").split("").slice(0, 6);
+
+  const handleChange = (index: number, char: string) => {
+    if (!/^\d?$/.test(char)) return;
+    const arr = digits.slice();
+    arr[index] = char;
+    const newVal = arr.join("").replace(/\s/g, "");
+    onChange(newVal);
+    if (char && index < 5) inputRefs.current[index + 1]?.focus();
+  };
+
+  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === "Backspace" && !digits[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    onChange(pasted);
+    const focusIdx = Math.min(pasted.length, 5);
+    inputRefs.current[focusIdx]?.focus();
+  };
+
+  return (
+    <div className="flex gap-2.5 justify-center">
+      {digits.map((d, i) => (
+        <input
+          key={i}
+          ref={(el) => { inputRefs.current[i] = el; }}
+          type="text"
+          inputMode="numeric"
+          maxLength={1}
+          value={d.trim()}
+          onChange={(e) => handleChange(i, e.target.value)}
+          onKeyDown={(e) => handleKeyDown(i, e)}
+          onPaste={i === 0 ? handlePaste : undefined}
+          className="w-11 h-14 text-center text-xl font-mono font-bold rounded-xl bg-white/[0.06] border border-white/[0.15] text-warm-white focus:border-gold focus:ring-2 focus:ring-gold/30 outline-none transition-all placeholder:text-warm-muted/20"
+          placeholder="·"
+        />
+      ))}
+    </div>
+  );
+}
+
+function SiteLogo() {
+  const siteLogo = useSiteLogo();
+  if (siteLogo) {
+    return <Image src={siteLogo} alt="WPTC" width={140} height={48} className="h-10 w-auto object-contain mx-auto mb-6" unoptimized />;
+  }
+  return null;
 }
 
 function OnboardForm() {
@@ -143,6 +200,7 @@ function OnboardForm() {
           {step === "error" && (
             <motion.div key="error" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
               className="border border-red-500/30 bg-white/[0.05] backdrop-blur-2xl rounded-2xl p-8 shadow-[0_8px_60px_rgba(0,0,0,0.4)] text-center">
+              <SiteLogo />
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-red-500/30 bg-red-500/10">
                 <X className="h-7 w-7 text-red-400" />
               </div>
@@ -158,6 +216,7 @@ function OnboardForm() {
           {step === "welcome" && invite && (
             <motion.div key="welcome" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
               className="border border-white/[0.12] bg-white/[0.05] backdrop-blur-2xl rounded-2xl p-8 shadow-[0_8px_60px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)]">
+              <SiteLogo />
               <div className="mb-6 text-center">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-gold/30 bg-gold/[0.08]">
                   <UserCheck className="h-7 w-7 text-gold" />
@@ -203,10 +262,11 @@ function OnboardForm() {
             </motion.div>
           )}
 
-          {/* Step 2: Verify Phone */}
+          {/* Step 2: Verify Phone — individual digit boxes */}
           {step === "verify" && (
             <motion.div key="verify" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
               className="border border-white/[0.12] bg-white/[0.05] backdrop-blur-2xl rounded-2xl p-8 shadow-[0_8px_60px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)]">
+              <SiteLogo />
               <div className="mb-6 text-center">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-gold/30 bg-gold/[0.08]">
                   <Phone className="h-7 w-7 text-gold" />
@@ -226,25 +286,15 @@ function OnboardForm() {
                   </div>
                 )}
 
-                <div className="space-y-2">
-                  <Label className="text-warm-muted text-xs tracking-wide">Verification Code</Label>
-                  <Input
-                    value={otpCode}
-                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    placeholder="000000"
-                    className="h-14 text-center text-2xl tracking-[0.5em] font-mono bg-white/[0.04] border-white/[0.12] text-warm-white rounded-xl placeholder:text-warm-muted/30 focus-visible:ring-gold/30"
-                    maxLength={6}
-                    inputMode="numeric"
-                  />
-                </div>
+                <OtpInput value={otpCode} onChange={setOtpCode} />
 
                 <Button onClick={handleVerifyOtp} disabled={verifying || otpCode.length !== 6}
                   className="h-11 w-full bg-gold text-luxury hover:bg-gold-bright font-semibold text-[11px] tracking-[0.1em] uppercase rounded-xl disabled:opacity-40">
                   {verifying ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Verifying...</> : "Verify Code"}
                 </Button>
 
-                <button onClick={handleSendOtp} disabled={otpSending} className="w-full text-center text-xs text-warm-muted hover:text-gold transition-colors disabled:opacity-40">
-                  {otpSending ? "Sending..." : "Didn’t receive it? Resend code"}
+                <button onClick={() => { setOtpCode(""); handleSendOtp(); }} disabled={otpSending} className="w-full text-center text-xs text-warm-muted hover:text-gold transition-colors disabled:opacity-40">
+                  {otpSending ? "Sending..." : "Didn't receive it? Resend code"}
                 </button>
               </div>
             </motion.div>
@@ -254,6 +304,7 @@ function OnboardForm() {
           {step === "password" && (
             <motion.div key="password" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
               className="border border-white/[0.12] bg-white/[0.05] backdrop-blur-2xl rounded-2xl p-8 shadow-[0_8px_60px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)]">
+              <SiteLogo />
               <div className="mb-6 text-center">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-gold/30 bg-gold/[0.08]">
                   <KeyRound className="h-7 w-7 text-gold" />
@@ -335,6 +386,7 @@ function OnboardForm() {
           {step === "done" && (
             <motion.div key="done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
               className="border border-white/[0.12] bg-white/[0.05] backdrop-blur-2xl rounded-2xl p-8 shadow-[0_8px_60px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] text-center">
+              <SiteLogo />
               <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
                 <CheckCircle className="h-8 w-8 text-emerald-400" />
               </div>

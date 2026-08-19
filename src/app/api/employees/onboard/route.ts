@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       if (!profile.phone) {
         return NextResponse.json({ error: "No phone number on file" }, { status: 400 });
       }
-      const otpCode = await storeOTP(profile.id, "employee_onboard");
+      const otpCode = await storeOTP(profile.id, "guest_login");
       await sendSms({
         to: profile.phone,
         message: `WPTC: Your verification code is ${otpCode}. Valid for 5 minutes.`,
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
 
     if (action === "verify_otp") {
       if (!code) return NextResponse.json({ error: "Code is required" }, { status: 400 });
-      const result = await verifyOTP(profile.id, code, "employee_onboard");
+      const result = await verifyOTP(profile.id, code, "guest_login");
       if (!result.valid) {
         return NextResponse.json({ error: result.error }, { status: 400 });
       }

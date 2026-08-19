@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Save, Loader2, CheckCircle, Building2, Tag, Bell } from "lucide-react";
+import { Save, Loader2, CheckCircle, Building2, Tag, Bell, User, Camera } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 type SettingsMap = Record<string, string>;
 
@@ -36,20 +37,76 @@ const DEFAULTS: SettingsMap = {
   admin_notif_email: "",
 };
 
+interface UserProfile {
+  id: string;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  avatar_url: string | null;
+  role: string;
+}
+
 export default function SettingsPage() {
   const [settings, setSettings] = useState<SettingsMap>({ ...DEFAULTS });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"general" | "pricing" | "notifications">("general");
+  const [activeTab, setActiveTab] = useState<"profile" | "general" | "pricing" | "notifications">("profile");
+
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [profileName, setProfileName] = useState("");
+  const [profilePhone, setProfilePhone] = useState("");
 
   useEffect(() => {
-    fetch("/api/settings")
-      .then((r) => r.json())
-      .then((data) => { if (data.settings) setSettings((prev) => ({ ...prev, ...data.settings })); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    Promise.all([
+      fetch("/api/settings").then((r) => r.json()),
+      fetch("/api/auth/me").then((r) => r.json()),
+    ]).then(([settingsData, meData]) => {
+      if (settingsData.settings) setSettings((prev) => ({ ...prev, ...settingsData.settings }));
+      if (meData.user) {
+        setProfile(meData.user);
+        setProfileName(meData.user.full_name || "");
+        setProfilePhone(meData.user.phone || "");
+        setAvatarPreview(meData.user.avatar_url || null);
+      }
+    }).catch(() => {}).finally(() => setLoading(false));
   }, []);
+
+  const handleAvatarUpload = async (file: File) => {
+    if (file.size > 2 * 1024 * 1024) { alert("Image must be under 2MB"); return; }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) { alert("Only JPEG, PNG, or WebP allowed"); return; }
+    setAvatarPreview(URL.createObjectURL(file));
+    setUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/employees/avatar", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setAvatarPreview(data.avatar_url);
+      setSaved("avatar");
+      setTimeout(() => setSaved(null), 3000);
+    } catch { alert("Failed to upload photo"); }
+    finally { setUploadingAvatar(false); }
+  };
+
+  const handleProfileSave = async () => {
+    if (!profile) return;
+    setSaving("profile");
+    try {
+      const res = await fetch("/api/employees/update-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ full_name: profileName, phone: profilePhone || null }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      setSaved("profile");
+      setTimeout(() => setSaved(null), 3000);
+    } catch { alert("Failed to save profile"); }
+    finally { setSaving(null); }
+  };
 
   const update = (key: string, value: string) => setSettings((prev) => ({ ...prev, [key]: value }));
   const toggleSwitch = (key: string) => setSettings((prev) => ({ ...prev, [key]: prev[key] === "true" ? "false" : "true" }));
@@ -82,6 +139,7 @@ export default function SettingsPage() {
   }
 
   const tabs = [
+    { key: "profile" as const, label: "My Profile", icon: User },
     { key: "general" as const, label: "General", icon: Building2 },
     { key: "pricing" as const, label: "Pricing", icon: Tag },
     { key: "notifications" as const, label: "Notifications", icon: Bell },
@@ -112,6 +170,64 @@ export default function SettingsPage() {
           );
         })}
       </div>
+
+      {/* Profile */}
+      {activeTab === "profile" && profile && (
+        <div className="space-y-5">
+          <div className="rounded-xl border border-border/60 bg-card p-5 space-y-5">
+            <h3 className="text-sm font-semibold">Profile Photo</h3>
+            <div className="flex items-center gap-5">
+              <label className="relative cursor-pointer group shrink-0">
+                <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAvatarUpload(f); }} />
+                {avatarPreview ? (
+                  <Image src={avatarPreview} alt="Avatar" width={80} height={80} className="h-20 w-20 rounded-xl object-cover ring-2 ring-primary/20" unoptimized />
+                ) : (
+                  <div className="h-20 w-20 rounded-xl bg-muted/60 border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 group-hover:border-primary/40 transition-colors">
+                    <User className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-primary flex items-center justify-center shadow-md">
+                  <Camera className="h-3.5 w-3.5 text-primary-foreground" />
+                </div>
+              </label>
+              <div className="space-y-1">
+                <p className="text-sm font-medium">{profile.full_name}</p>
+                <p className="text-xs text-muted-foreground">{profile.email}</p>
+                {uploadingAvatar && (
+                  <p className="text-xs text-primary flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />Uploading...</p>
+                )}
+                {saved === "avatar" && (
+                  <p className="text-xs text-teal-500 flex items-center gap-1"><CheckCircle className="h-3 w-3" />Photo updated</p>
+                )}
+                <p className="text-[10px] text-muted-foreground">JPEG, PNG, or WebP. Max 2MB.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border/60 bg-card p-5 space-y-5">
+            <h3 className="text-sm font-semibold">Personal Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Full Name</Label>
+                <Input value={profileName} onChange={(e) => setProfileName(e.target.value)} className="h-9" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Phone</Label>
+                <Input value={profilePhone} onChange={(e) => setProfilePhone(e.target.value)} className="h-9" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Email</Label>
+                <Input value={profile.email} disabled className="h-9 opacity-60" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Role</Label>
+                <Input value={profile.role} disabled className="h-9 opacity-60" />
+              </div>
+            </div>
+            <SaveButton section="profile" saving={saving} saved={saved} onClick={handleProfileSave} />
+          </div>
+        </div>
+      )}
 
       {/* General */}
       {activeTab === "general" && (

@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Menu, LogOut, ChevronDown, Settings } from "lucide-react";
+import { Menu, LogOut, ChevronDown, Settings, User as UserIcon } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MobileSidebar } from "./mobile-sidebar";
@@ -88,9 +89,13 @@ export function DashboardTopbar() {
             onClick={() => setShowDropdown(!showDropdown)}
             className="flex items-center gap-2.5 pl-2.5 pr-1.5 py-1 rounded-lg hover:bg-muted/60 transition-colors"
           >
-            <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center text-[11px] font-bold text-primary">
-              {initials}
-            </div>
+            {user?.avatar_url ? (
+              <Image src={user.avatar_url} alt={user.full_name} width={28} height={28} className="h-7 w-7 rounded-lg object-cover" unoptimized />
+            ) : (
+              <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                <UserIcon className="h-3.5 w-3.5 text-primary" />
+              </div>
+            )}
             <div className="hidden md:block text-left">
               <p className="text-xs font-semibold leading-tight">
                 {user?.full_name || "Loading..."}

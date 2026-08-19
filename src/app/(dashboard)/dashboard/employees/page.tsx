@@ -9,11 +9,12 @@ import { USER_ROLE_LABELS, ASSIGNABLE_ROLES, ROLE_DASHBOARD_ACCESS, ALL_DASHBOAR
 import { getProfiles } from "@/lib/supabase/queries";
 import { createClient } from "@/lib/supabase/client";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
-import { Loader2, Edit2, Shield, Phone, Trash2, AlertCircle, UserPlus, Download, X, ChevronDown, ChevronUp, Send, CheckCircle2 } from "lucide-react";
+import { Loader2, Edit2, Shield, Phone, Trash2, AlertCircle, UserPlus, Download, X, ChevronDown, ChevronUp, Send, CheckCircle2, Camera, User } from "lucide-react";
 import { downloadCSV } from "@/lib/export-csv";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 import type { Profile } from "@/lib/supabase/types";
 
 const ROLE_COLORS: Record<string, string> = {
@@ -113,6 +114,31 @@ export default function EmployeesPage() {
   const [resending, setResending] = useState(false);
   const [resendResult, setResendResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
+  // Avatar state
+  const [addAvatarPreview, setAddAvatarPreview] = useState<string | null>(null);
+  const [addAvatarFile, setAddAvatarFile] = useState<File | null>(null);
+  const [editAvatarPreview, setEditAvatarPreview] = useState<string | null>(null);
+  const [editAvatarFile, setEditAvatarFile] = useState<File | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const handleAvatarSelect = (file: File, target: "add" | "edit") => {
+    if (file.size > 2 * 1024 * 1024) { alert("Image must be under 2MB"); return; }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) { alert("Only JPEG, PNG, or WebP allowed"); return; }
+    const url = URL.createObjectURL(file);
+    if (target === "add") { setAddAvatarPreview(url); setAddAvatarFile(file); }
+    else { setEditAvatarPreview(url); setEditAvatarFile(file); }
+  };
+
+  const uploadAvatar = async (profileId: string, file: File): Promise<string | null> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("profileId", profileId);
+    const res = await fetch("/api/employees/avatar", { method: "POST", body: formData });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Avatar upload failed");
+    return data.avatar_url;
+  };
+
   const handleResendInvite = async (empId: string) => {
     setResending(true);
     setResendResult(null);
@@ -150,6 +176,8 @@ export default function EmployeesPage() {
     }
     setEditActive(emp.is_active);
     setEditAccess(emp.dashboard_access || getDefaultAccess(emp.role));
+    setEditAvatarPreview(emp.avatar_url || null);
+    setEditAvatarFile(null);
   };
 
   const handleAddEmployee = async () => {
@@ -167,11 +195,15 @@ export default function EmployeesPage() {
       });
       const data = await res.json();
       if (!res.ok) { alert(data.error || "Failed to add employee"); return; }
+      if (addAvatarFile && data.employee?.id) {
+        try { await uploadAvatar(data.employee.id, addAvatarFile); } catch { /* avatar upload failure is non-blocking */ }
+      }
       if (data.smsError) {
         alert(`Employee added, but SMS invite failed: ${data.smsError}\n\nYou can resend from the edit dialog.`);
       }
       setShowAdd(false);
       setAddName(""); setAddPhone(""); setAddRole("receptionist"); setCustomRole(""); setAddAccess(getDefaultAccess("receptionist"));
+      setAddAvatarPreview(null); setAddAvatarFile(null);
       refetch();
     } catch { alert("Failed to add employee"); }
     finally { setAdding(false); }
@@ -200,6 +232,9 @@ export default function EmployeesPage() {
         })
         .eq("id", editItem.id);
       if (error) { alert(error.message); return; }
+      if (editAvatarFile) {
+        try { await uploadAvatar(editItem.id, editAvatarFile); } catch { /* non-blocking */ }
+      }
       setEditItem(null);
       refetch();
     } catch { alert("Failed to update employee"); }
@@ -232,9 +267,13 @@ export default function EmployeesPage() {
   const columns: Column<Profile>[] = [
     { header: "Staff", accessor: (e) => (
       <div className="flex items-center gap-3">
-        <div className="h-9 w-9 rounded-lg bg-primary/8 flex items-center justify-center text-[11px] font-bold text-primary shrink-0">
-          {e.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
-        </div>
+        {e.avatar_url ? (
+          <Image src={e.avatar_url} alt={e.full_name} width={36} height={36} className="h-9 w-9 rounded-lg object-cover shrink-0" unoptimized />
+        ) : (
+          <div className="h-9 w-9 rounded-lg bg-primary/8 flex items-center justify-center shrink-0">
+            <User className="h-4 w-4 text-muted-foreground" />
+          </div>
+        )}
         <div>
           <p className="font-medium text-sm">{e.full_name}</p>
           <p className="text-[11px] text-muted-foreground">{e.email}</p>
@@ -319,6 +358,24 @@ export default function EmployeesPage() {
               <button onClick={() => setShowAdd(false)} className="rounded-md p-1 hover:bg-muted transition-colors"><X className="h-4 w-4" /></button>
             </div>
             <div className="space-y-4">
+              {/* Avatar picker */}
+              <div className="flex justify-center">
+                <label className="relative cursor-pointer group">
+                  <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAvatarSelect(f, "add"); }} />
+                  {addAvatarPreview ? (
+                    <Image src={addAvatarPreview} alt="Avatar" width={72} height={72} className="h-[72px] w-[72px] rounded-xl object-cover ring-2 ring-primary/20" unoptimized />
+                  ) : (
+                    <div className="h-[72px] w-[72px] rounded-xl bg-muted/60 border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 group-hover:border-primary/40 transition-colors">
+                      <User className="h-6 w-6 text-muted-foreground" />
+                      <span className="text-[9px] text-muted-foreground">Add photo</span>
+                    </div>
+                  )}
+                  <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-primary flex items-center justify-center shadow-md">
+                    <Camera className="h-3 w-3 text-primary-foreground" />
+                  </div>
+                </label>
+              </div>
+
               <div className="space-y-1.5">
                 <Label className="text-xs">Full Name</Label>
                 <Input value={addName} onChange={(e) => setAddName(e.target.value)} placeholder="e.g. Kwame Asante" className="h-9" />
@@ -370,6 +427,24 @@ export default function EmployeesPage() {
               <button onClick={() => setEditItem(null)} className="rounded-md p-1 hover:bg-muted transition-colors"><X className="h-4 w-4" /></button>
             </div>
             <div className="space-y-4">
+              {/* Avatar picker */}
+              <div className="flex justify-center">
+                <label className="relative cursor-pointer group">
+                  <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAvatarSelect(f, "edit"); }} />
+                  {editAvatarPreview ? (
+                    <Image src={editAvatarPreview} alt="Avatar" width={72} height={72} className="h-[72px] w-[72px] rounded-xl object-cover ring-2 ring-primary/20" unoptimized />
+                  ) : (
+                    <div className="h-[72px] w-[72px] rounded-xl bg-muted/60 border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 group-hover:border-primary/40 transition-colors">
+                      <User className="h-6 w-6 text-muted-foreground" />
+                      <span className="text-[9px] text-muted-foreground">Add photo</span>
+                    </div>
+                  )}
+                  <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-primary flex items-center justify-center shadow-md">
+                    <Camera className="h-3 w-3 text-primary-foreground" />
+                  </div>
+                </label>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Full Name <span className="text-red-500">*</span></Label>
