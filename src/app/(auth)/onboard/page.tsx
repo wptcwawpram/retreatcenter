@@ -26,6 +26,7 @@ interface InviteInfo {
   full_name: string;
   role: string;
   phone: string | null;
+  avatar_url: string | null;
 }
 
 function OtpInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -68,7 +69,7 @@ function OtpInput({ value, onChange }: { value: string; onChange: (v: string) =>
           onChange={(e) => handleChange(i, e.target.value)}
           onKeyDown={(e) => handleKeyDown(i, e)}
           onPaste={i === 0 ? handlePaste : undefined}
-          className="w-11 h-14 text-center text-xl font-mono font-bold rounded-xl bg-white/[0.06] border border-white/[0.15] text-warm-white focus:border-gold focus:ring-2 focus:ring-gold/30 outline-none transition-all placeholder:text-warm-muted/20"
+          className="w-12 h-14 text-center text-xl font-mono font-bold rounded-xl bg-white/15 border-2 border-white/30 text-white focus:border-gold focus:ring-2 focus:ring-gold/30 outline-none transition-all placeholder:text-white/20"
           placeholder="·"
         />
       ))}
@@ -231,9 +232,13 @@ function OnboardForm() {
 
               <div className="space-y-3 mb-6">
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.04] border border-white/[0.08]">
-                  <div className="h-10 w-10 rounded-lg bg-gold/10 flex items-center justify-center text-sm font-bold text-gold shrink-0">
-                    {invite.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
-                  </div>
+                  {invite.avatar_url ? (
+                    <Image src={invite.avatar_url} alt={invite.full_name} width={40} height={40} className="h-10 w-10 rounded-lg object-cover shrink-0" unoptimized />
+                  ) : (
+                    <div className="h-10 w-10 rounded-lg bg-gold/10 flex items-center justify-center text-sm font-bold text-gold shrink-0">
+                      {invite.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
                   <div>
                     <p className="text-warm-white font-medium">{invite.full_name}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">

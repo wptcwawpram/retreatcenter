@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   const supabase = serviceClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, full_name, role, phone, invite_token")
+    .select("id, full_name, role, phone, avatar_url, invite_token")
     .eq("invite_token", token)
     .maybeSingle();
 
@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
     full_name: profile.full_name,
     role: profile.role,
     phone: profile.phone ? profile.phone.replace(/(\+233)(\d{2})\d{4}(\d{3})/, "$1$2****$3") : null,
+    avatar_url: profile.avatar_url || null,
   });
 }
 
