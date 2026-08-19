@@ -9,7 +9,7 @@ import { USER_ROLE_LABELS, ASSIGNABLE_ROLES, ROLE_DASHBOARD_ACCESS, ALL_DASHBOAR
 import { getProfiles } from "@/lib/supabase/queries";
 import { createClient } from "@/lib/supabase/client";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
-import { Loader2, Edit2, Shield, Phone, Trash2, AlertCircle, UserPlus, Download, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, Edit2, Shield, Phone, Trash2, AlertCircle, UserPlus, Download, X, ChevronDown, ChevronUp, Send, CheckCircle2 } from "lucide-react";
 import { downloadCSV } from "@/lib/export-csv";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -109,8 +109,35 @@ export default function EmployeesPage() {
   const [deleteItem, setDeleteItem] = useState<Profile | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  // Resend invite state
+  const [resending, setResending] = useState(false);
+  const [resendResult, setResendResult] = useState<{ ok: boolean; msg: string } | null>(null);
+
+  const handleResendInvite = async (empId: string) => {
+    setResending(true);
+    setResendResult(null);
+    try {
+      const res = await fetch("/api/employees/resend-invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ employeeId: empId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setResendResult({ ok: false, msg: data.error || "Failed to send" });
+      } else {
+        setResendResult({ ok: true, msg: "Invitation SMS sent" });
+      }
+    } catch {
+      setResendResult({ ok: false, msg: "Network error" });
+    } finally {
+      setResending(false);
+    }
+  };
+
   const openEdit = (emp: Profile) => {
     setEditItem(emp);
+    setResendResult(null);
     setEditName(emp.full_name);
     setEditPhone(emp.phone || "");
     const knownRole = ASSIGNABLE_ROLES.find((r) => r.value === emp.role);
@@ -140,6 +167,9 @@ export default function EmployeesPage() {
       });
       const data = await res.json();
       if (!res.ok) { alert(data.error || "Failed to add employee"); return; }
+      if (data.smsError) {
+        alert(`Employee added, but SMS invite failed: ${data.smsError}\n\nYou can resend from the edit dialog.`);
+      }
       setShowAdd(false);
       setAddName(""); setAddPhone(""); setAddRole("receptionist"); setCustomRole(""); setAddAccess(getDefaultAccess("receptionist"));
       refetch();
@@ -377,6 +407,19 @@ export default function EmployeesPage() {
                 </div>
               )}
               <PageAccessSelector selectedPages={editAccess} onChange={setEditAccess} role={effectiveEditRole} />
+
+              {/* Resend Invite */}
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => handleResendInvite(editItem.id)} disabled={resending}>
+                  {resending ? <><Loader2 className="h-3 w-3 animate-spin" />Sending...</> : <><Send className="h-3 w-3" />Resend Invite SMS</>}
+                </Button>
+                {resendResult && (
+                  <span className={cn("text-[11px] flex items-center gap-1", resendResult.ok ? "text-teal-500" : "text-red-400")}>
+                    {resendResult.ok ? <CheckCircle2 className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
+                    {resendResult.msg}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="-mx-5 -mb-5 mt-4 flex items-center rounded-b-xl border-t bg-muted/50 p-4">
               {editItem.role !== "super_admin" && (

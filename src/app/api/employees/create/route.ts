@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { sendSms } from "@/lib/hubtel-sms";
 
 async function getAuthUser() {
   const cookieStore = await cookies();
@@ -60,8 +61,6 @@ export async function POST(request: NextRequest) {
     const tempPassword = `WPTC_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const phoneFormatted = normalized.startsWith("233") ? `+${normalized}` : `+233${last9}`;
 
-    // Check if auth user already exists (from a previous failed attempt)
-    const { data: existingUsers } = await supabase.auth.admin.listUsers({ perPage: 1, page: 1 });
     let authUserId: string;
 
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -104,21 +103,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Send SMS invite via Hubtel (non-fatal)
+    let smsSent = false;
+    let smsError: string | null = null;
     try {
-      const smsUrl = new URL("https://smsc.hubtel.com/v1/messages/send");
-      smsUrl.searchParams.set("From", "WPTC");
-      smsUrl.searchParams.set("To", phoneFormatted);
-      smsUrl.searchParams.set("Content", `Hi ${full_name.split(" ")[0]}, you've been added as staff at Warriors Prayer Tower Complex. Open the app and log in with your phone number to set up your account.`);
-
-      await fetch(smsUrl.toString(), {
-        headers: { Authorization: `Basic ${Buffer.from(`${process.env.HUBTEL_CLIENT_ID}:${process.env.HUBTEL_CLIENT_SECRET}`).toString("base64")}` },
+      await sendSms({
+        to: phoneFormatted,
+        message: `Hi ${full_name.split(" ")[0]}, you've been added as staff at Warriors Prayer Tower Complex. Open the app and log in with your phone number to set up your account.`,
       });
-    } catch {
-      // SMS failure is non-fatal
+      smsSent = true;
+    } catch (err) {
+      smsError = err instanceof Error ? err.message : "SMS send failed";
+      console.error("SMS invite error:", smsError);
     }
 
     return NextResponse.json({
       success: true,
+      smsSent,
+      smsError,
       employee: { id: authUserId, full_name, phone: phoneFormatted, role: role || "receptionist" },
     });
   } catch (error) {
