@@ -31,7 +31,7 @@ interface InviteInfo {
 
 function OtpInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const digits = value.padEnd(6, "").split("").slice(0, 6);
+  const digits = Array.from({ length: 6 }, (_, i) => value[i] || "");
 
   const handleChange = (index: number, char: string) => {
     if (!/^\d?$/.test(char)) return;
