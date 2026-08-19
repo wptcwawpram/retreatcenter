@@ -4,7 +4,12 @@ import { cookies } from "next/headers";
 import { sendSms } from "@/lib/hubtel-sms";
 import crypto from "crypto";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+function getAppUrl() {
+  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
+}
 
 async function getAuthUser() {
   const cookieStore = await cookies();
@@ -59,7 +64,7 @@ export async function POST(request: NextRequest) {
       .update({ invite_token: inviteToken })
       .eq("id", employeeId);
 
-    const inviteLink = `${APP_URL}/onboard?token=${inviteToken}`;
+    const inviteLink = `${getAppUrl()}/onboard?token=${inviteToken}`;
 
     await sendSms({
       to: profile.phone,
