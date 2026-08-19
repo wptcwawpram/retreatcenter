@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { sendSms } from "@/lib/hubtel-sms";
+import crypto from "crypto";
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
 async function getAuthUser() {
   const cookieStore = await cookies();
@@ -49,9 +52,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Employee has no phone number" }, { status: 400 });
     }
 
+    const inviteToken = crypto.randomBytes(32).toString("hex");
+
+    await supabase
+      .from("profiles")
+      .update({ invite_token: inviteToken })
+      .eq("id", employeeId);
+
+    const inviteLink = `${APP_URL}/onboard?token=${inviteToken}`;
+
     await sendSms({
       to: profile.phone,
-      message: `Hi ${profile.full_name.split(" ")[0]}, you've been added as staff at Warriors Prayer Tower Complex. Open the app and log in with your phone number to set up your account.`,
+      message: `Hi ${profile.full_name.split(" ")[0]}, you've been invited to join WPTC as staff. Click the link to set up your account: ${inviteLink}`,
     });
 
     return NextResponse.json({ success: true });

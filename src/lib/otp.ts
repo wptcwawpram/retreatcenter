@@ -17,7 +17,7 @@ export function generateOTP(): string {
   return otp;
 }
 
-export async function storeOTP(identifier: string, purpose: "admin_2fa" | "guest_login"): Promise<string> {
+export async function storeOTP(identifier: string, purpose: "admin_2fa" | "guest_login" | "employee_onboard"): Promise<string> {
   const supabase = createServiceClient();
   const code = generateOTP();
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
@@ -38,7 +38,7 @@ export async function storeOTP(identifier: string, purpose: "admin_2fa" | "guest
 export async function verifyOTP(
   identifier: string,
   code: string,
-  purpose: "admin_2fa" | "guest_login",
+  purpose: "admin_2fa" | "guest_login" | "employee_onboard",
 ): Promise<{ valid: boolean; error?: string }> {
   const supabase = createServiceClient();
 

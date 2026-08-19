@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { sendSms } from "@/lib/hubtel-sms";
+import crypto from "crypto";
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
 async function getAuthUser() {
   const cookieStore = await cookies();
@@ -45,7 +48,6 @@ export async function POST(request: NextRequest) {
 
     const supabase = serviceClient();
 
-    // Check if phone already exists
     const { data: existing } = await supabase
       .from("profiles")
       .select("id")
@@ -72,7 +74,6 @@ export async function POST(request: NextRequest) {
 
     if (authError) {
       if (authError.message?.includes("already") || authError.message?.includes("exists") || authError.message?.includes("registered")) {
-        // Auth user exists from a previous attempt — look them up by email
         const { data: listData } = await supabase.auth.admin.listUsers({ perPage: 50, page: 1 });
         const found = listData?.users?.find((u) => u.email === tempEmail);
         if (!found) {
@@ -86,6 +87,8 @@ export async function POST(request: NextRequest) {
       authUserId = authData.user.id;
     }
 
+    const inviteToken = crypto.randomBytes(32).toString("hex");
+
     const { error: profileError } = await supabase
       .from("profiles")
       .upsert({
@@ -96,19 +99,21 @@ export async function POST(request: NextRequest) {
         role: role || "receptionist",
         is_active: true,
         dashboard_access: Array.isArray(dashboard_access) && dashboard_access.length > 0 ? dashboard_access : null,
+        invite_token: inviteToken,
       });
 
     if (profileError) {
       return NextResponse.json({ error: `Profile creation failed: ${profileError.message}` }, { status: 500 });
     }
 
-    // Send SMS invite via Hubtel (non-fatal)
+    const inviteLink = `${APP_URL}/onboard?token=${inviteToken}`;
+
     let smsSent = false;
     let smsError: string | null = null;
     try {
       await sendSms({
         to: phoneFormatted,
-        message: `Hi ${full_name.split(" ")[0]}, you've been added as staff at Warriors Prayer Tower Complex. Open the app and log in with your phone number to set up your account.`,
+        message: `Hi ${full_name.split(" ")[0]}, you've been invited to join WPTC as staff. Click the link to set up your account: ${inviteLink}`,
       });
       smsSent = true;
     } catch (err) {
