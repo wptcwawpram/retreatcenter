@@ -43,6 +43,23 @@ export async function POST(request: NextRequest) {
         .eq("id", booking_id);
 
       if (room_ids && room_ids.length > 0) {
+        // Validate room types match the booking's expected room type
+        const { data: existingAssigned } = await supabase
+          .from("booking_rooms")
+          .select("room:rooms(type)")
+          .eq("booking_id", booking_id);
+        const expectedType = (existingAssigned?.[0]?.room as { type?: string } | null)?.type;
+        if (expectedType) {
+          const { data: selectedRoomData } = await supabase
+            .from("rooms")
+            .select("id, type")
+            .in("id", room_ids);
+          const wrongType = (selectedRoomData || []).find((r) => r.type !== expectedType);
+          if (wrongType) {
+            return NextResponse.json({ error: `Room type mismatch: this booking requires ${expectedType.replace(/_/g, " ")} rooms. Please select the correct room type.` }, { status: 400 });
+          }
+        }
+
         await supabase
           .from("rooms")
           .update({ status: "OCCUPIED" })

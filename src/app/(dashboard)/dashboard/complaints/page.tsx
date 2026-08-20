@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { DataTable, type Column } from "@/components/dashboard/data-table";
-import { FormDialog, type FormField } from "@/components/dashboard/form-dialog";
+import { FormDialog, type FormField } from "@/components/dashboard/form-dialog"; // used for add dialog only
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -14,6 +14,7 @@ import { COMPLAINT_CATEGORY_LABELS } from "@/lib/constants";
 import { getComplaints, createComplaint, updateComplaint, deleteComplaint, getGuests } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatDate } from "@/lib/format";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Edit2, Trash2, AlertCircle, MessageSquareWarning, Download, Send, CheckCircle } from "lucide-react";
 import { downloadCSV } from "@/lib/export-csv";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,11 @@ export default function ComplaintsPage() {
   const [guestMessage, setGuestMessage] = useState("");
   const [sendingUpdate, setSendingUpdate] = useState(false);
   const [updateSent, setUpdateSent] = useState(false);
+  const [editNotify, setEditNotify] = useState(false);
+  const [editMessage, setEditMessage] = useState("");
+  const [editStatus, setEditStatus] = useState("");
+  const [editPriority, setEditPriority] = useState("");
+  const [editResolution, setEditResolution] = useState("");
 
   const allComplaints = (complaints || []) as ComplaintRow[];
   const allGuests = guests || [];
@@ -75,14 +81,9 @@ export default function ComplaintsPage() {
     { name: "description", label: "Description", type: "textarea", required: true, colSpan: 2, placeholder: "Describe the complaint" },
   ];
 
-  const editFields: FormField[] = [
-    { name: "status", label: "Status", type: "select", required: true, options: Object.entries(STATUS_CFG).map(([k, v]) => ({ label: v.label, value: k })) },
-    { name: "priority", label: "Priority", type: "select", options: [{ label: "Low", value: "LOW" }, { label: "Normal", value: "NORMAL" }, { label: "High", value: "HIGH" }] },
-    { name: "resolution", label: "Resolution Notes", type: "textarea", colSpan: 2, placeholder: "How was this resolved?" },
-  ];
 
   const handleAdd = async (values: Record<string, unknown>) => {
-    await createComplaint({
+    const newComplaint = await createComplaint({
       guest_id: (values.guest_id as string) || null,
       booking_id: null,
       room_id: null,
@@ -94,6 +95,14 @@ export default function ComplaintsPage() {
       resolved_by: null,
       resolution: null,
     });
+    // Notify guest via SMS that their complaint was received
+    if (newComplaint?.id && values.guest_id) {
+      fetch("/api/complaints/notify-guest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ complaint_id: newComplaint.id, type: "received" }),
+      }).catch(() => {});
+    }
     refetch();
   };
 
@@ -108,7 +117,17 @@ export default function ComplaintsPage() {
       updates.resolved_at = new Date().toISOString();
     }
     await updateComplaint(editItem.id, updates);
+    // Optionally notify guest via SMS
+    if (editNotify && editMessage.trim() && editItem.guest_id) {
+      fetch("/api/complaints/notify-guest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ complaint_id: editItem.id, message: editMessage.trim() }),
+      }).catch(() => {});
+    }
     setEditItem(null);
+    setEditNotify(false);
+    setEditMessage("");
     refetch();
   };
 
@@ -153,7 +172,12 @@ export default function ComplaintsPage() {
       </div>
     )},
     { header: "Category", accessor: (c) => <Badge variant="outline" className="text-[10px]">{COMPLAINT_CATEGORY_LABELS[c.category] ?? c.category}</Badge> },
-    { header: "Subject", accessor: (c) => <span className="text-sm font-medium">{c.subject}</span> },
+    { header: "Subject / Description", accessor: (c) => (
+      <div className="max-w-xs">
+        <p className="text-sm font-medium truncate">{c.subject}</p>
+        {c.description && <p className="text-[11px] text-muted-foreground truncate mt-0.5" title={c.description}>{c.description}</p>}
+      </div>
+    )},
     { header: "Priority", accessor: (c) => (
       <Badge className={cn("text-[10px] border", PRIORITY_COLOR[c.priority] ?? "")}>{c.priority}</Badge>
     )},
@@ -173,7 +197,7 @@ export default function ComplaintsPage() {
             <Send className="h-3.5 w-3.5" />
           </Button>
         )}
-        <Button variant="ghost" size="icon-xs" onClick={(e) => { e.stopPropagation(); setEditItem(c); }}><Edit2 className="h-3.5 w-3.5" /></Button>
+        <Button variant="ghost" size="icon-xs" onClick={(e) => { e.stopPropagation(); setEditItem(c); setEditStatus(c.status); setEditPriority(c.priority); setEditResolution(c.resolution || ""); setEditNotify(false); setEditMessage(""); }}><Edit2 className="h-3.5 w-3.5" /></Button>
         <Button variant="ghost" size="icon-xs" className="text-red-600" onClick={(e) => { e.stopPropagation(); setDeleteItem(c); }}>
           <Trash2 className="h-3.5 w-3.5" />
         </Button>
@@ -242,8 +266,59 @@ export default function ComplaintsPage() {
 
       <FormDialog open={showAdd} onOpenChange={setShowAdd} title="Log Complaint" fields={addFields} onSubmit={handleAdd} submitLabel="Log Complaint" />
 
+      {/* Edit complaint dialog */}
       {editItem && (
-        <FormDialog open={!!editItem} onOpenChange={(o) => !o && setEditItem(null)} title={`Update: ${editItem.subject}`} fields={editFields} initialValues={editItem} onSubmit={handleEdit} isEdit />
+        <Dialog open={!!editItem} onOpenChange={(o) => { if (!o) { setEditItem(null); setEditNotify(false); setEditMessage(""); } }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader><DialogTitle>Update: {editItem.subject}</DialogTitle></DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Status *</Label>
+                  <Select value={editStatus} onValueChange={setEditStatus}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{Object.entries(STATUS_CFG).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Priority</Label>
+                  <Select value={editPriority} onValueChange={setEditPriority}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="LOW">Low</SelectItem>
+                      <SelectItem value="NORMAL">Normal</SelectItem>
+                      <SelectItem value="HIGH">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Resolution Notes</Label>
+                <Textarea value={editResolution} onChange={(e) => setEditResolution(e.target.value)} placeholder="How was this resolved?" rows={3} className="resize-none" />
+              </div>
+              {/* Optional SMS notify */}
+              {editItem.guest_id && (
+                <div className="rounded-lg border border-border/60 bg-muted/20 p-3 space-y-2.5">
+                  <label className="flex items-center gap-2.5 cursor-pointer">
+                    <input type="checkbox" className="accent-primary h-4 w-4 rounded" checked={editNotify} onChange={(e) => setEditNotify(e.target.checked)} />
+                    <span className="text-sm font-medium">Notify guest via SMS</span>
+                  </label>
+                  {editNotify && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Message to send</Label>
+                      <Textarea value={editMessage} onChange={(e) => setEditMessage(e.target.value)} placeholder="e.g. We have reviewed your complaint and resolved it. Thank you for your patience." rows={2} className="resize-none text-sm" />
+                      <p className="text-[10px] text-muted-foreground">Sent as SMS to guest&apos;s phone number.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+              <DialogFooter>
+                <Button variant="outline" onClick={() => { setEditItem(null); setEditNotify(false); setEditMessage(""); }}>Cancel</Button>
+                <Button onClick={() => handleEdit({ status: editStatus, priority: editPriority, resolution: editResolution })}>Save Changes</Button>
+              </DialogFooter>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       <Dialog open={!!deleteItem} onOpenChange={(o) => !o && setDeleteItem(null)}>

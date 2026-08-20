@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { PAYMENT_STATUS_CONFIG, PAYMENT_METHOD_LABELS } from "@/lib/constants";
-import { getPayments, getBookings, createPayment, deletePayment, createFinanceRecord, getFinanceAccounts } from "@/lib/supabase/queries";
+import { getPayments, getBookings, createPayment, deletePayment, createFinanceRecord, getFinanceAccounts, updateBookingPayment } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { Search, Wallet, Clock, CreditCard, TrendingUp, Loader2, Trash2, AlertCircle, Download } from "lucide-react";
@@ -110,6 +110,14 @@ export default function PaymentsPage() {
         payment_method: method,
       });
     } catch {}
+
+    // Update booking paid_amount + balance when a COMPLETED payment is recorded
+    if ((values.status as string) === "COMPLETED" && booking) {
+      const newPaid = Number(booking.paid_amount || 0) + amount;
+      const total = Number(booking.total_amount || 0);
+      const payStatus = newPaid >= total && total > 0 ? "PAID" : newPaid > 0 ? "PARTIAL" : "UNPAID";
+      try { await updateBookingPayment(bookingId, newPaid, total, payStatus); } catch {}
+    }
 
     refetch();
   };

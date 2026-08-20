@@ -185,10 +185,11 @@ export async function updateBooking(id: string, updates: Partial<Omit<Booking, "
   if (error) throw error;
 }
 
-export async function updateBookingPayment(id: string, paidAmount: number, paymentStatus: Booking["payment_status"]) {
+export async function updateBookingPayment(id: string, paidAmount: number, totalAmount: number, paymentStatus: Booking["payment_status"]) {
+  const balance = Math.max(0, totalAmount - paidAmount);
   const { error } = await supabase()
     .from("bookings")
-    .update({ paid_amount: paidAmount, balance: 0, payment_status: paymentStatus })
+    .update({ paid_amount: paidAmount, balance, payment_status: paymentStatus })
     .eq("id", id);
   if (error) throw error;
 }

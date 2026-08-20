@@ -32,9 +32,12 @@ export async function POST(request: NextRequest) {
     const user = await getAuthUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { complaint_id, message } = await request.json();
-    if (!complaint_id || !message) {
-      return NextResponse.json({ error: "complaint_id and message are required" }, { status: 400 });
+    const { complaint_id, message, type } = await request.json();
+    if (!complaint_id) {
+      return NextResponse.json({ error: "complaint_id is required" }, { status: 400 });
+    }
+    if (type !== "received" && !message) {
+      return NextResponse.json({ error: "message is required" }, { status: 400 });
     }
 
     const supabase = serviceClient();
@@ -56,7 +59,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No phone number on file for this guest" }, { status: 400 });
     }
 
-    const smsText = await renderMessage("msg_complaint_update", { subject: complaint.subject, message });
+    const smsText = type === "received"
+      ? await renderMessage("msg_complaint_received", { subject: complaint.subject })
+      : await renderMessage("msg_complaint_update", { subject: complaint.subject, message });
     await sendSms({ to: guest.phone, message: smsText });
 
     return NextResponse.json({ success: true, sent_to: guest.full_name });

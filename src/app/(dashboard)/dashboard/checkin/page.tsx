@@ -88,7 +88,7 @@ export default function CheckInPage() {
   useEffect(() => { loadData(); }, [loadData]);
 
   const arrivals = bookings.filter((b) =>
-    b.check_in === today && ["PENDING", "CONFIRMED"].includes(b.status),
+    b.check_in >= today && ["PENDING", "CONFIRMED"].includes(b.status),
   );
   const departures = bookings.filter((b) =>
     b.check_out === today && b.status === "CHECKED_IN",
@@ -195,7 +195,7 @@ export default function CheckInPage() {
         <div className="rounded-xl border border-border/60 bg-card p-4 text-center">
           <LogIn className="h-5 w-5 text-blue-500 mx-auto mb-1" />
           <p className="text-2xl font-bold">{arrivals.length}</p>
-          <p className="text-xs text-muted-foreground">Expected Arrivals</p>
+          <p className="text-xs text-muted-foreground">Upcoming Arrivals</p>
         </div>
         <div className="rounded-xl border border-border/60 bg-card p-4 text-center">
           <LogOut className="h-5 w-5 text-amber-500 mx-auto mb-1" />
@@ -272,6 +272,14 @@ export default function CheckInPage() {
                   <div className="flex items-center gap-2 mb-1">
                     <p className="font-semibold text-sm truncate">{booking.guest?.full_name || "Unknown Guest"}</p>
                     <Badge variant="outline" className="text-[10px] shrink-0">{booking.reference}</Badge>
+                    {tab === "arrivals" && booking.check_in !== today && (
+                      <Badge className="text-[10px] shrink-0 bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                        Arriving {formatDate(booking.check_in)}
+                      </Badge>
+                    )}
+                    {tab === "arrivals" && booking.check_in === today && (
+                      <Badge className="text-[10px] shrink-0 bg-teal-500/10 text-teal-600 border border-teal-500/20">Today</Badge>
+                    )}
                   </div>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
@@ -377,29 +385,46 @@ export default function CheckInPage() {
                 </div>
               )}
 
-              <div>
-                <p className="text-sm font-medium mb-2">Assign Rooms</p>
-                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
-                  {availableRooms.map((room) => (
-                    <button
-                      key={room.id}
-                      onClick={() => toggleRoom(room.id)}
-                      className={cn(
-                        "p-2.5 rounded-lg border text-left text-sm transition-all",
-                        selectedRooms.includes(room.id)
-                          ? "border-primary bg-primary/10"
-                          : "border-border hover:border-primary/50",
+              {(() => {
+                const expectedType = selectedBooking.booking_rooms?.[0]?.room?.type;
+                const eligibleRooms = expectedType
+                  ? availableRooms.filter((r) => r.type === expectedType)
+                  : availableRooms;
+                return (
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-medium">Assign Rooms</p>
+                      {expectedType && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                          {expectedType.replace(/_/g, " ")} only
+                        </span>
                       )}
-                    >
-                      <p className="font-semibold">Room {room.number}</p>
-                      <p className="text-xs text-muted-foreground">{room.type.replace("_", " ")} · {room.building}</p>
-                    </button>
-                  ))}
-                </div>
-                {availableRooms.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-4">No available rooms. Check room management.</p>
-                )}
-              </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                      {eligibleRooms.map((room) => (
+                        <button
+                          key={room.id}
+                          onClick={() => toggleRoom(room.id)}
+                          className={cn(
+                            "p-2.5 rounded-lg border text-left text-sm transition-all",
+                            selectedRooms.includes(room.id)
+                              ? "border-primary bg-primary/10"
+                              : "border-border hover:border-primary/50",
+                          )}
+                        >
+                          <p className="font-semibold">Room {room.number}</p>
+                          <p className="text-xs text-muted-foreground">{room.type.replace(/_/g, " ")} · {room.building}</p>
+                        </button>
+                      ))}
+                    </div>
+                    {eligibleRooms.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        {expectedType ? `No available ${expectedType.replace(/_/g, " ")} rooms.` : "No available rooms."} Check room management.
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           )}
 

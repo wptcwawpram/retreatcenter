@@ -631,6 +631,7 @@ function NewBookingDialog({
 export default function BookingsPage() {
   const { data: bookings, loading, refetch } = useSupabaseQuery(() => getBookings(), []);
   const { data: guests } = useSupabaseQuery(() => getGuests(), []);
+  const [typeTab, setTypeTab] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
@@ -647,6 +648,7 @@ export default function BookingsPage() {
   const allGuests = guests || [];
 
   const filtered = allBookings.filter((b) => {
+    if (typeTab !== "ALL" && b.booking_type !== typeTab) return false;
     if (statusFilter !== "ALL" && b.status !== statusFilter) return false;
     if (search) {
       const q = search.toLowerCase();
@@ -654,6 +656,8 @@ export default function BookingsPage() {
     }
     return true;
   });
+
+  const typeCounts = { ALL: allBookings.length, INDIVIDUAL: allBookings.filter(b => b.booking_type === "INDIVIDUAL").length, GROUP: allBookings.filter(b => b.booking_type === "GROUP").length, EVENT: allBookings.filter(b => b.booking_type === "EVENT").length };
 
   const editFields: FormField[] = [
     { name: "status", label: "Status", type: "select", required: true, options: Object.entries(BOOKING_STATUS_CONFIG).map(([k, v]) => ({ label: v.label, value: k })) },
@@ -738,6 +742,24 @@ export default function BookingsPage() {
           <Download className="h-3.5 w-3.5" />Export CSV
         </Button>
       </PageHeader>
+
+      {/* Booking type tabs */}
+      <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+        {([
+          { key: "ALL", label: "All Bookings", icon: Users },
+          { key: "INDIVIDUAL", label: "Individual", icon: User },
+          { key: "GROUP", label: "Group", icon: Users },
+          { key: "EVENT", label: "Event", icon: Church },
+        ] as const).map(({ key, label, icon: Icon }) => (
+          <button key={key} onClick={() => setTypeTab(key)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all whitespace-nowrap ${
+              typeTab === key ? "bg-sidebar-primary/10 text-sidebar-primary border-sidebar-primary/20 shadow-sm" : "bg-card text-muted-foreground border-border/60 hover:bg-muted/50"
+            }`}>
+            <Icon className="h-3.5 w-3.5" />{label}
+            <span className="ml-0.5 text-[10px] font-bold">{typeCounts[key]}</span>
+          </button>
+        ))}
+      </div>
 
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
