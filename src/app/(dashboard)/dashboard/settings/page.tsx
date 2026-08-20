@@ -374,8 +374,9 @@ export default function SettingsPage() {
                   <Input value="" onChange={(e) => update("admin_notif_phone", e.target.value)} placeholder="e.g. +233 546 802 414" className="h-9" />
                 )}
                 <button type="button" onClick={() => {
-                  const current = settings.admin_notif_phone || "";
-                  update("admin_notif_phone", current ? current + "," : "");
+                  const phones = (settings.admin_notif_phone || "").split(",").filter(Boolean);
+                  phones.push("");
+                  update("admin_notif_phone", phones.join(","));
                 }} className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors pt-0.5">
                   <Plus className="h-3 w-3" />Add another phone
                 </button>
@@ -404,8 +405,9 @@ export default function SettingsPage() {
                   <Input value="" onChange={(e) => update("admin_notif_email", e.target.value)} placeholder="e.g. admin@wptc.com" className="h-9" />
                 )}
                 <button type="button" onClick={() => {
-                  const current = settings.admin_notif_email || "";
-                  update("admin_notif_email", current ? current + "," : "");
+                  const emails = (settings.admin_notif_email || "").split(",").filter(Boolean);
+                  emails.push("");
+                  update("admin_notif_email", emails.join(","));
                 }} className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors pt-0.5">
                   <Plus className="h-3 w-3" />Add another email
                 </button>

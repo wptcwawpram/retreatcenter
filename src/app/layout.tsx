@@ -24,11 +24,11 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: {
-    default: "WPTC Management",
-    template: "%s | WPTC Management",
+    default: "Warriors Prayer Tower Complex",
+    template: "%s | WPTC",
   },
   description:
-    "Warriors Prayer Tower Complex - Hybrid Retreat Centre Management System",
+    "Warriors Prayer Tower Complex — A serene retreat and accommodation centre in Atwima Boko, Kumasi. Book rooms, halls, and event venues.",
   icons: {
     icon: "/favicon.ico",
     shortcut: "/favicon.ico",

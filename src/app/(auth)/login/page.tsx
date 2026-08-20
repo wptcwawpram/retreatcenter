@@ -22,7 +22,7 @@ const PASSWORD_RULES = [
   { label: "Symbol (!@#$...)", test: (p: string) => /[^a-zA-Z0-9]/.test(p) },
 ];
 
-type Step = "login" | "2fa" | "loading" | "forgot-phone" | "forgot-otp" | "forgot-newpass" | "forgot-done";
+type Step = "login" | "2fa-method" | "2fa" | "loading" | "forgot-phone" | "forgot-otp" | "forgot-newpass" | "forgot-done";
 
 function LoginForm() {
   const router = useRouter();
@@ -97,16 +97,7 @@ function LoginForm() {
 
       if (data.user) {
         setUserId(data.user.id);
-        try {
-          await sendOTP(data.user.id, "sms");
-        } catch {
-          // OTP system not ready (table missing, SMS not configured, etc.)
-          // Skip 2FA and go straight to dashboard
-          setStep("loading");
-          await new Promise((r) => setTimeout(r, 1200));
-          router.push(redirectTo);
-          router.refresh();
-        }
+        setStep("2fa-method");
       }
     } catch {
       setError("An unexpected error occurred. Please try again.");
@@ -316,6 +307,64 @@ function LoginForm() {
               <motion.div className="h-1 bg-gold/20 rounded-full mt-4 w-48 overflow-hidden">
                 <motion.div className="h-full bg-gold rounded-full" initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: 1.2, ease: "easeInOut" }} />
               </motion.div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── 2FA Method Selection ── */}
+        {step === "2fa-method" && (
+          <motion.div key="2fa-method" variants={containerVariants} initial="hidden" animate="visible" exit="exit" className="relative z-10 mx-4 w-full max-w-md">
+            <div className={cardClass}>
+              <div className="mb-6 text-center">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-gold/30 bg-gold/[0.08]">
+                  <ShieldCheck className="h-7 w-7 text-gold" />
+                </div>
+                <h2 className="font-[family-name:var(--font-playfair)] text-xl font-bold text-warm-white">Two-Factor Verification</h2>
+                <p className="mt-2 text-sm text-warm-muted">Choose how you'd like to receive your verification code</p>
+              </div>
+              {error && <div className="mb-4 border border-red-500/30 bg-red-500/10 rounded-lg px-4 py-3 text-sm text-red-300">{error}</div>}
+              <div className="space-y-3">
+                <button
+                  onClick={async () => {
+                    try { await sendOTP(userId, "sms"); }
+                    catch {
+                      setStep("loading");
+                      await new Promise((r) => setTimeout(r, 1200));
+                      router.push(redirectTo); router.refresh();
+                    }
+                  }}
+                  disabled={otpSending}
+                  className="w-full flex items-center gap-3 rounded-xl border border-gold/20 bg-gold/[0.05] hover:bg-gold/[0.10] px-4 py-3.5 text-left transition-colors"
+                >
+                  <Smartphone className="h-5 w-5 text-gold shrink-0" />
+                  <div>
+                    <div className="text-sm font-medium text-warm-white">Send via SMS</div>
+                    <div className="text-xs text-warm-muted">Code sent to your registered phone number</div>
+                  </div>
+                </button>
+                <button
+                  onClick={async () => {
+                    try { await sendOTP(userId, "email"); }
+                    catch {
+                      setStep("loading");
+                      await new Promise((r) => setTimeout(r, 1200));
+                      router.push(redirectTo); router.refresh();
+                    }
+                  }}
+                  disabled={otpSending}
+                  className="w-full flex items-center gap-3 rounded-xl border border-gold/20 bg-gold/[0.05] hover:bg-gold/[0.10] px-4 py-3.5 text-left transition-colors"
+                >
+                  <Mail className="h-5 w-5 text-gold shrink-0" />
+                  <div>
+                    <div className="text-sm font-medium text-warm-white">Send via Email</div>
+                    <div className="text-xs text-warm-muted">Code sent to your registered email address</div>
+                  </div>
+                </button>
+              </div>
+              {otpSending && <div className="flex justify-center mt-4"><Loader2 className="h-5 w-5 animate-spin text-gold" /></div>}
+              <button onClick={() => { setStep("login"); setError(null); }} className="mt-4 w-full text-center text-xs text-warm-muted/60 hover:text-warm-white transition-colors flex items-center justify-center gap-1">
+                <ArrowLeft className="h-3 w-3" />Back to login
+              </button>
             </div>
           </motion.div>
         )}
