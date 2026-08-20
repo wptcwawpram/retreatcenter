@@ -272,7 +272,7 @@ export default function GuestPortalPage() {
                       <Input
                         id="phone"
                         type="tel"
-                        placeholder="024 725 8161"
+                        placeholder="024 000 0000"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handlePhoneSubmit()}

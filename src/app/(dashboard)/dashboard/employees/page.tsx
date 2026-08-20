@@ -382,7 +382,7 @@ export default function EmployeesPage() {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Phone Number</Label>
-                <Input value={addPhone} onChange={(e) => setAddPhone(e.target.value)} placeholder="e.g. 024 725 8161" type="tel" className="h-9" />
+                <Input value={addPhone} onChange={(e) => setAddPhone(e.target.value)} placeholder="e.g. 024 000 0000" type="tel" className="h-9" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Role</Label>

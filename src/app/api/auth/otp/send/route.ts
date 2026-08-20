@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
               method: "POST",
               headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
               body: JSON.stringify({
-                from: process.env.RESEND_FROM_EMAIL || "WPTC <noreply@resend.dev>",
+                from: process.env.RESEND_NOREPLY_EMAIL || process.env.RESEND_FROM_EMAIL || "WPTC <noreply@resend.dev>",
                 to: [user.user.email],
                 subject: "WPTC Admin Login Verification Code",
                 html: `<div style="font-family:Arial,sans-serif;max-width:400px;margin:0 auto;padding:30px;background:#1a1a1a;color:#fff;border-radius:12px">

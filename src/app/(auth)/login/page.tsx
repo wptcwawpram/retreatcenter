@@ -374,7 +374,7 @@ function LoginForm() {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="forgot-phone" className="text-warm-muted text-xs tracking-wide">Phone Number</Label>
-                  <Input id="forgot-phone" type="tel" placeholder="024 725 8161" value={forgotPhone} onChange={(e) => setForgotPhone(e.target.value)}
+                  <Input id="forgot-phone" type="tel" placeholder="024 000 0000" value={forgotPhone} onChange={(e) => setForgotPhone(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleForgotSendOTP()}
                     className={inputClass + " text-center text-lg tracking-wider font-mono"} />
                 </div>
@@ -539,7 +539,7 @@ function LoginForm() {
                 {loginMode === "phone" ? (
                   <div className="space-y-2">
                     <Label htmlFor="login-phone" className="text-warm-muted text-xs tracking-wide">Phone number</Label>
-                    <Input id="login-phone" type="tel" placeholder="024 725 8161" value={loginPhone} onChange={(e) => setLoginPhone(e.target.value)}
+                    <Input id="login-phone" type="tel" placeholder="024 000 0000" value={loginPhone} onChange={(e) => setLoginPhone(e.target.value)}
                       required autoComplete="tel" className={inputClass} />
                   </div>
                 ) : (
