@@ -6,7 +6,9 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { formatCurrency } from "@/lib/format";
 import { getRooms, getBookings, getGuests, getFinanceRecords } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
-import { BedDouble, TrendingUp, Users, Wallet, Calendar, BarChart3, Loader2 } from "lucide-react";
+import { downloadCSV } from "@/lib/export-csv";
+import { Button } from "@/components/ui/button";
+import { BedDouble, TrendingUp, Users, Wallet, Calendar, BarChart3, Loader2, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function ReportsPage() {
@@ -61,11 +63,66 @@ export default function ReportsPage() {
     );
   }
 
+  const exportFullReport = () => {
+    const rows: (string | number)[][] = [
+      ["--- OVERVIEW ---", "", ""],
+      ["Occupancy", `${occupancyPct}%`, `${occupiedRooms} of ${totalRooms} rooms`],
+      ["Total Revenue", totalIncome, ""],
+      ["Total Expenses", totalExpenses, ""],
+      ["Net Profit", totalIncome - totalExpenses, ""],
+      ["Total Guests", allGuests.length, ""],
+      ["Active Bookings", checkedInCount + confirmedCount, `${checkedInCount} checked in, ${confirmedCount} confirmed`],
+      ["", "", ""],
+      ["--- ROOM STATUS ---", "", ""],
+      ...Object.entries(statusBreakdown).map(([status, count]) => [
+        status.replace(/_/g, " "), count, `${totalRooms > 0 ? Math.round((count / totalRooms) * 100) : 0}%`,
+      ] as (string | number)[]),
+      ["", "", ""],
+      ["--- REVENUE BY SOURCE ---", "", ""],
+      ...revenueByCategory.map(([cat, amount]) => [
+        cat, amount, `${totalIncome > 0 ? Math.round((amount / totalIncome) * 100) : 0}%`,
+      ] as (string | number)[]),
+      ["", "", ""],
+      ["--- BOOKING SUMMARY ---", "", ""],
+      ["Total Bookings", allBookings.length, ""],
+      ["Checked In", checkedInCount, ""],
+      ["Confirmed", confirmedCount, ""],
+      ["Cancelled", allBookings.filter((b) => b.status === "CANCELLED").length, ""],
+    ];
+    downloadCSV("WPTC-Full-Report", ["Category", "Value", "Details"], rows);
+  };
+
+  const exportFinance = () => {
+    const rows = allFinance.map((f) => [
+      f.date, f.type, f.category, f.description || "", Number(f.amount), f.payment_method || "",
+    ]);
+    downloadCSV("WPTC-Finance-Records", ["Date", "Type", "Category", "Description", "Amount", "Payment Method"], rows);
+  };
+
+  const exportBookings = () => {
+    const rows = allBookings.map((b) => [
+      b.guest?.full_name || "", b.reference || "", b.check_in, b.check_out, b.nights || "", b.status, b.total_amount, b.paid_amount, b.balance,
+    ]);
+    downloadCSV("WPTC-Bookings", ["Guest", "Reference", "Check In", "Check Out", "Nights", "Status", "Total", "Paid", "Balance"], rows);
+  };
+
   const barColors = ["bg-teal-400", "bg-blue-400", "bg-amber-400", "bg-purple-400", "bg-red-400"];
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Reports" description="Analytics and insights for your operations" />
+      <PageHeader title="Reports" description="Analytics and insights for your operations">
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={exportFullReport}>
+            <Download className="h-3.5 w-3.5" />Export Summary
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={exportFinance}>
+            <Download className="h-3.5 w-3.5" />Finance CSV
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={exportBookings}>
+            <Download className="h-3.5 w-3.5" />Bookings CSV
+          </Button>
+        </div>
+      </PageHeader>
 
       {/* Top-level stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

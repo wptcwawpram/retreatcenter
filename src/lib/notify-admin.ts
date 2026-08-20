@@ -50,18 +50,21 @@ export async function notifyAdmin({ type, subject, message }: NotifyOptions) {
     return;
   }
 
-  const adminPhone = cfg.admin_notif_phone || cfg.phone;
-  const adminEmail = cfg.admin_notif_email || cfg.email;
+  const adminPhones = (cfg.admin_notif_phone || cfg.phone || "").split(",").map((p) => p.trim()).filter(Boolean);
+  const adminEmails = (cfg.admin_notif_email || cfg.email || "").split(",").map((e) => e.trim()).filter(Boolean);
 
   const results: { sms?: string; email?: string } = {};
 
-  // Send SMS notification
-  if (adminPhone) {
+  if (adminPhones.length) {
     try {
-      await sendSms({
-        to: adminPhone,
-        message: `[WPTC ${type.toUpperCase()}] ${subject}\n${message}`,
-      });
+      await Promise.all(
+        adminPhones.map((phone) =>
+          sendSms({
+            to: phone,
+            message: `[WPTC ${type.toUpperCase()}] ${subject}\n${message}`,
+          })
+        )
+      );
       results.sms = "sent";
     } catch (err) {
       console.error("Admin SMS notification failed:", err);
@@ -69,9 +72,8 @@ export async function notifyAdmin({ type, subject, message }: NotifyOptions) {
     }
   }
 
-  // Send email notification via Resend if configured
   const resendKey = process.env.RESEND_API_KEY;
-  if (resendKey && adminEmail) {
+  if (resendKey && adminEmails.length) {
     try {
       await fetch("https://api.resend.com/emails", {
         method: "POST",
@@ -81,7 +83,7 @@ export async function notifyAdmin({ type, subject, message }: NotifyOptions) {
         },
         body: JSON.stringify({
           from: "WPTC Notifications <notifications@warriorsprayertowercomplex.com>",
-          to: adminEmail,
+          to: adminEmails,
           subject: `[WPTC] ${subject}`,
           text: message,
         }),

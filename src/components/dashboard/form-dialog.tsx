@@ -55,7 +55,7 @@ export function FormDialog({
   const [values, setValues] = useState<Record<string, unknown>>(() => {
     const defaults: Record<string, unknown> = {};
     fields.forEach((f) => {
-      defaults[f.name] = initialValues?.[f.name] ?? f.defaultValue ?? (f.type === "number" ? 0 : f.type === "checkbox" ? false : "");
+      defaults[f.name] = initialValues?.[f.name] ?? f.defaultValue ?? (f.type === "checkbox" ? false : "");
     });
     return defaults;
   });
@@ -67,7 +67,7 @@ export function FormDialog({
     if (o) {
       const defaults: Record<string, unknown> = {};
       fields.forEach((f) => {
-        defaults[f.name] = initialValues?.[f.name] ?? f.defaultValue ?? (f.type === "number" ? 0 : f.type === "checkbox" ? false : "");
+        defaults[f.name] = initialValues?.[f.name] ?? f.defaultValue ?? (f.type === "checkbox" ? false : "");
       });
       setValues(defaults);
       setError("");
@@ -148,9 +148,9 @@ export function FormDialog({
                       <Input
                         id={field.name}
                         type={field.type || "text"}
-                        value={field.type === "number" ? (values[field.name] as number) : String(values[field.name] ?? "")}
-                        onChange={(e) => updateValue(field.name, field.type === "number" ? Number(e.target.value) : e.target.value)}
-                        placeholder={field.placeholder}
+                        value={field.type === "number" ? (values[field.name] === "" || values[field.name] === undefined ? "" : String(values[field.name])) : String(values[field.name] ?? "")}
+                        onChange={(e) => updateValue(field.name, field.type === "number" ? (e.target.value === "" ? "" : Number(e.target.value)) : e.target.value)}
+                        placeholder={field.placeholder || (field.type === "number" ? "0" : undefined)}
                         required={field.required}
                         min={field.min}
                         step={field.step}

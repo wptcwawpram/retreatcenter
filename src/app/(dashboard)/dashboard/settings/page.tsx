@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Save, Loader2, CheckCircle, Building2, Tag, Bell, User, Camera } from "lucide-react";
+import { Save, Loader2, CheckCircle, Building2, Tag, Bell, User, Camera, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
@@ -305,14 +305,66 @@ export default function SettingsPage() {
           <div className="rounded-xl border border-border/60 bg-card p-5 space-y-4">
             <h3 className="text-sm font-semibold">Admin Notification Contacts</h3>
             <p className="text-xs text-muted-foreground -mt-2">Where to send booking, contact, and complaint alerts. Falls back to the property phone/email if left empty.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Admin Phone (SMS)</Label>
-                <Input value={settings.admin_notif_phone} onChange={(e) => update("admin_notif_phone", e.target.value)} placeholder="e.g. +233 546 802 414" className="h-9" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="space-y-2">
+                <Label className="text-xs">Phone Numbers (SMS)</Label>
+                {(settings.admin_notif_phone || "").split(",").filter(Boolean).map((phone, i, arr) => (
+                  <div key={i} className="flex items-center gap-1.5">
+                    <Input value={phone.trim()} onChange={(e) => {
+                      const phones = (settings.admin_notif_phone || "").split(",").filter(Boolean);
+                      phones[i] = e.target.value;
+                      update("admin_notif_phone", phones.join(","));
+                    }} placeholder="e.g. +233 546 802 414" className="h-9" />
+                    {arr.length > 1 && (
+                      <button type="button" onClick={() => {
+                        const phones = (settings.admin_notif_phone || "").split(",").filter(Boolean);
+                        phones.splice(i, 1);
+                        update("admin_notif_phone", phones.join(","));
+                      }} className="shrink-0 h-8 w-8 rounded-md flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {!(settings.admin_notif_phone || "").split(",").filter(Boolean).length && (
+                  <Input value="" onChange={(e) => update("admin_notif_phone", e.target.value)} placeholder="e.g. +233 546 802 414" className="h-9" />
+                )}
+                <button type="button" onClick={() => {
+                  const current = settings.admin_notif_phone || "";
+                  update("admin_notif_phone", current ? current + "," : "");
+                }} className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors pt-0.5">
+                  <Plus className="h-3 w-3" />Add another phone
+                </button>
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Admin Email</Label>
-                <Input value={settings.admin_notif_email} onChange={(e) => update("admin_notif_email", e.target.value)} placeholder="e.g. admin@wptc.com" className="h-9" />
+              <div className="space-y-2">
+                <Label className="text-xs">Email Addresses</Label>
+                {(settings.admin_notif_email || "").split(",").filter(Boolean).map((email, i, arr) => (
+                  <div key={i} className="flex items-center gap-1.5">
+                    <Input value={email.trim()} onChange={(e) => {
+                      const emails = (settings.admin_notif_email || "").split(",").filter(Boolean);
+                      emails[i] = e.target.value;
+                      update("admin_notif_email", emails.join(","));
+                    }} placeholder="e.g. admin@wptc.com" className="h-9" />
+                    {arr.length > 1 && (
+                      <button type="button" onClick={() => {
+                        const emails = (settings.admin_notif_email || "").split(",").filter(Boolean);
+                        emails.splice(i, 1);
+                        update("admin_notif_email", emails.join(","));
+                      }} className="shrink-0 h-8 w-8 rounded-md flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {!(settings.admin_notif_email || "").split(",").filter(Boolean).length && (
+                  <Input value="" onChange={(e) => update("admin_notif_email", e.target.value)} placeholder="e.g. admin@wptc.com" className="h-9" />
+                )}
+                <button type="button" onClick={() => {
+                  const current = settings.admin_notif_email || "";
+                  update("admin_notif_email", current ? current + "," : "");
+                }} className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors pt-0.5">
+                  <Plus className="h-3 w-3" />Add another email
+                </button>
               </div>
             </div>
           </div>
