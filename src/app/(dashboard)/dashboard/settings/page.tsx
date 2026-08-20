@@ -30,6 +30,14 @@ const DEFAULTS: SettingsMap = {
   price_suite_fan: "350",
   price_suite_ac: "500",
   price_apartment: "750",
+  price_faith_hall_no_ac: "400",
+  price_faith_hall_ac: "550",
+  price_pavilion_canopy: "900",
+  price_pavilion_no_canopy: "700",
+  price_kitchen_55plus: "500",
+  price_kitchen_30to50: "400",
+  price_kitchen_below20: "250",
+  price_wedding_grounds: "4000",
   notif_new_booking: "true",
   notif_payment: "true",
   notif_checkin_reminder: "true",
@@ -276,29 +284,62 @@ export default function SettingsPage() {
 
       {/* Pricing */}
       {activeTab === "pricing" && (
-        <div className="rounded-xl border border-border/60 bg-card p-5 space-y-5">
-          <h3 className="text-sm font-semibold">Room Pricing (per night)</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {[
-              { key: "price_2in1", label: "2 in 1 Room" },
-              { key: "price_3in1", label: "3 in 1 Room" },
-              { key: "price_4in1", label: "4 in 1 Room" },
-              { key: "price_6in1", label: "6 in 1 Room" },
-              { key: "price_suite_fan", label: "Suite (Fan)" },
-              { key: "price_suite_ac", label: "Suite (AC)" },
-              { key: "price_apartment", label: "Holy Family Apartment" },
-            ].map((r) => (
-              <div key={r.key} className="space-y-1.5">
-                <Label className="text-xs">{r.label}</Label>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-muted-foreground">GH₵</span>
-                  <Input type="number" value={settings[r.key]} onChange={(e) => update(r.key, e.target.value)} min={0} step={10} className="h-9" />
-                </div>
-              </div>
-            ))}
+        <div className="space-y-5">
+          <div className="rounded-xl border border-border/60 bg-card p-5 space-y-5">
+            <h3 className="text-sm font-semibold">Room Pricing (per night)</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {[
+                { key: "price_2in1", label: "2 in 1 Room" },
+                { key: "price_3in1", label: "3 in 1 Room" },
+                { key: "price_4in1", label: "4 in 1 Room" },
+                { key: "price_6in1", label: "6 in 1 Room" },
+                { key: "price_suite_fan", label: "Suite (Fan)" },
+                { key: "price_suite_ac", label: "Suite (AC)" },
+                { key: "price_apartment", label: "Holy Family Apartment" },
+              ].map((r) => (
+                <PriceField key={r.key} label={r.label} value={settings[r.key]} onChange={(v) => update(r.key, v)} />
+              ))}
+            </div>
+            <p className="text-[11px] text-muted-foreground">Saving will update all rooms of that type across the entire system.</p>
           </div>
-          <p className="text-[11px] text-muted-foreground">Saving will update all rooms of that type across the entire system.</p>
-          <SaveButton section="pricing" saving={saving} saved={saved} onClick={() => saveSection("pricing", ["price_2in1", "price_3in1", "price_4in1", "price_6in1", "price_suite_fan", "price_suite_ac", "price_apartment"])} />
+
+          <div className="rounded-xl border border-border/60 bg-card p-5 space-y-5">
+            <h3 className="text-sm font-semibold">Faith Hall Pricing</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <PriceField label="Faith Hall (without AC)" value={settings.price_faith_hall_no_ac} onChange={(v) => update("price_faith_hall_no_ac", v)} />
+              <PriceField label="Faith Hall (with AC)" value={settings.price_faith_hall_ac} onChange={(v) => update("price_faith_hall_ac", v)} />
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border/60 bg-card p-5 space-y-5">
+            <h3 className="text-sm font-semibold">Pavilion Pricing</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <PriceField label="Pavilion (with canopy)" value={settings.price_pavilion_canopy} onChange={(v) => update("price_pavilion_canopy", v)} />
+              <PriceField label="Pavilion (without canopy)" value={settings.price_pavilion_no_canopy} onChange={(v) => update("price_pavilion_no_canopy", v)} />
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border/60 bg-card p-5 space-y-5">
+            <h3 className="text-sm font-semibold">Kitchen & Dining Pricing</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <PriceField label="55+ persons" value={settings.price_kitchen_55plus} onChange={(v) => update("price_kitchen_55plus", v)} />
+              <PriceField label="30–50 persons" value={settings.price_kitchen_30to50} onChange={(v) => update("price_kitchen_30to50", v)} />
+              <PriceField label="Below 20 persons" value={settings.price_kitchen_below20} onChange={(v) => update("price_kitchen_below20", v)} />
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border/60 bg-card p-5 space-y-5">
+            <h3 className="text-sm font-semibold">Wedding Grounds</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <PriceField label="Wedding Grounds (flat rate)" value={settings.price_wedding_grounds} onChange={(v) => update("price_wedding_grounds", v)} />
+            </div>
+          </div>
+
+          <SaveButton section="pricing" saving={saving} saved={saved} onClick={() => saveSection("pricing", [
+            "price_2in1", "price_3in1", "price_4in1", "price_6in1", "price_suite_fan", "price_suite_ac", "price_apartment",
+            "price_faith_hall_no_ac", "price_faith_hall_ac", "price_pavilion_canopy", "price_pavilion_no_canopy",
+            "price_kitchen_55plus", "price_kitchen_30to50", "price_kitchen_below20", "price_wedding_grounds",
+          ])} />
         </div>
       )}
 
@@ -447,6 +488,18 @@ function SwitchRow({ label, desc, checked, onToggle }: {
         <p className="text-[11px] text-muted-foreground">{desc}</p>
       </div>
       <Switch checked={checked} onCheckedChange={onToggle} />
+    </div>
+  );
+}
+
+function PriceField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs">{label}</Label>
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-medium text-muted-foreground">GH₵</span>
+        <Input type="number" value={value} onChange={(e) => onChange(e.target.value)} min={0} step={10} className="h-9" />
+      </div>
     </div>
   );
 }

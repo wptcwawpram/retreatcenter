@@ -36,7 +36,7 @@ const ROOM_OPTIONS = [
   { label: "Holy Family Apartment", price: 750, type: "APARTMENT" },
 ];
 
-const HALL_OPTIONS = [
+const DEFAULT_HALL_OPTIONS = [
   { label: "Faith Hall (without AC)", price: 400 },
   { label: "Faith Hall (with AC)", price: 550 },
   { label: "Pavilion (with canopy)", price: 900 },
@@ -46,7 +46,7 @@ const HALL_OPTIONS = [
   { label: "Kitchen & Dining (below 20 persons)", price: 250 },
 ];
 
-const WEDDING_GROUNDS_PRICE = 4000;
+const DEFAULT_WEDDING_GROUNDS_PRICE = 4000;
 
 // ─── New Booking Dialog (matches website flow) ────────────────────────
 
@@ -82,7 +82,22 @@ function NewBookingDialog({
   const [roomQuantities, setRoomQuantities] = useState<Record<string, number>>({});
   const [nights, setNights] = useState(1);
 
-  // Hall
+  // Hall — fetch live pricing
+  const [HALL_OPTIONS, setHallOptions] = useState(DEFAULT_HALL_OPTIONS);
+  const [WEDDING_GROUNDS_PRICE, setWeddingGroundsPrice] = useState(DEFAULT_WEDDING_GROUNDS_PRICE);
+
+  useEffect(() => {
+    fetch("/api/settings/pricing")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.halls?.length > 0 || data.kitchen?.length > 0) {
+          setHallOptions([...(data.halls || []), ...(data.kitchen || [])]);
+        }
+        if (typeof data.wedding_grounds === "number") setWeddingGroundsPrice(data.wedding_grounds);
+      })
+      .catch(() => {});
+  }, []);
+
   const [needsHall, setNeedsHall] = useState(false);
   const [selectedHall, setSelectedHall] = useState("");
   const [hallDays, setHallDays] = useState(1);
