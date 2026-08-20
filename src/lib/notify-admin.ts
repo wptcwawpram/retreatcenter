@@ -79,7 +79,7 @@ export async function notifyAdmin({ type, subject, message }: NotifyOptions) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "WPTC Notifications <notifications@warriorsprayertowercomplex.com>",
+          from: `WPTC Notifications <${process.env.RESEND_FROM_EMAIL || "info@warriorsprayertowercomplex.com"}>`,
           to: adminEmails,
           subject: `[WPTC] ${subject}`,
           text: message,
