@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { notifyAdmin } from "@/lib/notify-admin";
 import { sendSms } from "@/lib/hubtel-sms";
+import { renderMessage } from "@/lib/message-templates";
 
 function createServiceClient() {
   return createServerClient(
@@ -75,10 +76,9 @@ export async function POST(request: NextRequest) {
 
     // Send confirmation SMS to guest
     if (guestPhone) {
-      sendSms({
-        to: guestPhone,
-        message: `WPTC: Your complaint "${subject}" has been received and is being reviewed. We will update you on the progress. Thank you for your feedback.`,
-      }).catch(() => {});
+      renderMessage("msg_complaint_received", { subject }).then((msg) =>
+        sendSms({ to: guestPhone, message: msg })
+      ).catch(() => {});
     }
 
     return NextResponse.json({ success: true, complaint_id: data.id });

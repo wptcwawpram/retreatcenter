@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { storeOTP } from "@/lib/otp";
 import { sendSms } from "@/lib/hubtel-sms";
+import { renderMessage } from "@/lib/message-templates";
 
 function createServiceClient() {
   return createServerClient(
@@ -30,10 +31,8 @@ export async function POST(request: NextRequest) {
         .maybeSingle();
 
       if (method === "sms" && profile?.phone) {
-        await sendSms({
-          to: profile.phone,
-          message: `WPTC Admin Login: Your verification code is ${code}. Valid for 5 minutes. Do not share this code.`,
-        });
+        const otpMsg = await renderMessage("msg_otp_admin", { code });
+        await sendSms({ to: profile.phone, message: otpMsg });
         const masked = profile.phone.replace(/(\d{3})\d{4}(\d{3})/, "$1****$2");
         return NextResponse.json({ sent: true, channel: "sms", masked });
       } else if (method === "email") {
@@ -64,10 +63,8 @@ export async function POST(request: NextRequest) {
       }
 
       if (profile?.phone) {
-        await sendSms({
-          to: profile.phone,
-          message: `WPTC Admin Login: Your verification code is ${code}. Valid for 5 minutes. Do not share this code.`,
-        });
+        const otpMsg = await renderMessage("msg_otp_admin", { code });
+        await sendSms({ to: profile.phone, message: otpMsg });
         const masked = profile.phone.replace(/(\d{3})\d{4}(\d{3})/, "$1****$2");
         return NextResponse.json({ sent: true, channel: "sms", masked });
       }
@@ -76,10 +73,8 @@ export async function POST(request: NextRequest) {
     }
 
     if (purpose === "guest_login") {
-      await sendSms({
-        to: identifier,
-        message: `WPTC Guest Portal: Your verification code is ${code}. Valid for 5 minutes.`,
-      });
+      const otpMsg = await renderMessage("msg_otp_guest", { code });
+      await sendSms({ to: identifier, message: otpMsg });
       const masked = identifier.replace(/(\d{3})\d{4}(\d{3})/, "$1****$2");
       return NextResponse.json({ sent: true, channel: "sms", masked });
     }

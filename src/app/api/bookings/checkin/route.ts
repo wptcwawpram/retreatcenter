@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
-import { sendSms, SMS_TEMPLATES } from "@/lib/hubtel-sms";
+import { sendSms } from "@/lib/hubtel-sms";
 import { notifyAdmin } from "@/lib/notify-admin";
+import { renderMessage } from "@/lib/message-templates";
 
 function createServiceClient() {
   return createServerClient(
@@ -65,10 +66,10 @@ export async function POST(request: NextRequest) {
       const guest = booking.guest;
       if (guest?.phone) {
         const checkOutFmt = new Date(booking.check_out).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-        sendSms({
-          to: guest.phone,
-          message: `Dear ${guest.full_name}, welcome to Warriors Prayer Tower Complex! You are now checked in. Check-out: ${checkOutFmt}. ${booking.balance > 0 ? `Outstanding balance: GH₵${booking.balance}. ` : ""}We wish you a blessed stay!`,
-        }).catch((err) => console.error("Check-in SMS failed:", err));
+        const balanceNote = booking.balance > 0 ? `Outstanding balance: GH₵${booking.balance}. ` : "";
+        renderMessage("msg_checkin_welcome", { guest_name: guest.full_name, check_out: checkOutFmt, balance_note: balanceNote })
+          .then((msg) => sendSms({ to: guest.phone, message: msg }))
+          .catch((err) => console.error("Check-in SMS failed:", err));
       }
 
       notifyAdmin({
@@ -105,10 +106,10 @@ export async function POST(request: NextRequest) {
 
       const guest = booking.guest;
       if (guest?.phone) {
-        sendSms({
-          to: guest.phone,
-          message: `Dear ${guest.full_name}, thank you for staying at Warriors Prayer Tower Complex! You have been checked out. ${booking.balance > 0 ? `Please note your outstanding balance of GH₵${booking.balance}. ` : ""}God bless you!`,
-        }).catch((err) => console.error("Check-out SMS failed:", err));
+        const balanceNote = booking.balance > 0 ? `Please note your outstanding balance of GH₵${booking.balance}. ` : "";
+        renderMessage("msg_checkout_farewell", { guest_name: guest.full_name, balance_note: balanceNote })
+          .then((msg) => sendSms({ to: guest.phone, message: msg }))
+          .catch((err) => console.error("Check-out SMS failed:", err));
       }
 
       notifyAdmin({

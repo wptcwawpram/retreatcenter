@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { sendSms } from "@/lib/hubtel-sms";
+import { renderMessage } from "@/lib/message-templates";
 import crypto from "crypto";
 
 function getAppUrl() {
@@ -116,10 +117,8 @@ export async function POST(request: NextRequest) {
     let smsSent = false;
     let smsError: string | null = null;
     try {
-      await sendSms({
-        to: phoneFormatted,
-        message: `Hi ${full_name.split(" ")[0]}, you've been invited to join WPTC as staff. Click the link to set up your account: ${inviteLink}`,
-      });
+      const inviteMsg = await renderMessage("msg_staff_invite", { first_name: full_name.split(" ")[0], link: inviteLink });
+      await sendSms({ to: phoneFormatted, message: inviteMsg });
       smsSent = true;
     } catch (err) {
       smsError = err instanceof Error ? err.message : "SMS send failed";

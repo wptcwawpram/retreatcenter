@@ -6,9 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Save, Loader2, CheckCircle, Building2, Tag, Bell, User, Camera, Plus, X } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Save, Loader2, CheckCircle, Building2, Tag, Bell, User, Camera, Plus, X, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { MESSAGE_TEMPLATES } from "@/lib/message-templates";
 
 type SettingsMap = Record<string, string>;
 
@@ -51,7 +53,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"profile" | "general" | "pricing" | "notifications">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "general" | "pricing" | "notifications" | "messages">("profile");
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -143,6 +145,7 @@ export default function SettingsPage() {
     { key: "general" as const, label: "General", icon: Building2 },
     { key: "pricing" as const, label: "Pricing", icon: Tag },
     { key: "notifications" as const, label: "Notifications", icon: Bell },
+    { key: "messages" as const, label: "Messages", icon: MessageSquare },
   ];
 
   return (
@@ -384,6 +387,48 @@ export default function SettingsPage() {
             </div>
             <SaveButton section="notifications" saving={saving} saved={saved} onClick={() => saveSection("notifications", ["notif_new_booking", "notif_payment", "notif_checkin_reminder", "notif_low_inventory", "notif_complaint", "admin_notif_phone", "admin_notif_email"])} />
           </div>
+        </div>
+      )}
+
+      {/* Messages */}
+      {activeTab === "messages" && (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-border/60 bg-card p-5 space-y-2">
+            <h3 className="text-sm font-semibold">Message Templates</h3>
+            <p className="text-xs text-muted-foreground">Customize the SMS messages sent to guests and staff. Use variables in curly braces like <code className="bg-muted/50 px-1 rounded text-[10px]">{"{guest_name}"}</code> which get replaced with actual values.</p>
+          </div>
+          {MESSAGE_TEMPLATES.map((tmpl) => (
+            <div key={tmpl.key} className="rounded-xl border border-border/60 bg-card p-5 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h4 className="text-sm font-semibold">{tmpl.label}</h4>
+                  <p className="text-[11px] text-muted-foreground">{tmpl.description}</p>
+                </div>
+                {settings[tmpl.key] && settings[tmpl.key] !== tmpl.defaultText && (
+                  <button
+                    type="button"
+                    onClick={() => update(tmpl.key, tmpl.defaultText)}
+                    className="text-[10px] text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap shrink-0"
+                  >
+                    Reset to default
+                  </button>
+                )}
+              </div>
+              <Textarea
+                value={settings[tmpl.key] || tmpl.defaultText}
+                onChange={(e) => update(tmpl.key, e.target.value)}
+                rows={3}
+                className="text-sm resize-none"
+              />
+              <div className="flex flex-wrap gap-1">
+                <span className="text-[10px] text-muted-foreground mr-1">Variables:</span>
+                {tmpl.variables.map((v) => (
+                  <span key={v} className="inline-flex items-center px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-mono">{`{${v}}`}</span>
+                ))}
+              </div>
+            </div>
+          ))}
+          <SaveButton section="messages" saving={saving} saved={saved} onClick={() => saveSection("messages", MESSAGE_TEMPLATES.map((t) => t.key))} />
         </div>
       )}
     </div>

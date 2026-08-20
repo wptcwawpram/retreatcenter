@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { sendSms } from "@/lib/hubtel-sms";
+import { renderMessage } from "@/lib/message-templates";
 
 async function getAuthUser() {
   const cookieStore = await cookies();
@@ -55,10 +56,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No phone number on file for this guest" }, { status: 400 });
     }
 
-    await sendSms({
-      to: guest.phone,
-      message: `WPTC Update on "${complaint.subject}": ${message}`,
-    });
+    const smsText = await renderMessage("msg_complaint_update", { subject: complaint.subject, message });
+    await sendSms({ to: guest.phone, message: smsText });
 
     return NextResponse.json({ success: true, sent_to: guest.full_name });
   } catch (error) {

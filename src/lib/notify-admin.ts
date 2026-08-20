@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { sendSms } from "@/lib/hubtel-sms";
+import { renderMessage } from "@/lib/message-templates";
 
 function createServiceClient() {
   return createServerClient(
@@ -57,13 +58,9 @@ export async function notifyAdmin({ type, subject, message }: NotifyOptions) {
 
   if (adminPhones.length) {
     try {
+      const smsText = await renderMessage("msg_admin_notif", { type: type.toUpperCase(), subject, message });
       await Promise.all(
-        adminPhones.map((phone) =>
-          sendSms({
-            to: phone,
-            message: `[WPTC ${type.toUpperCase()}] ${subject}\n${message}`,
-          })
-        )
+        adminPhones.map((phone) => sendSms({ to: phone, message: smsText }))
       );
       results.sms = "sent";
     } catch (err) {

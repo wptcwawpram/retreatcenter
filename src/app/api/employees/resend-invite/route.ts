@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { sendSms } from "@/lib/hubtel-sms";
+import { renderMessage } from "@/lib/message-templates";
 import crypto from "crypto";
 
 function getAppUrl() {
@@ -66,10 +67,8 @@ export async function POST(request: NextRequest) {
 
     const inviteLink = `${getAppUrl()}/onboard?token=${inviteToken}`;
 
-    await sendSms({
-      to: profile.phone,
-      message: `Hi ${profile.full_name.split(" ")[0]}, you've been invited to join WPTC as staff. Click the link to set up your account: ${inviteLink}`,
-    });
+    const inviteMsg = await renderMessage("msg_staff_invite", { first_name: profile.full_name.split(" ")[0], link: inviteLink });
+    await sendSms({ to: profile.phone, message: inviteMsg });
 
     return NextResponse.json({ success: true });
   } catch (err) {

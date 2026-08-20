@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyPayment } from "@/lib/paystack";
 import { createServerClient } from "@supabase/ssr";
-import { sendSms, SMS_TEMPLATES } from "@/lib/hubtel-sms";
+import { sendSms } from "@/lib/hubtel-sms";
 import { notifyAdmin } from "@/lib/notify-admin";
+import { renderMessage } from "@/lib/message-templates";
 
 function createServiceClient() {
   return createServerClient(
@@ -89,24 +90,11 @@ export async function GET(request: NextRequest) {
           if (guestPhone && guestName && checkIn && checkOut) {
             const checkInFormatted = new Date(checkIn).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
             const checkOutFormatted = new Date(checkOut).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-            await sendSms({
-              to: guestPhone,
-              message: SMS_TEMPLATES.bookingConfirmation(guestName, bookingRef, checkInFormatted, checkOutFormatted),
-            });
+            const confirmMsg = await renderMessage("msg_booking_confirmation", { guest_name: guestName, reference: bookingRef, check_in: checkInFormatted, check_out: checkOutFormatted });
+            await sendSms({ to: guestPhone, message: confirmMsg });
           }
         } catch (smsError) {
           console.error("Guest SMS failed:", smsError);
-        }
-
-        // Send SMS to admin
-        try {
-          const adminPhone = process.env.ADMIN_PHONE || "+233546802414";
-          await sendSms({
-            to: adminPhone,
-            message: `WPTC: Payment received! ${guestName || "Guest"} paid GH₵${amountPaid} for booking ${bookingRef}. Check-in: ${checkIn || "N/A"}. Phone: ${guestPhone || "N/A"}.`,
-          });
-        } catch (adminSmsError) {
-          console.error("Admin SMS failed:", adminSmsError);
         }
 
         // Notify admin in-app

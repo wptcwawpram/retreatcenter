@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyWebhookSignature, verifyPayment } from "@/lib/paystack";
 import { createServerClient } from "@supabase/ssr";
-import { sendSms, SMS_TEMPLATES } from "@/lib/hubtel-sms";
+import { sendSms } from "@/lib/hubtel-sms";
 import { notifyAdmin } from "@/lib/notify-admin";
+import { renderMessage } from "@/lib/message-templates";
 
 function createServiceClient() {
   return createServerClient(
@@ -98,10 +99,8 @@ export async function POST(request: NextRequest) {
               if (guestPhone && guestName && checkIn && checkOut) {
                 const checkInFmt = new Date(checkIn).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
                 const checkOutFmt = new Date(checkOut).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-                await sendSms({
-                  to: guestPhone,
-                  message: SMS_TEMPLATES.bookingConfirmation(guestName, bookingRef, checkInFmt, checkOutFmt),
-                });
+                const confirmMsg = await renderMessage("msg_booking_confirmation", { guest_name: guestName, reference: bookingRef, check_in: checkInFmt, check_out: checkOutFmt });
+                await sendSms({ to: guestPhone, message: confirmMsg });
               }
             } catch (smsErr) {
               console.error("Webhook SMS failed:", smsErr);

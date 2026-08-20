@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { sendSms } from "@/lib/hubtel-sms";
 import { storeOTP, verifyOTP } from "@/lib/otp";
+import { renderMessage } from "@/lib/message-templates";
 
 function serviceClient() {
   return createServerClient(
@@ -56,10 +57,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "No phone number on file" }, { status: 400 });
       }
       const otpCode = await storeOTP(profile.id, "guest_login");
-      await sendSms({
-        to: profile.phone,
-        message: `WPTC: Your verification code is ${otpCode}. Valid for 5 minutes.`,
-      });
+      const otpMsg = await renderMessage("msg_otp_onboard", { code: otpCode });
+      await sendSms({ to: profile.phone, message: otpMsg });
       const masked = profile.phone.replace(/(\+233)(\d{2})\d{4}(\d{3})/, "$1$2****$3");
       return NextResponse.json({ sent: true, masked });
     }
