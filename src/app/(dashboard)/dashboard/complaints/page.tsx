@@ -7,11 +7,14 @@ import { FormDialog, type FormField } from "@/components/dashboard/form-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { COMPLAINT_CATEGORY_LABELS } from "@/lib/constants";
 import { getComplaints, createComplaint, updateComplaint, deleteComplaint, getGuests } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatDate } from "@/lib/format";
-import { Loader2, Edit2, Trash2, AlertCircle, MessageSquareWarning, Download } from "lucide-react";
+import { Loader2, Edit2, Trash2, AlertCircle, MessageSquareWarning, Download, Send, CheckCircle } from "lucide-react";
 import { downloadCSV } from "@/lib/export-csv";
 import { cn } from "@/lib/utils";
 import type { Complaint } from "@/lib/supabase/types";
@@ -39,6 +42,10 @@ export default function ComplaintsPage() {
   const [deleteItem, setDeleteItem] = useState<ComplaintRow | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [statusTab, setStatusTab] = useState("ALL");
+  const [notifyItem, setNotifyItem] = useState<ComplaintRow | null>(null);
+  const [guestMessage, setGuestMessage] = useState("");
+  const [sendingUpdate, setSendingUpdate] = useState(false);
+  const [updateSent, setUpdateSent] = useState(false);
 
   const allComplaints = (complaints || []) as ComplaintRow[];
   const allGuests = guests || [];
@@ -105,6 +112,27 @@ export default function ComplaintsPage() {
     refetch();
   };
 
+  const handleSendGuestUpdate = async () => {
+    if (!notifyItem || !guestMessage.trim()) return;
+    setSendingUpdate(true);
+    try {
+      const res = await fetch("/api/complaints/notify-guest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ complaint_id: notifyItem.id, message: guestMessage }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to send");
+      setUpdateSent(true);
+      setGuestMessage("");
+      setTimeout(() => setUpdateSent(false), 3000);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to send update to guest");
+    } finally {
+      setSendingUpdate(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!deleteItem) return;
     setDeleting(true);
@@ -140,6 +168,11 @@ export default function ComplaintsPage() {
     }},
     { header: "", accessor: (c) => (
       <div className="flex gap-0.5">
+        {c.guest_id && (
+          <Button variant="ghost" size="icon-xs" className="text-primary" title="Send update to guest" onClick={(e) => { e.stopPropagation(); setNotifyItem(c); setGuestMessage(""); setUpdateSent(false); }}>
+            <Send className="h-3.5 w-3.5" />
+          </Button>
+        )}
         <Button variant="ghost" size="icon-xs" onClick={(e) => { e.stopPropagation(); setEditItem(c); }}><Edit2 className="h-3.5 w-3.5" /></Button>
         <Button variant="ghost" size="icon-xs" className="text-red-600" onClick={(e) => { e.stopPropagation(); setDeleteItem(c); }}>
           <Trash2 className="h-3.5 w-3.5" />
@@ -224,6 +257,44 @@ export default function ComplaintsPage() {
             <Button variant="outline" onClick={() => setDeleteItem(null)} disabled={deleting}>Cancel</Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
               {deleting ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" />Deleting...</> : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send Update to Guest */}
+      <Dialog open={!!notifyItem} onOpenChange={(o) => !o && setNotifyItem(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Send Update to Guest</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="rounded-lg bg-muted/30 border border-border/60 p-3 space-y-1">
+              <p className="text-xs text-muted-foreground">Complaint</p>
+              <p className="text-sm font-medium">{notifyItem?.subject}</p>
+              <p className="text-xs text-muted-foreground">Guest: {notifyItem?.guest?.full_name ?? "Unknown"}</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Message to guest (SMS)</Label>
+              <Textarea
+                value={guestMessage}
+                onChange={(e) => setGuestMessage(e.target.value)}
+                placeholder="e.g. We are looking into your concern and will have it resolved shortly."
+                rows={3}
+                className="resize-none"
+              />
+              <p className="text-[10px] text-muted-foreground">This will be sent as an SMS to the guest&apos;s phone number.</p>
+            </div>
+            {updateSent && (
+              <div className="flex items-center gap-2 text-sm text-teal-500">
+                <CheckCircle className="h-4 w-4" />Update sent to guest
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNotifyItem(null)} disabled={sendingUpdate}>Cancel</Button>
+            <Button onClick={handleSendGuestUpdate} disabled={sendingUpdate || !guestMessage.trim()} className="gap-1.5">
+              {sendingUpdate ? <><Loader2 className="h-4 w-4 animate-spin" />Sending...</> : <><Send className="h-3.5 w-3.5" />Send Update</>}
             </Button>
           </DialogFooter>
         </DialogContent>
