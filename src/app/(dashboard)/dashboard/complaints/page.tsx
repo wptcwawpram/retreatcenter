@@ -275,14 +275,14 @@ export default function ComplaintsPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Status *</Label>
-                  <Select value={editStatus} onValueChange={setEditStatus}>
+                  <Select value={editStatus} onValueChange={(v) => { if (v != null) setEditStatus(v); }}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{Object.entries(STATUS_CFG).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Priority</Label>
-                  <Select value={editPriority} onValueChange={setEditPriority}>
+                  <Select value={editPriority} onValueChange={(v) => { if (v != null) setEditPriority(v); }}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="LOW">Low</SelectItem>
