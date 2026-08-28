@@ -790,30 +790,52 @@ function BookingPage() {
                     <div className="space-y-4">
                       <Label className={labelClass}>Room Quantities</Label>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {ROOM_OPTIONS.map((r) => {
-                          const count = availability[r.label];
-                          return (
-                            <div key={r.label} className="flex items-center justify-between p-4 rounded-xl border border-white/[0.1] bg-white/[0.04] backdrop-blur-xl hover:bg-white/[0.06] hover:border-white/[0.14] transition-all duration-300">
-                              <div>
-                                <p className="text-sm font-medium text-warm-white">{r.label}</p>
-                                <p className="text-xs text-warm-muted">
-                                  GH₵{r.price}/night
-                                  {count !== undefined && (
-                                    <span className={count > 0 ? " text-emerald-400" : " text-red-400"}>
-                                      {" "}· {count > 0 ? `${count} available` : "Full"}
-                                    </span>
-                                  )}
-                                </p>
+                        {(() => {
+                          const suiteLabels = new Set(["Suite (Fan)", "Suite (AC)"]);
+                          const suitePool = availability["Suite (AC)"] ?? availability["Suite (Fan)"] ?? 0;
+                          const suitesUsed = (roomQuantities["Suite (Fan)"] || 0) + (roomQuantities["Suite (AC)"] || 0);
+                          const suiteRemaining = Math.max(0, suitePool - suitesUsed);
+                          return ROOM_OPTIONS.map((r) => {
+                            const count = availability[r.label];
+                            const isSuite = suiteLabels.has(r.label);
+                            const thisQty = roomQuantities[r.label] || 0;
+                            // For suites: max = suites already chosen for this option + remaining pool slots
+                            const effectiveMax = isSuite
+                              ? thisQty + suiteRemaining
+                              : count !== undefined ? count : 20;
+                            const poolFull = isSuite && suitePool > 0 && suiteRemaining === 0 && thisQty === 0;
+                            const availLabel = isSuite
+                              ? suitePool > 0
+                                ? suiteRemaining > 0
+                                  ? `${suitePool} suite${suitePool === 1 ? "" : "s"} shared pool`
+                                  : "Suite pool full — remove from other suite option"
+                                : "Full"
+                              : count !== undefined
+                              ? count > 0 ? `${count} available` : "Full"
+                              : null;
+                            return (
+                              <div key={r.label} className="flex items-center justify-between p-4 rounded-xl border border-white/[0.1] bg-white/[0.04] backdrop-blur-xl hover:bg-white/[0.06] hover:border-white/[0.14] transition-all duration-300">
+                                <div>
+                                  <p className="text-sm font-medium text-warm-white">{r.label}</p>
+                                  <p className="text-xs text-warm-muted">
+                                    GH₵{r.price}/night
+                                    {availLabel && (
+                                      <span className={poolFull ? " text-amber-400" : count === 0 ? " text-red-400" : " text-emerald-400"}>
+                                        {" "}· {availLabel}
+                                      </span>
+                                    )}
+                                  </p>
+                                </div>
+                                <NumberStepper
+                                  value={thisQty}
+                                  onChange={(val) => setRoomQuantities((prev) => ({ ...prev, [r.label]: val }))}
+                                  min={0}
+                                  max={effectiveMax}
+                                />
                               </div>
-                              <NumberStepper
-                                value={roomQuantities[r.label] || 0}
-                                onChange={(val) => setRoomQuantities((prev) => ({ ...prev, [r.label]: val }))}
-                                min={0}
-                                max={count !== undefined ? count : 20}
-                              />
-                            </div>
-                          );
-                        })}
+                            );
+                          });
+                        })()}
                       </div>
                     </div>
                   )}
