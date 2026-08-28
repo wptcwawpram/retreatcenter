@@ -30,9 +30,12 @@ export const metadata: Metadata = {
   description:
     "Warriors Prayer Tower Complex — A serene retreat and accommodation centre in Atwima Boko, Kumasi. Book rooms, halls, and event venues.",
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+    ],
     shortcut: "/favicon.ico",
-    apple: "/favicon.ico",
+    apple: "/icon.png",
   },
 };
 
