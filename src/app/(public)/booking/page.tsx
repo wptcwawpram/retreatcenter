@@ -792,20 +792,26 @@ function BookingPage() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {(() => {
                           const suiteLabels = new Set(["Suite (Fan)", "Suite (AC)"]);
-                          const suitePool = availability["Suite (AC)"] ?? availability["Suite (Fan)"] ?? 0;
+                          // undefined = dates not yet selected / not yet fetched
+                          const suitePoolRaw = availability["Suite (AC)"] ?? availability["Suite (Fan)"];
+                          const suiteAvailFetched = suitePoolRaw !== undefined;
+                          const suitePool = suitePoolRaw ?? 0;
                           const suitesUsed = (roomQuantities["Suite (Fan)"] || 0) + (roomQuantities["Suite (AC)"] || 0);
                           const suiteRemaining = Math.max(0, suitePool - suitesUsed);
                           return ROOM_OPTIONS.map((r) => {
                             const count = availability[r.label];
                             const isSuite = suiteLabels.has(r.label);
                             const thisQty = roomQuantities[r.label] || 0;
-                            // For suites: max = suites already chosen for this option + remaining pool slots
+                            // For suites: max = already chosen for this option + remaining pool slots.
+                            // If availability not yet fetched (no dates), allow up to physical max of 2.
                             const effectiveMax = isSuite
-                              ? thisQty + suiteRemaining
+                              ? suiteAvailFetched ? thisQty + suiteRemaining : 2
                               : count !== undefined ? count : 20;
-                            const poolFull = isSuite && suitePool > 0 && suiteRemaining === 0 && thisQty === 0;
+                            const poolFull = isSuite && suiteAvailFetched && suitePool > 0 && suiteRemaining === 0 && thisQty === 0;
                             const availLabel = isSuite
-                              ? suitePool > 0
+                              ? !suiteAvailFetched
+                                ? null
+                                : suitePool > 0
                                 ? suiteRemaining > 0
                                   ? `${suitePool} suite${suitePool === 1 ? "" : "s"} shared pool`
                                   : "Suite pool full — remove from other suite option"
@@ -820,7 +826,11 @@ function BookingPage() {
                                   <p className="text-xs text-warm-muted">
                                     GH₵{r.price}/night
                                     {availLabel && (
-                                      <span className={poolFull ? " text-amber-400" : count === 0 ? " text-red-400" : " text-emerald-400"}>
+                                      <span className={
+                                        poolFull ? " text-amber-400"
+                                        : isSuite ? (suitePool === 0 ? " text-red-400" : " text-emerald-400")
+                                        : count === 0 ? " text-red-400" : " text-emerald-400"
+                                      }>
                                         {" "}· {availLabel}
                                       </span>
                                     )}
