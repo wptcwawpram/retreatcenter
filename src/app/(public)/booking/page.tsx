@@ -792,20 +792,22 @@ function BookingPage() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {(() => {
                           const suiteLabels = new Set(["Suite (Fan)", "Suite (AC)"]);
-                          // undefined = dates not yet selected / not yet fetched
+                          // Physical suite pool is always 2 (ST1 + ST2).
+                          // Use DB availability when dates are picked; fall back to the physical cap.
+                          const SUITE_PHYSICAL_MAX = 2;
                           const suitePoolRaw = availability["Suite (AC)"] ?? availability["Suite (Fan)"];
                           const suiteAvailFetched = suitePoolRaw !== undefined;
-                          const suitePool = suitePoolRaw ?? 0;
+                          const suitePool = suiteAvailFetched ? suitePoolRaw! : SUITE_PHYSICAL_MAX;
                           const suitesUsed = (roomQuantities["Suite (Fan)"] || 0) + (roomQuantities["Suite (AC)"] || 0);
                           const suiteRemaining = Math.max(0, suitePool - suitesUsed);
                           return ROOM_OPTIONS.map((r) => {
                             const count = availability[r.label];
                             const isSuite = suiteLabels.has(r.label);
                             const thisQty = roomQuantities[r.label] || 0;
-                            // For suites: max = already chosen for this option + remaining pool slots.
-                            // If availability not yet fetched (no dates), allow up to physical max of 2.
+                            // Suite max is always pool-aware: thisQty + remaining slots.
+                            // This enforces the shared cap whether or not dates are selected.
                             const effectiveMax = isSuite
-                              ? suiteAvailFetched ? thisQty + suiteRemaining : 2
+                              ? thisQty + suiteRemaining
                               : count !== undefined ? count : 20;
                             const poolFull = isSuite && suiteAvailFetched && suitePool > 0 && suiteRemaining === 0 && thisQty === 0;
                             const availLabel = isSuite
