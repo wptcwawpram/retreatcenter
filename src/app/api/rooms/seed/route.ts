@@ -63,22 +63,22 @@ const SEED_ROOMS = [
     description: null,
     display_order: 6,
   },
-  // Suite 1 — Fan/standard configuration
+  // Suite 1 — both physical suites are SUITE_AC (fan & AC, rate chosen at booking)
   {
     number: "ST1",
     name: "Suite 1",
-    type: "SUITE_FAN" as const,
+    type: "SUITE_AC" as const,
     building: "Main Building",
     floor: 0,
     capacity: 2,
     beds: 1,
-    price_per_night: 350,
+    price_per_night: 750,
     status: "AVAILABLE" as const,
-    amenities: ["Ceiling Fan", "Private Washroom", "TV", "Fridge", "Seating Area"],
-    has_ac: false,
+    amenities: ["Air Conditioning", "Ceiling Fan", "Private Washroom", "TV", "Fridge", "Seating Area"],
+    has_ac: true,
     has_tv: true,
     has_fridge: true,
-    description: "Suite with fan, private washroom and full amenities",
+    description: "Suite with air conditioning and ceiling fan, private washroom and full amenities",
     display_order: 7,
   },
   // Suite 2 — AC configuration

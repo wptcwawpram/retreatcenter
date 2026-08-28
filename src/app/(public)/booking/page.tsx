@@ -208,15 +208,23 @@ function BookingPage() {
       .then((data) => {
         const counts: Record<string, number> = {};
         ROOM_OPTIONS.forEach((r) => { counts[r.label] = 0; });
+        // Both SUITE_AC and SUITE_FAN are the same 2 physical suites (both have fan+AC).
+        // Suite (Fan) and Suite (AC) are rate configs sharing the same pool.
+        let suitePool = 0;
         (data.available || []).forEach((r: { type: string }) => {
-          const typeMap: Record<string, string> = {
-            "2_IN_1": "2 IN 1", "3_IN_1": "3 IN 1", "4_IN_1": "4 IN 1", "6_IN_1": "6 IN 1",
-            "SUITE_FAN": "Suite (Fan)", "SUITE_AC": "Suite (AC)",
-            "APARTMENT": "Holy Family Apartment",
-          };
-          const label = typeMap[r.type] || r.type;
-          counts[label] = (counts[label] || 0) + 1;
+          if (r.type === "SUITE_AC" || r.type === "SUITE_FAN") {
+            suitePool++;
+          } else {
+            const typeMap: Record<string, string> = {
+              "2_IN_1": "2 IN 1", "3_IN_1": "3 IN 1", "4_IN_1": "4 IN 1", "6_IN_1": "6 IN 1",
+              "APARTMENT": "Holy Family Apartment",
+            };
+            const label = typeMap[r.type];
+            if (label) counts[label] = (counts[label] || 0) + 1;
+          }
         });
+        counts["Suite (Fan)"] = suitePool;
+        counts["Suite (AC)"] = suitePool;
         setAvailability(counts);
       })
       .catch(() => setAvailability({}))
@@ -311,6 +319,13 @@ function BookingPage() {
         });
         if (overbooked.length > 0) {
           setSubmitError(`You've selected more rooms than available: ${overbooked.map((r) => `${r.label} (${availability[r.label]} available, ${roomQuantities[r.label]} selected)`).join(", ")}. Please adjust or contact us at ${CONTACT_NUMBERS[1]}.`);
+          return;
+        }
+        // Suite (Fan) and Suite (AC) share the same 2 physical rooms — total combined must not exceed pool
+        const totalSuitesSelected = (roomQuantities["Suite (Fan)"] || 0) + (roomQuantities["Suite (AC)"] || 0);
+        const suitePoolSize = availability["Suite (AC)"] ?? 0;
+        if (totalSuitesSelected > suitePoolSize) {
+          setSubmitError(`Only ${suitePoolSize} suite room${suitePoolSize === 1 ? "" : "s"} available. Your combined Suite (Fan) + Suite (AC) selection (${totalSuitesSelected}) exceeds that. Please reduce your suite selections.`);
           return;
         }
       }

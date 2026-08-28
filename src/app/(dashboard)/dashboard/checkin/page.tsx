@@ -387,16 +387,23 @@ export default function CheckInPage() {
 
               {(() => {
                 const expectedType = selectedBooking.booking_rooms?.[0]?.room?.type;
+                const suiteTypes = new Set(["SUITE_FAN", "SUITE_AC"]);
+                // Suite (Fan) and Suite (AC) share the same physical rooms — show all suites for either
                 const eligibleRooms = expectedType
-                  ? availableRooms.filter((r) => r.type === expectedType)
+                  ? availableRooms.filter((r) =>
+                      suiteTypes.has(expectedType) ? suiteTypes.has(r.type) : r.type === expectedType,
+                    )
                   : availableRooms;
+                const badgeLabel = expectedType
+                  ? suiteTypes.has(expectedType) ? "Suite rooms" : expectedType.replace(/_/g, " ")
+                  : null;
                 return (
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-sm font-medium">Assign Rooms</p>
-                      {expectedType && (
+                      {badgeLabel && (
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                          {expectedType.replace(/_/g, " ")} only
+                          {badgeLabel} only
                         </span>
                       )}
                     </div>
@@ -419,7 +426,7 @@ export default function CheckInPage() {
                     </div>
                     {eligibleRooms.length === 0 && (
                       <p className="text-sm text-muted-foreground text-center py-4">
-                        {expectedType ? `No available ${expectedType.replace(/_/g, " ")} rooms.` : "No available rooms."} Check room management.
+                        {badgeLabel ? `No available ${badgeLabel}.` : "No available rooms."} Check room management.
                       </p>
                     )}
                   </div>

@@ -50,11 +50,16 @@ export async function POST(request: NextRequest) {
           .eq("booking_id", booking_id);
         const expectedType = (existingAssigned?.[0]?.room as { type?: string } | null)?.type;
         if (expectedType) {
+          const suiteTypes = new Set(["SUITE_FAN", "SUITE_AC"]);
           const { data: selectedRoomData } = await supabase
             .from("rooms")
             .select("id, type")
             .in("id", room_ids);
-          const wrongType = (selectedRoomData || []).find((r) => r.type !== expectedType);
+          const wrongType = (selectedRoomData || []).find((r) => {
+            // Suite (Fan) and Suite (AC) bookings can use either physical suite room
+            if (suiteTypes.has(expectedType) && suiteTypes.has(r.type)) return false;
+            return r.type !== expectedType;
+          });
           if (wrongType) {
             return NextResponse.json({ error: `Room type mismatch: this booking requires ${expectedType.replace(/_/g, " ")} rooms. Please select the correct room type.` }, { status: 400 });
           }
