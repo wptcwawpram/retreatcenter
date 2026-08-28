@@ -63,25 +63,25 @@ const SEED_ROOMS = [
     description: null,
     display_order: 6,
   },
-  // Suite 1 (between room 6 and 7)
+  // Suite 1 — Fan/standard configuration
   {
     number: "ST1",
     name: "Suite 1",
-    type: "SUITE_AC" as const,
+    type: "SUITE_FAN" as const,
     building: "Main Building",
     floor: 0,
     capacity: 2,
     beds: 1,
-    price_per_night: 500,
+    price_per_night: 350,
     status: "AVAILABLE" as const,
-    amenities: ["Air Conditioning", "Private Washroom", "TV", "Fridge", "Seating Area"],
-    has_ac: true,
+    amenities: ["Ceiling Fan", "Private Washroom", "TV", "Fridge", "Seating Area"],
+    has_ac: false,
     has_tv: true,
     has_fridge: true,
-    description: "Premium suite with air conditioning and full amenities",
+    description: "Suite with fan, private washroom and full amenities",
     display_order: 7,
   },
-  // Suite 2
+  // Suite 2 — AC configuration
   {
     number: "ST2",
     name: "Suite 2",
@@ -90,7 +90,7 @@ const SEED_ROOMS = [
     floor: 0,
     capacity: 2,
     beds: 1,
-    price_per_night: 500,
+    price_per_night: 750,
     status: "AVAILABLE" as const,
     amenities: ["Air Conditioning", "Private Washroom", "TV", "Fridge", "Seating Area"],
     has_ac: true,

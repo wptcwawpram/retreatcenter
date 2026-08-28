@@ -149,11 +149,17 @@ function BookingPage() {
       .then((r) => r.json())
       .then((data) => {
         if (data.types?.length > 0) {
-          setRoomOptions(data.types.map((t: { label: string; price: number; slug: string }) => ({
-            label: t.label,
-            price: t.price,
-            slug: t.slug,
-          })));
+          // Build a price lookup from DB results, keyed by slug
+          const apiBySlug = new Map<string, { label: string; price: number; slug: string }>(
+            data.types.map((t: { label: string; price: number; slug: string }) => [t.slug, t])
+          );
+          // Use DEFAULT order + labels, but take price from DB when available
+          // This ensures Suite (Fan) always shows even if not yet in DB
+          const merged = DEFAULT_ROOM_OPTIONS.map((def) => {
+            const api = apiBySlug.get(def.slug);
+            return api ? { ...def, price: api.price } : def;
+          });
+          setRoomOptions(merged);
         }
       })
       .catch(() => {});
