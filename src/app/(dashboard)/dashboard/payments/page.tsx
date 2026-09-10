@@ -71,8 +71,8 @@ export default function PaymentsPage() {
     },
     { name: "amount", label: "Amount (GH₵)", type: "number", required: true, min: 0, step: 0.01 },
     { name: "method", label: "Payment Method", type: "select", required: true, options: Object.entries(PAYMENT_METHOD_LABELS).map(([k, v]) => ({ label: v, value: k })) },
-    { name: "account_id", label: "Deposit To Account", type: "select",
-      options: [{ label: "-- No account --", value: "" }, ...activeAccounts.map((a: { id: string; name: string; type: string }) => ({ label: `${a.name} (${a.type})`, value: a.id }))]
+    { name: "account_id", label: "Deposit To Account", type: "select", required: true,
+      options: activeAccounts.map((a: { id: string; name: string; type: string }) => ({ label: `${a.name} (${a.type})`, value: a.id }))
     },
     { name: "status", label: "Status", type: "select", required: true, defaultValue: "COMPLETED", options: Object.entries(PAYMENT_STATUS_CONFIG).map(([k, v]) => ({ label: v.label, value: k })) },
     { name: "notes", label: "Notes", type: "textarea", colSpan: 2, placeholder: "Payment notes" },

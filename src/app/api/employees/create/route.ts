@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     const admin = await getAuthUser();
     if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { full_name, phone, role, dashboard_access } = await request.json();
+    const { full_name, phone, role, dashboard_access, email } = await request.json();
 
     if (!full_name || !phone) {
       return NextResponse.json({ error: "Name and phone number are required" }, { status: 400 });
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
       .from("profiles")
       .upsert({
         id: authUserId,
-        email: tempEmail,
+        email: email?.trim() || tempEmail,
         full_name,
         phone: phoneFormatted,
         role: role || "receptionist",

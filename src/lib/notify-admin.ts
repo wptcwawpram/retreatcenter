@@ -29,10 +29,10 @@ export async function notifyAdmin({ type, subject, message }: NotifyOptions) {
     "email",
   ];
 
-  const { data: settings } = await supabase
-    .from("settings")
-    .select("key, value")
-    .in("key", settingKeys);
+  const [{ data: settings }, { data: staffProfiles }] = await Promise.all([
+    supabase.from("settings").select("key, value").in("key", settingKeys),
+    supabase.from("profiles").select("phone, email").in("role", ["admin", "super_admin", "manager"]).eq("is_active", true),
+  ]);
 
   const cfg: Record<string, string> = {};
   settings?.forEach((s: { key: string; value: string }) => {
@@ -51,8 +51,15 @@ export async function notifyAdmin({ type, subject, message }: NotifyOptions) {
     return;
   }
 
-  const adminPhones = (cfg.admin_notif_phone || cfg.phone || "").split(",").map((p) => p.trim()).filter(Boolean);
-  const adminEmails = (cfg.admin_notif_email || cfg.email || "").split(",").map((e) => e.trim()).filter(Boolean);
+  // Merge phones: settings-configured list + active admin/manager profile phones
+  const settingsPhones = (cfg.admin_notif_phone || cfg.phone || "").split(",").map((p: string) => p.trim()).filter(Boolean);
+  const profilePhones = (staffProfiles || []).map((p: { phone: string | null }) => p.phone?.trim()).filter(Boolean) as string[];
+  const adminPhones = [...new Set([...settingsPhones, ...profilePhones])];
+
+  // Merge emails: settings-configured list + active admin/manager profile emails (skip @wptc.local fakes)
+  const settingsEmails = (cfg.admin_notif_email || cfg.email || "").split(",").map((e: string) => e.trim()).filter(Boolean);
+  const profileEmails = (staffProfiles || []).map((p: { email: string | null }) => p.email?.trim()).filter((e): e is string => !!e && !e.endsWith("@wptc.local"));
+  const adminEmails = [...new Set([...settingsEmails, ...profileEmails])];
 
   const results: { sms?: string; email?: string } = {};
 

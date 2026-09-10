@@ -135,7 +135,7 @@ const SEED_ROOMS = [
     description: null,
     display_order: 16 + i,
   })),
-  // Holy Family: Room 1 (2-in-1)
+  // Holy Family: Room 1 (2-in-1, same price as regular 2-in-1)
   {
     number: "HF1",
     name: "Holy Family Room 1",
@@ -144,7 +144,7 @@ const SEED_ROOMS = [
     floor: 0,
     capacity: 2,
     beds: 2,
-    price_per_night: 750,
+    price_per_night: 150,
     status: "AVAILABLE" as const,
     amenities: ["Air Conditioning", "Private Washroom", "Kitchen", "Fridge", "TV"],
     has_ac: true,
@@ -153,7 +153,7 @@ const SEED_ROOMS = [
     description: "Holy Family Apartment - 2-in-1 bedroom",
     display_order: 24,
   },
-  // Holy Family: Room 2 (2-in-1)
+  // Holy Family: Room 2 (2-in-1, same price as regular 2-in-1)
   {
     number: "HF2",
     name: "Holy Family Room 2",
@@ -162,7 +162,7 @@ const SEED_ROOMS = [
     floor: 0,
     capacity: 2,
     beds: 2,
-    price_per_night: 750,
+    price_per_night: 150,
     status: "AVAILABLE" as const,
     amenities: ["Air Conditioning", "Private Washroom", "Kitchen", "Fridge", "TV"],
     has_ac: true,
@@ -171,7 +171,7 @@ const SEED_ROOMS = [
     description: "Holy Family Apartment - 2-in-1 bedroom",
     display_order: 25,
   },
-  // Holy Family: Room 3 (3-in-1)
+  // Holy Family: Room 3 (price set by admin)
   {
     number: "HF3",
     name: "Holy Family Room 3",
@@ -180,13 +180,13 @@ const SEED_ROOMS = [
     floor: 0,
     capacity: 3,
     beds: 3,
-    price_per_night: 750,
+    price_per_night: 0,
     status: "AVAILABLE" as const,
     amenities: ["Air Conditioning", "Private Washroom", "Kitchen", "Fridge", "TV"],
     has_ac: true,
     has_tv: true,
     has_fridge: true,
-    description: "Holy Family Apartment - 3-in-1 bedroom",
+    description: "Holy Family Apartment - 3-in-1 bedroom (price set by admin)",
     display_order: 26,
   },
 ];

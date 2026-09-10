@@ -83,17 +83,7 @@ export async function POST(request: NextRequest) {
 
     if (bookingError) throw bookingError;
 
-    // 3. Create finance record for expected income
-    await supabase.from("finance_records").insert({
-      type: "INCOME",
-      category: "Room Booking",
-      description: `Website booking by ${guest.full_name} (${bookingRecord.reference})`,
-      amount: totalAmount,
-      date: new Date().toISOString().split("T")[0],
-      booking_id: bookingRecord.id,
-    });
-
-    // 4. Notify admin (non-blocking)
+    // 3. Notify admin (non-blocking) - income is only recorded when payment is actually received
     notifyAdmin({
       type: "booking",
       subject: `New Booking: ${bookingRecord.reference}`,

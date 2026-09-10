@@ -91,6 +91,7 @@ export default function EmployeesPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [addName, setAddName] = useState("");
   const [addPhone, setAddPhone] = useState("");
+  const [addEmail, setAddEmail] = useState("");
   const [addRole, setAddRole] = useState("receptionist");
   const [customRole, setCustomRole] = useState("");
   const [addAccess, setAddAccess] = useState<string[]>(getDefaultAccess("receptionist"));
@@ -100,6 +101,7 @@ export default function EmployeesPage() {
   const [editItem, setEditItem] = useState<Profile | null>(null);
   const [editName, setEditName] = useState("");
   const [editPhone, setEditPhone] = useState("");
+  const [editEmail, setEditEmail] = useState("");
   const [editRole, setEditRole] = useState("");
   const [editCustomRole, setEditCustomRole] = useState("");
   const [editActive, setEditActive] = useState(true);
@@ -166,6 +168,7 @@ export default function EmployeesPage() {
     setResendResult(null);
     setEditName(emp.full_name);
     setEditPhone(emp.phone || "");
+    setEditEmail(emp.email?.endsWith("@wptc.local") ? "" : (emp.email || ""));
     const knownRole = ASSIGNABLE_ROLES.find((r) => r.value === emp.role);
     if (knownRole) {
       setEditRole(emp.role);
@@ -191,7 +194,7 @@ export default function EmployeesPage() {
       const res = await fetch("/api/employees/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ full_name: addName, phone: addPhone, role: finalRole, dashboard_access: accessToSend }),
+        body: JSON.stringify({ full_name: addName, phone: addPhone, role: finalRole, dashboard_access: accessToSend, email: addEmail.trim() || undefined }),
       });
       const data = await res.json();
       if (!res.ok) { alert(data.error || "Failed to add employee"); return; }
@@ -202,7 +205,7 @@ export default function EmployeesPage() {
         alert(`Employee added, but SMS invite failed: ${data.smsError}\n\nYou can resend from the edit dialog.`);
       }
       setShowAdd(false);
-      setAddName(""); setAddPhone(""); setAddRole("receptionist"); setCustomRole(""); setAddAccess(getDefaultAccess("receptionist"));
+      setAddName(""); setAddPhone(""); setAddEmail(""); setAddRole("receptionist"); setCustomRole(""); setAddAccess(getDefaultAccess("receptionist"));
       setAddAvatarPreview(null); setAddAvatarFile(null);
       refetch();
     } catch { alert("Failed to add employee"); }
@@ -221,11 +224,15 @@ export default function EmployeesPage() {
         : JSON.stringify(editAccess) !== JSON.stringify(getDefaultAccess(finalRole))
           ? editAccess
           : null;
+      const normalized = editPhone.replace(/\D/g, "");
+      const last9 = normalized.slice(-9);
+      const phoneFormatted = normalized ? (normalized.startsWith("233") ? `+${normalized}` : `+233${last9}`) : null;
       const { error } = await supabase
         .from("profiles")
         .update({
           full_name: editName,
-          phone: editPhone || null,
+          phone: phoneFormatted || editPhone || null,
+          email: editEmail.trim() || editItem.email || null,
           role: finalRole,
           is_active: editActive,
           dashboard_access: accessToSave,
@@ -385,6 +392,10 @@ export default function EmployeesPage() {
                 <Input value={addPhone} onChange={(e) => setAddPhone(e.target.value)} placeholder="e.g. 024 000 0000" type="tel" className="h-9" />
               </div>
               <div className="space-y-1.5">
+                <Label className="text-xs">Email <span className="text-muted-foreground font-normal">(for booking notifications)</span></Label>
+                <Input value={addEmail} onChange={(e) => setAddEmail(e.target.value)} placeholder="e.g. kwame@example.com" type="email" className="h-9" />
+              </div>
+              <div className="space-y-1.5">
                 <Label className="text-xs">Role</Label>
                 <select value={addRole} onChange={(e) => {
                   setAddRole(e.target.value);
@@ -454,6 +465,10 @@ export default function EmployeesPage() {
                   <Label className="text-xs">Phone</Label>
                   <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} type="tel" className="h-9" />
                 </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Email <span className="text-muted-foreground font-normal">(for booking notifications)</span></Label>
+                <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} placeholder="e.g. kwame@example.com" type="email" className="h-9" />
               </div>
               <div className="grid grid-cols-2 gap-3 items-start">
                 <div className="space-y-1.5">
