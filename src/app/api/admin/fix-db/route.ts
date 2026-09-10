@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     const updates = [
       { number: "HF1", price_per_night: 150 },
       { number: "HF2", price_per_night: 150 },
-      { number: "HF3", price_per_night: 0 },
+      { number: "HF3", price_per_night: 180 },
     ];
     const errors: string[] = [];
     for (const u of updates) {

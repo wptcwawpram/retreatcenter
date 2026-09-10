@@ -32,6 +32,17 @@ const ROOM_TYPES = [
   { label: "Kitchen", value: "KITCHEN" },
 ];
 
+const DEFAULT_PRICES: Record<string, number> = {
+  "2_IN_1": 150,
+  "3_IN_1": 180,
+  "4_IN_1": 200,
+  "6_IN_1": 270,
+  "SUITE_FAN": 350,
+  "SUITE_AC": 750,
+  "APARTMENT": 0,
+  "KITCHEN": 0,
+};
+
 const STATUS_DOT: Record<string, string> = {
   AVAILABLE: "bg-teal-400",
   OCCUPIED: "bg-blue-400",
@@ -78,7 +89,40 @@ export default function RoomsPage() {
   const [editItem, setEditItem] = useState<Room | null>(null);
   const [deleteItem, setDeleteItem] = useState<Room | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [seeding, setSeeding] = useState(false);
+
+  // Edit form state
+  const [editNumber, setEditNumber] = useState("");
+  const [editName, setEditName] = useState("");
+  const [editType, setEditType] = useState("2_IN_1");
+  const [editBuilding, setEditBuilding] = useState("");
+  const [editFloor, setEditFloor] = useState(0);
+  const [editCapacity, setEditCapacity] = useState(2);
+  const [editBeds, setEditBeds] = useState(1);
+  const [editPrice, setEditPrice] = useState(0);
+  const [editStatus, setEditStatus] = useState("AVAILABLE");
+  const [editHasAc, setEditHasAc] = useState(false);
+  const [editHasTv, setEditHasTv] = useState(false);
+  const [editHasFridge, setEditHasFridge] = useState(false);
+  const [editDesc, setEditDesc] = useState("");
+
+  const openEdit = (room: Room) => {
+    setEditItem(room);
+    setEditNumber(room.number);
+    setEditName(room.name || "");
+    setEditType(room.type);
+    setEditBuilding(room.building);
+    setEditFloor(room.floor || 0);
+    setEditCapacity(room.capacity || 2);
+    setEditBeds(room.beds || 1);
+    setEditPrice(Number(room.price_per_night) || 0);
+    setEditStatus(room.status);
+    setEditHasAc(room.has_ac || false);
+    setEditHasTv(room.has_tv || false);
+    setEditHasFridge(room.has_fridge || false);
+    setEditDesc(room.description || "");
+  };
 
   const handleSeed = async () => {
     setSeeding(true);
@@ -163,24 +207,29 @@ export default function RoomsPage() {
     refetch();
   };
 
-  const handleEdit = async (values: Record<string, unknown>) => {
+  const handleEdit = async () => {
     if (!editItem) return;
-    await updateRoom(editItem.id, {
-      number: values.number as string,
-      name: (values.name as string) || "",
-      type: values.type as Room["type"],
-      building: values.building as string,
-      floor: Number(values.floor) || 0,
-      capacity: Number(values.capacity) || 2,
-      beds: Number(values.beds) || 1,
-      status: (values.status as Room["status"]) || editItem.status,
-      has_ac: !!values.has_ac,
-      has_tv: !!values.has_tv,
-      has_fridge: !!values.has_fridge,
-      description: (values.description as string) || null,
-    });
-    setEditItem(null);
-    refetch();
+    setSaving(true);
+    try {
+      await updateRoom(editItem.id, {
+        number: editNumber,
+        name: editName || "",
+        type: editType as Room["type"],
+        building: editBuilding,
+        floor: editFloor,
+        capacity: editCapacity,
+        beds: editBeds,
+        price_per_night: editPrice,
+        status: editStatus as Room["status"],
+        has_ac: editHasAc,
+        has_tv: editHasTv,
+        has_fridge: editHasFridge,
+        description: editDesc || null,
+      });
+      setEditItem(null);
+      refetch();
+    } catch { alert("Failed to update room"); }
+    finally { setSaving(false); }
   };
 
   const handleDelete = async () => {
@@ -286,7 +335,7 @@ export default function RoomsPage() {
             return (
               <div
                 key={room.id}
-                onClick={() => setEditItem(room)}
+                onClick={() => openEdit(room)}
                 className={cn(
                   "relative rounded-xl border bg-card p-3.5 cursor-pointer group transition-all hover:shadow-md hover:shadow-black/[0.03]",
                   STATUS_CARD_BG[room.status]
@@ -387,7 +436,7 @@ export default function RoomsPage() {
                   <td className="p-3 text-right font-semibold tabular-nums">{formatCurrency(Number(room.price_per_night))}</td>
                   <td className="p-3">
                     <div className="flex items-center justify-end gap-0.5">
-                      <Button variant="ghost" size="icon-xs" onClick={() => setEditItem(room)}><Edit2 className="h-3.5 w-3.5" /></Button>
+                      <Button variant="ghost" size="icon-xs" onClick={() => openEdit(room)}><Edit2 className="h-3.5 w-3.5" /></Button>
                       <Button variant="ghost" size="icon-xs" className="text-red-600" onClick={() => setDeleteItem(room)}><Trash2 className="h-3.5 w-3.5" /></Button>
                     </div>
                   </td>
@@ -404,12 +453,105 @@ export default function RoomsPage() {
       <FormDialog open={showAdd} onOpenChange={setShowAdd} title="Add Room" fields={roomFields} onSubmit={handleAdd} submitLabel="Add Room" />
 
       {editItem && (
-        <FormDialog open={!!editItem} onOpenChange={(o) => !o && setEditItem(null)} title={`Edit Room ${editItem.number}`}
-          fields={[
-            ...roomFields,
-            { name: "status", label: "Status", type: "select", options: Object.entries(ROOM_STATUS_CONFIG).map(([k, v]) => ({ label: v.label, value: k })) },
-          ]}
-          initialValues={editItem} onSubmit={handleEdit} isEdit />
+        <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) setEditItem(null); }}>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px]" />
+          <div className="relative z-10 w-full max-w-[calc(100%-2rem)] sm:max-w-lg rounded-xl bg-popover p-5 text-sm text-popover-foreground ring-1 ring-foreground/10 shadow-xl animate-in fade-in-0 zoom-in-95 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-heading text-base font-semibold flex items-center gap-2"><Edit2 className="h-4 w-4" />Edit Room {editItem.number}</h2>
+              <button onClick={() => setEditItem(null)} className="rounded-md p-1 hover:bg-muted transition-colors">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium">Room Number</label>
+                  <Input value={editNumber} onChange={(e) => setEditNumber(e.target.value)} className="h-9" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium">Room Name</label>
+                  <Input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="e.g. Deluxe Suite" className="h-9" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium">Type</label>
+                  <select
+                    value={editType}
+                    onChange={(e) => {
+                      const t = e.target.value;
+                      setEditType(t);
+                      const defaultPrice = DEFAULT_PRICES[t];
+                      if (defaultPrice !== undefined && defaultPrice > 0) setEditPrice(defaultPrice);
+                    }}
+                    className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    {ROOM_TYPES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium">Price / Night (GH₵)</label>
+                  <Input type="number" value={editPrice} onChange={(e) => setEditPrice(Number(e.target.value))} min={0} step={10} className="h-9" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium">Building</label>
+                  <Input value={editBuilding} onChange={(e) => setEditBuilding(e.target.value)} className="h-9" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium">Status</label>
+                  <select value={editStatus} onChange={(e) => setEditStatus(e.target.value)} className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                    {Object.entries(ROOM_STATUS_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium">Floor</label>
+                  <Input type="number" value={editFloor} onChange={(e) => setEditFloor(Number(e.target.value))} min={0} className="h-9" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium">Capacity</label>
+                  <Input type="number" value={editCapacity} onChange={(e) => setEditCapacity(Number(e.target.value))} min={1} className="h-9" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium">Beds</label>
+                  <Input type="number" value={editBeds} onChange={(e) => setEditBeds(Number(e.target.value))} min={1} className="h-9" />
+                </div>
+              </div>
+              <div className="flex items-center gap-6">
+                <label className="flex items-center gap-2 text-xs cursor-pointer">
+                  <input type="checkbox" checked={editHasAc} onChange={(e) => setEditHasAc(e.target.checked)} className="h-4 w-4 rounded border-border" />
+                  Air Conditioning
+                </label>
+                <label className="flex items-center gap-2 text-xs cursor-pointer">
+                  <input type="checkbox" checked={editHasTv} onChange={(e) => setEditHasTv(e.target.checked)} className="h-4 w-4 rounded border-border" />
+                  TV
+                </label>
+                <label className="flex items-center gap-2 text-xs cursor-pointer">
+                  <input type="checkbox" checked={editHasFridge} onChange={(e) => setEditHasFridge(e.target.checked)} className="h-4 w-4 rounded border-border" />
+                  Fridge
+                </label>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium">Description</label>
+                <textarea value={editDesc} onChange={(e) => setEditDesc(e.target.value)} rows={2} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
+              </div>
+            </div>
+            <div className="-mx-5 -mb-5 mt-4 flex items-center rounded-b-xl border-t bg-muted/50 p-4">
+              <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-500/10 gap-1.5" onClick={() => setDeleteItem(editItem)}>
+                <Trash2 className="h-3.5 w-3.5" />Delete
+              </Button>
+              <div className="ml-auto flex gap-2">
+                <Button variant="outline" onClick={() => setEditItem(null)} disabled={saving}>Cancel</Button>
+                <Button onClick={handleEdit} disabled={saving || !editNumber || !editBuilding}>
+                  {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" />Saving...</> : "Save Changes"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       <Dialog open={!!deleteItem} onOpenChange={(o) => !o && setDeleteItem(null)}>
