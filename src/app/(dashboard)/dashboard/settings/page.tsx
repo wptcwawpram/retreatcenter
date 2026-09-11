@@ -205,7 +205,7 @@ export default function SettingsPage() {
               </label>
               <div className="space-y-1">
                 <p className="text-sm font-medium">{profile.full_name}</p>
-                <p className="text-xs text-muted-foreground">{profile.email}</p>
+                {profileEmail && <p className="text-xs text-muted-foreground">{profileEmail}</p>}
                 {uploadingAvatar && (
                   <p className="text-xs text-primary flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />Uploading...</p>
                 )}
@@ -229,7 +229,7 @@ export default function SettingsPage() {
                 <Input value={profilePhone} onChange={(e) => setProfilePhone(e.target.value)} className="h-9" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Email <span className="text-muted-foreground font-normal">(for notifications)</span></Label>
+                <Label className="text-xs">Email</Label>
                 <Input value={profileEmail} onChange={(e) => setProfileEmail(e.target.value)} placeholder="your@email.com" type="email" className="h-9" />
               </div>
               <div className="space-y-1.5">

@@ -291,7 +291,9 @@ export default function EmployeesPage() {
         )}
         <div>
           <p className="font-medium text-sm">{e.full_name}</p>
-          <p className="text-[11px] text-muted-foreground">{e.email}</p>
+          {e.email && !e.email.endsWith("@wptc.local") && (
+            <p className="text-[11px] text-muted-foreground">{e.email}</p>
+          )}
         </div>
       </div>
     )},
@@ -409,7 +411,7 @@ export default function EmployeesPage() {
                 <Input value={addPhone} onChange={(e) => setAddPhone(e.target.value)} placeholder="e.g. 024 000 0000" type="tel" className="h-9" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Email <span className="text-muted-foreground font-normal">(for booking notifications)</span></Label>
+                <Label className="text-xs">Email</Label>
                 <Input value={addEmail} onChange={(e) => setAddEmail(e.target.value)} placeholder="e.g. kwame@example.com" type="email" className="h-9" />
               </div>
               <div className="space-y-1.5">
@@ -484,7 +486,7 @@ export default function EmployeesPage() {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Email <span className="text-muted-foreground font-normal">(for booking notifications)</span></Label>
+                <Label className="text-xs">Email</Label>
                 <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} placeholder="e.g. kwame@example.com" type="email" className="h-9" />
               </div>
               <div className="grid grid-cols-2 gap-3 items-start">
