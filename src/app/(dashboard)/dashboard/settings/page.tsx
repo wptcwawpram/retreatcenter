@@ -68,6 +68,7 @@ export default function SettingsPage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [profileName, setProfileName] = useState("");
   const [profilePhone, setProfilePhone] = useState("");
+  const [profileEmail, setProfileEmail] = useState("");
 
   useEffect(() => {
     Promise.all([
@@ -79,6 +80,7 @@ export default function SettingsPage() {
         setProfile(meData.user);
         setProfileName(meData.user.full_name || "");
         setProfilePhone(meData.user.phone || "");
+        setProfileEmail(meData.user.email?.endsWith("@wptc.local") ? "" : (meData.user.email || ""));
         setAvatarPreview(meData.user.avatar_url || null);
       }
     }).catch(() => {}).finally(() => setLoading(false));
@@ -109,7 +111,7 @@ export default function SettingsPage() {
       const res = await fetch("/api/employees/update-profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ full_name: profileName, phone: profilePhone || null }),
+        body: JSON.stringify({ full_name: profileName, phone: profilePhone || null, email: profileEmail || null }),
       });
       if (!res.ok) throw new Error("Failed");
       setSaved("profile");
@@ -227,8 +229,8 @@ export default function SettingsPage() {
                 <Input value={profilePhone} onChange={(e) => setProfilePhone(e.target.value)} className="h-9" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Email</Label>
-                <Input value={profile.email} disabled className="h-9 opacity-60" />
+                <Label className="text-xs">Email <span className="text-muted-foreground font-normal">(for notifications)</span></Label>
+                <Input value={profileEmail} onChange={(e) => setProfileEmail(e.target.value)} placeholder="your@email.com" type="email" className="h-9" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Role</Label>

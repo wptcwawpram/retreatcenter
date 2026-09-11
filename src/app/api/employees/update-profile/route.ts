@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { full_name, phone } = await request.json();
+    const { full_name, phone, email } = await request.json();
     if (!full_name?.trim()) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
@@ -32,9 +32,12 @@ export async function POST(request: NextRequest) {
       { cookies: { getAll: () => [], setAll: () => {} } },
     );
 
+    const updates: Record<string, string | null> = { full_name: full_name.trim(), phone: phone || null };
+    if (email?.trim()) updates.email = email.trim();
+
     const { error } = await service
       .from("profiles")
-      .update({ full_name: full_name.trim(), phone: phone || null })
+      .update(updates)
       .eq("id", user.id);
 
     if (error) throw error;

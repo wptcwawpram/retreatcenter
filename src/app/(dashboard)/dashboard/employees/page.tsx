@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { DataTable, type Column } from "@/components/dashboard/data-table";
 import { Badge } from "@/components/ui/badge";
@@ -86,6 +86,13 @@ function PageAccessSelector({ selectedPages, onChange, role }: { selectedPages: 
 
 export default function EmployeesPage() {
   const { data: employees, loading, refetch } = useSupabaseQuery(() => getProfiles(), []);
+  const [currentRole, setCurrentRole] = useState<string>("");
+
+  useEffect(() => {
+    fetch("/api/auth/me").then((r) => r.json()).then((d) => {
+      if (d.user?.role) setCurrentRole(d.user.role);
+    }).catch(() => {});
+  }, []);
 
   // Add Employee state
   const [showAdd, setShowAdd] = useState(false);
@@ -164,6 +171,7 @@ export default function EmployeesPage() {
   };
 
   const openEdit = (emp: Profile) => {
+    if (emp.role === "super_admin" && currentRole !== "super_admin") return;
     setEditItem(emp);
     setResendResult(null);
     setEditName(emp.full_name);
@@ -308,18 +316,27 @@ export default function EmployeesPage() {
         </span>
       </div>
     )},
-    { header: "", accessor: (e) => (
-      <div className="flex items-center gap-0.5">
-        <Button variant="ghost" size="icon-xs" onClick={(e2) => { e2.stopPropagation(); openEdit(e); }}>
-          <Edit2 className="h-3.5 w-3.5" />
-        </Button>
-        {e.role !== "super_admin" && (
-          <Button variant="ghost" size="icon-xs" onClick={(e2) => { e2.stopPropagation(); setDeleteItem(e); }} className="text-red-500 hover:text-red-600 hover:bg-red-50">
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
-        )}
-      </div>
-    )},
+    { header: "", accessor: (e) => {
+      const isProtected = e.role === "super_admin" && currentRole !== "super_admin";
+      return (
+        <div className="flex items-center gap-0.5">
+          {isProtected ? (
+            <span className="text-[10px] text-muted-foreground px-1">Protected</span>
+          ) : (
+            <>
+              <Button variant="ghost" size="icon-xs" onClick={(e2) => { e2.stopPropagation(); openEdit(e); }}>
+                <Edit2 className="h-3.5 w-3.5" />
+              </Button>
+              {e.role !== "super_admin" && (
+                <Button variant="ghost" size="icon-xs" onClick={(e2) => { e2.stopPropagation(); setDeleteItem(e); }} className="text-red-500 hover:text-red-600 hover:bg-red-50">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </>
+          )}
+        </div>
+      );
+    }},
   ];
 
   const effectiveAddRole = addRole === "__custom__" ? customRole.trim().toLowerCase() : addRole;
