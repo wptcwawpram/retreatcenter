@@ -311,21 +311,24 @@ export async function getInventoryItems() {
 }
 
 export async function createInventoryItem(item: Omit<InventoryItem, "id" | "created_at">) {
-  const { data, error } = await supabase()
-    .from("inventory_items")
-    .insert(item)
-    .select()
-    .single();
-  if (error) throw error;
-  return data as InventoryItem;
+  const res = await fetch("/api/inventory/create", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(item),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to create item");
+  return data.item as InventoryItem;
 }
 
 export async function updateInventoryItem(id: string, updates: Partial<Omit<InventoryItem, "id" | "created_at">>) {
-  const { error } = await supabase()
-    .from("inventory_items")
-    .update(updates)
-    .eq("id", id);
-  if (error) throw error;
+  const res = await fetch("/api/inventory/update", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, updates }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to update item");
 }
 
 export async function deleteInventoryItem(id: string) {
