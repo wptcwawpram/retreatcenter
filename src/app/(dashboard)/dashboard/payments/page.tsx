@@ -10,11 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { PAYMENT_STATUS_CONFIG, PAYMENT_METHOD_LABELS } from "@/lib/constants";
-import { getPayments, getBookings, deletePayment, getFinanceAccounts } from "@/lib/supabase/queries";
+import { getPayments, getBookings, deletePayment, updatePaymentFull, getFinanceAccounts } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { useUndoableDelete } from "@/hooks/use-undoable-delete";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { Search, Wallet, Clock, CreditCard, TrendingUp, Loader2, Trash2, AlertCircle, Download } from "lucide-react";
+import { Search, Wallet, Clock, CreditCard, TrendingUp, Loader2, Trash2, Edit2, AlertCircle, Download } from "lucide-react";
 import { downloadCSV } from "@/lib/export-csv";
 import { Button } from "@/components/ui/button";
 
@@ -39,6 +39,7 @@ export default function PaymentsPage() {
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [deleteItem, setDeleteItem] = useState<PaymentRow | null>(null);
+  const [editItem, setEditItem] = useState<PaymentRow | null>(null);
   const { pendingIds, scheduleDelete } = useUndoableDelete(refetch);
 
   const allPayments = (payments || []) as PaymentRow[];
@@ -113,6 +114,29 @@ export default function PaymentsPage() {
     });
   };
 
+  // Edit reassigns/adjusts a payment; account is left on its existing record
+  const editFields: FormField[] = [
+    { name: "booking_id", label: "Booking", type: "select", required: true, colSpan: 2,
+      options: allBookings.map((b) => ({ label: `${b.reference} — ${(b as { guest?: { full_name: string } }).guest?.full_name ?? "Unknown"}`, value: b.id }))
+    },
+    { name: "amount", label: "Amount (GH₵)", type: "number", required: true, min: 0, step: 0.01 },
+    { name: "method", label: "Payment Method", type: "select", required: true, options: Object.entries(PAYMENT_METHOD_LABELS).map(([k, v]) => ({ label: v, value: k })) },
+    { name: "status", label: "Status", type: "select", required: true, options: Object.entries(PAYMENT_STATUS_CONFIG).map(([k, v]) => ({ label: v.label, value: k })) },
+    { name: "notes", label: "Notes", type: "textarea", colSpan: 2, placeholder: "Payment notes" },
+  ];
+
+  const handleEdit = async (values: Record<string, unknown>) => {
+    if (!editItem) return;
+    await updatePaymentFull(editItem.id, {
+      booking_id: values.booking_id as string,
+      amount: Number(values.amount),
+      method: values.method as string,
+      status: values.status as string,
+      notes: (values.notes as string) || null,
+    });
+    refetch();
+  };
+
   const columns: Column<PaymentRow>[] = [
     { header: "Reference", accessor: (p) => <span className="font-mono text-[11px] font-bold">{p.reference}</span> },
     { header: "Booking", accessor: (p) => (
@@ -126,9 +150,14 @@ export default function PaymentsPage() {
     { header: "Status", accessor: (p) => <StatusBadge status={p.status} config={PAYMENT_STATUS_CONFIG} /> },
     { header: "Date", accessor: (p) => <span className="text-xs text-muted-foreground">{formatDate(p.created_at)}</span> },
     { header: "", accessor: (p) => (
-      <Button variant="ghost" size="icon-xs" className="text-red-600" onClick={(e) => { e.stopPropagation(); setDeleteItem(p); }}>
-        <Trash2 className="h-3.5 w-3.5" />
-      </Button>
+      <div className="flex items-center gap-1 justify-end">
+        <Button variant="ghost" size="icon-xs" title="Edit" onClick={(e) => { e.stopPropagation(); setEditItem(p); }}>
+          <Edit2 className="h-3.5 w-3.5" />
+        </Button>
+        <Button variant="ghost" size="icon-xs" className="text-red-600" title="Delete" onClick={(e) => { e.stopPropagation(); setDeleteItem(p); }}>
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </div>
     )},
   ];
 
@@ -175,6 +204,25 @@ export default function PaymentsPage() {
       <DataTable columns={columns} data={filtered} keyExtractor={(p) => p.id} total={filtered.length} emptyMessage="No payments found" />
 
       <FormDialog open={showAdd} onOpenChange={setShowAdd} title="Record Payment" fields={addFields} onSubmit={handleAdd} submitLabel="Record Payment" />
+
+      {editItem && (
+        <FormDialog
+          open={!!editItem}
+          onOpenChange={(o) => !o && setEditItem(null)}
+          title={`Edit Payment ${editItem.reference}`}
+          fields={editFields}
+          initialValues={{
+            booking_id: editItem.booking_id,
+            amount: editItem.amount,
+            method: editItem.method,
+            status: editItem.status,
+            notes: editItem.notes ?? "",
+          }}
+          onSubmit={handleEdit}
+          submitLabel="Save Changes"
+          isEdit
+        />
+      )}
 
       <Dialog open={!!deleteItem} onOpenChange={(o) => !o && setDeleteItem(null)}>
         <DialogContent className="sm:max-w-sm">

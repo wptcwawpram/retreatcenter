@@ -274,7 +274,30 @@ export async function createPayment(payment: Omit<Payment, "id" | "created_at">)
 }
 
 export async function deletePayment(id: string) {
-  await adminDelete("payments", id);
+  // Route through manage endpoint so the booking + income + account balance are reversed
+  const res = await fetch("/api/payments/manage", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id }),
+  });
+  if (!res.ok) {
+    const d = await res.json().catch(() => ({}));
+    throw new Error(d.error || "Failed to delete payment");
+  }
+}
+
+export async function updatePaymentFull(id: string, updates: {
+  amount?: number; method?: string; status?: string; account_id?: string | null; booking_id?: string; notes?: string | null;
+}) {
+  const res = await fetch("/api/payments/manage", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, ...updates }),
+  });
+  if (!res.ok) {
+    const d = await res.json().catch(() => ({}));
+    throw new Error(d.error || "Failed to update payment");
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════

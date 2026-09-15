@@ -96,22 +96,27 @@ export async function POST(request: NextRequest) {
       if (payErr) throw payErr;
       createdPayments.push(payment);
 
-      // 2. Create finance income record
-      const { error: finErr } = await supabase
-        .from("finance_records")
-        .insert({
-          type: "INCOME",
-          category: "Booking Payment",
-          description: `${lineMethod} payment for booking ${booking.reference} (${guestName})`,
-          amount: lineAmt,
-          date: today,
-          booking_id,
-          account_id: line.account_id || null,
-          reference: booking.reference,
-          payment_method: lineMethod,
-          recorded_by: user.id,
-        });
-      if (finErr) console.error("Finance record error:", finErr);
+      // 2. Create finance income record (linked to this payment when possible)
+      const finRecord: Record<string, unknown> = {
+        type: "INCOME",
+        category: "Booking Payment",
+        description: `${lineMethod} payment for booking ${booking.reference} (${guestName})`,
+        amount: lineAmt,
+        date: today,
+        booking_id,
+        account_id: line.account_id || null,
+        reference: booking.reference,
+        payment_method: lineMethod,
+        recorded_by: user.id,
+        payment_id: payment?.id || null,
+      };
+      const { error: finErr } = await supabase.from("finance_records").insert(finRecord);
+      if (finErr && /column/i.test(finErr.message)) {
+        delete finRecord.payment_id;
+        await supabase.from("finance_records").insert(finRecord);
+      } else if (finErr) {
+        console.error("Finance record error:", finErr);
+      }
 
       // 3. Credit the account balance
       if (line.account_id) {
