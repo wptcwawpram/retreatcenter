@@ -90,6 +90,7 @@ export default function FinancePage() {
   const [typeFilter, setTypeFilter] = useState("ALL");
   const [showCategories, setShowCategories] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [recalcing, setRecalcing] = useState(false);
 
   // Transfer form
   const [txFrom, setTxFrom] = useState("");
@@ -270,7 +271,6 @@ export default function FinancePage() {
     try { await setDefaultFinanceAccount(id); refetchAccounts(); } catch {}
   };
 
-  const [recalcing, setRecalcing] = useState(false);
   const handleRecalc = async () => {
     setRecalcing(true);
     try {
