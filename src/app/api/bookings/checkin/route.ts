@@ -83,6 +83,10 @@ export async function POST(request: NextRequest) {
             newRoomIds.map((room_id: string) => ({ booking_id, room_id })),
           );
         }
+
+        // Keep bookings.room_ids in sync so the calendar reflects the assignment
+        const allAssigned = Array.from(new Set([...(existingRooms.data || []).map((r) => r.room_id), ...room_ids]));
+        await supabase.from("bookings").update({ room_ids: allAssigned }).eq("id", booking_id);
       }
 
       const guest = booking.guest;

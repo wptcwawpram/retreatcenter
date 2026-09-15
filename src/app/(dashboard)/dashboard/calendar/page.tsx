@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
-import { getRooms, getBookings } from "@/lib/supabase/queries";
+import { getRooms, getBookingsWithRooms } from "@/lib/supabase/queries";
+import { AssignRoomsDialog } from "@/components/dashboard/assign-rooms-dialog";
 import { formatCurrency, sortRooms } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -15,8 +16,10 @@ import {
   User,
   Eye,
   X,
+  BedDouble,
+  LayoutGrid,
 } from "lucide-react";
-import type { Room, Booking, Guest } from "@/lib/supabase/types";
+import type { Booking, Guest } from "@/lib/supabase/types";
 import Link from "next/link";
 
 type BookingWithGuest = Booking & { guest: Guest };
@@ -92,13 +95,30 @@ type ViewMode = "week" | "2week" | "month";
 
 export default function CalendarPage() {
   const [viewMode, setViewMode] = useState<ViewMode>("2week");
+  const [boardView, setBoardView] = useState<"rooms" | "dates">("rooms");
   const [startDate, setStartDate] = useState(() => getMonday(todayStr()));
   const [selectedBooking, setSelectedBooking] = useState<BookingWithGuest | null>(null);
+  const [assignItem, setAssignItem] = useState<BookingWithGuest | null>(null);
 
   const { data: rooms, loading: roomsLoading } = useSupabaseQuery(getRooms, []);
-  const { data: bookings, loading: bookingsLoading } = useSupabaseQuery(getBookings, []);
+  const { data: bookings, loading: bookingsLoading, refetch } = useSupabaseQuery(getBookingsWithRooms, []);
 
   const loading = roomsLoading || bookingsLoading;
+
+  const allBookings = (bookings || []) as BookingWithGuest[];
+
+  // Active bookings overlapping the current window (for the dates timeline)
+  const windowBookings = useMemo(() => {
+    return allBookings
+      .filter((b) => b.status !== "CANCELLED" && b.status !== "NO_SHOW")
+      .filter((b) => datesOverlap(b.check_in, b.check_out, startDate, addDays(startDate, viewMode === "week" ? 7 : viewMode === "2week" ? 14 : 30)))
+      .sort((a, b) => {
+        const au = (a.room_ids?.length || 0) === 0 ? 0 : 1;
+        const bu = (b.room_ids?.length || 0) === 0 ? 0 : 1;
+        if (au !== bu) return au - bu; // unassigned first
+        return a.check_in.localeCompare(b.check_in);
+      });
+  }, [allBookings, startDate, viewMode]);
 
   const daysCount = viewMode === "week" ? 7 : viewMode === "2week" ? 14 : 30;
   const endDate = addDays(startDate, daysCount);
@@ -171,11 +191,31 @@ export default function CalendarPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Booking Calendar</h1>
           <p className="text-sm text-muted-foreground">
-            {formatMonthYear(startDate)} — Room occupancy overview
+            {formatMonthYear(startDate)} — {boardView === "rooms" ? "Room occupancy" : "Bookings by date"}
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex border border-border/50 rounded-lg overflow-hidden">
+            {([
+              { key: "rooms", label: "Room Occupancy", icon: LayoutGrid },
+              { key: "dates", label: "By Date", icon: CalendarIcon },
+            ] as const).map((v) => (
+              <button
+                key={v.key}
+                onClick={() => setBoardView(v.key)}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5",
+                  boardView === v.key
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                )}
+              >
+                <v.icon className="h-3.5 w-3.5" />{v.label}
+              </button>
+            ))}
+          </div>
+
           <div className="flex border border-border/50 rounded-lg overflow-hidden">
             {(["week", "2week", "month"] as const).map((mode) => (
               <button
@@ -222,7 +262,8 @@ export default function CalendarPage() {
         ))}
       </div>
 
-      {/* Calendar Grid */}
+      {/* Calendar Grid — Room Occupancy */}
+      {boardView === "rooms" ? (
       <div className="flex-1 overflow-auto border border-border/50 rounded-lg bg-card/30">
         <div className="min-w-[800px]">
           {/* Date headers */}
@@ -333,6 +374,81 @@ export default function CalendarPage() {
           )}
         </div>
       </div>
+      ) : (
+      /* Bookings by date — includes unassigned bookings */
+      <div className="flex-1 overflow-auto border border-border/50 rounded-lg bg-card/30">
+        <div className="min-w-[800px]">
+          {/* Date headers */}
+          <div className="flex sticky top-0 z-20 bg-card border-b border-border/50">
+            <div className="w-44 shrink-0 p-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide border-r border-border/50 flex items-end">
+              Booking
+            </div>
+            {dates.map((date) => {
+              const h = formatDayHeader(date);
+              return (
+                <div key={date} className={cn(
+                  "flex-1 min-w-[48px] p-1.5 text-center border-r border-border/30 last:border-r-0",
+                  h.isToday && "bg-sidebar-primary/10",
+                  h.isWeekend && !h.isToday && "bg-muted/20",
+                )}>
+                  <p className={cn("text-[10px] font-medium", h.isToday ? "text-sidebar-primary" : "text-muted-foreground")}>{h.day}</p>
+                  <p className={cn("text-sm font-bold", h.isToday ? "text-sidebar-primary" : "text-foreground")}>{h.date}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {windowBookings.map((b, ri) => {
+            const effStart = b.check_in < startDate ? startDate : b.check_in;
+            const effEnd = b.check_out > endDate ? endDate : b.check_out;
+            const days = (a: string, c: string) => Math.round((new Date(c + "T00:00:00").getTime() - new Date(a + "T00:00:00").getTime()) / 86400000);
+            const leftPct = (days(startDate, effStart) / daysCount) * 100;
+            const widthPct = (Math.max(1, days(effStart, effEnd)) / daysCount) * 100;
+            const isGroup = b.booking_type === "GROUP";
+            const roomCount = b.room_ids?.length || 0;
+            const unassigned = roomCount === 0;
+            return (
+              <div key={b.id} className={cn("flex border-b border-border/30", ri % 2 === 0 && "bg-muted/5")}>
+                <div className="w-44 shrink-0 p-2 border-r border-border/50 flex items-center justify-between gap-1">
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold truncate">{b.guest?.full_name || "Guest"}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">
+                      {isGroup ? "Group" : "Individual"} • {unassigned ? <span className="text-amber-400 font-semibold">Unassigned</span> : `${roomCount} room${roomCount === 1 ? "" : "s"}`}
+                    </p>
+                  </div>
+                  <Button variant="ghost" size="icon-xs" title="Assign rooms" className="text-sidebar-primary shrink-0" onClick={() => setAssignItem(b)}>
+                    <BedDouble className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+                <div className="flex flex-1 relative min-h-[44px]">
+                  {dates.map((date) => {
+                    const h = formatDayHeader(date);
+                    return <div key={date} className={cn("flex-1 min-w-[48px] border-r border-border/15 last:border-r-0", h.isToday && "bg-sidebar-primary/5", h.isWeekend && !h.isToday && "bg-muted/10")} />;
+                  })}
+                  <button
+                    onClick={() => setSelectedBooking(b)}
+                    className={cn(
+                      "absolute h-[calc(100%-8px)] top-[4px] rounded-md border px-1.5 flex items-center gap-1 cursor-pointer transition-all hover:brightness-110 hover:shadow-md",
+                      STATUS_COLORS[b.status],
+                      unassigned && "ring-1 ring-amber-400/60",
+                    )}
+                    style={{ left: `${leftPct}%`, width: `calc(${widthPct}% - 4px)` }}
+                    title={`${b.guest?.full_name} — ${b.reference}\n${b.check_in} to ${b.check_out}`}
+                  >
+                    {isGroup ? <Users className="h-3 w-3 text-white/80 shrink-0" /> : <User className="h-3 w-3 text-white/80 shrink-0" />}
+                    <span className="text-[10px] font-medium text-white truncate">{b.reference}</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+
+          {windowBookings.length === 0 && (
+            <div className="p-12 text-center text-muted-foreground text-sm">No bookings in this date range.</div>
+          )}
+        </div>
+      </div>
+      )}
 
       {/* Booking Detail Sidebar */}
       {selectedBooking && (
@@ -417,6 +533,11 @@ export default function CalendarPage() {
                 </div>
               )}
 
+              <Button variant="outline" size="sm" className="w-full mt-2 text-xs gap-1.5 text-sidebar-primary" onClick={() => { setAssignItem(selectedBooking); }}>
+                <BedDouble className="h-3.5 w-3.5" />
+                Assign Rooms
+              </Button>
+
               <Link href="/dashboard/bookings" className="block">
                 <Button variant="outline" size="sm" className="w-full mt-2 text-xs gap-1.5">
                   <Eye className="h-3.5 w-3.5" />
@@ -426,6 +547,17 @@ export default function CalendarPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Assign Rooms Dialog */}
+      {assignItem && (
+        <AssignRoomsDialog
+          booking={assignItem}
+          allRooms={rooms || []}
+          allBookings={allBookings}
+          onClose={() => setAssignItem(null)}
+          onSaved={() => { setAssignItem(null); setSelectedBooking(null); refetch(); }}
+        />
       )}
     </div>
   );

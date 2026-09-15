@@ -149,6 +149,43 @@ export async function getBookings() {
   return data as (Booking & { guest: Guest })[];
 }
 
+// Bookings with room assignments merged from both stores (array + junction),
+// so the calendar reflects rooms assigned directly or at check-in.
+export async function getBookingsWithRooms() {
+  const client = supabase();
+  const { data, error } = await client
+    .from("bookings")
+    .select("*, guest:guests(*), booking_rooms(room_id)")
+    .order("created_at", { ascending: false });
+  if (error) {
+    // Fallback if booking_rooms relationship isn't available
+    const res = await client.from("bookings").select("*, guest:guests(*)").order("created_at", { ascending: false });
+    if (res.error) throw res.error;
+    return (res.data || []) as (Booking & { guest: Guest })[];
+  }
+  return (data || []).map((b: Record<string, unknown>) => {
+    const arrayIds = Array.isArray(b.room_ids) ? (b.room_ids as string[]) : [];
+    const junctionIds = Array.isArray(b.booking_rooms)
+      ? (b.booking_rooms as { room_id: string }[]).map((r) => r.room_id)
+      : [];
+    const merged = Array.from(new Set([...arrayIds, ...junctionIds]));
+    return { ...b, room_ids: merged } as unknown as Booking & { guest: Guest };
+  });
+}
+
+export async function assignBookingRooms(bookingId: string, roomIds: string[]) {
+  const res = await fetch("/api/bookings/assign-rooms", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ booking_id: bookingId, room_ids: roomIds }),
+  });
+  if (!res.ok) {
+    const d = await res.json().catch(() => ({}));
+    throw new Error(d.error || "Failed to assign rooms");
+  }
+  return (await res.json()).room_ids as string[];
+}
+
 export async function getBookingByReference(reference: string) {
   const { data, error } = await supabase()
     .from("bookings")

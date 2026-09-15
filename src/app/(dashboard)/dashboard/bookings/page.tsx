@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { NumberStepper } from "@/components/ui/number-stepper";
 import { BOOKING_STATUS_CONFIG, PAYMENT_METHOD_LABELS } from "@/lib/constants";
-import { getBookings, updateBookingFull, deleteBooking, getGuests, getFinanceAccounts } from "@/lib/supabase/queries";
+import { getBookings, updateBookingFull, deleteBooking, getGuests, getFinanceAccounts, getRooms } from "@/lib/supabase/queries";
+import { AssignRoomsDialog } from "@/components/dashboard/assign-rooms-dialog";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { useUndoableDelete } from "@/hooks/use-undoable-delete";
 import { formatCurrency, formatDate } from "@/lib/format";
@@ -1232,7 +1233,9 @@ export default function BookingsPage() {
   const [viewItem, setViewItem] = useState<BookingWithGuest | null>(null);
   const [deleteItem, setDeleteItem] = useState<BookingWithGuest | null>(null);
   const [payItem, setPayItem] = useState<BookingWithGuest | null>(null);
+  const [assignItem, setAssignItem] = useState<BookingWithGuest | null>(null);
   const { data: accounts } = useSupabaseQuery(() => getFinanceAccounts(), []);
+  const { data: rooms } = useSupabaseQuery(() => getRooms(), []);
   const { pendingIds, scheduleDelete } = useUndoableDelete(refetch);
 
   if (loading) {
@@ -1316,10 +1319,21 @@ export default function BookingsPage() {
         </div>
       );
     }},
+    { header: "Rooms", accessor: (b) => {
+      const count = b.room_ids?.length || 0;
+      return count > 0 ? (
+        <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-sidebar-primary/10 text-sidebar-primary border border-sidebar-primary/20">
+          <BedDouble className="h-2.5 w-2.5" />{count} room{count === 1 ? "" : "s"}
+        </span>
+      ) : (
+        <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/60">Unassigned</span>
+      );
+    }},
     { header: "Status", accessor: (b) => <StatusBadge status={b.status} config={BOOKING_STATUS_CONFIG} /> },
     { header: "Actions", accessor: (b) => (
       <div className="flex items-center gap-1">
         <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); setViewItem(b); }}><Eye className="h-3.5 w-3.5" /></Button>
+        <Button variant="ghost" size="icon-sm" title="Assign Rooms" className="text-sidebar-primary" onClick={(e) => { e.stopPropagation(); setAssignItem(b); }}><BedDouble className="h-3.5 w-3.5" /></Button>
         <Button variant="ghost" size="icon-sm" title="Record Payment" className="text-teal-600 hover:text-teal-700" onClick={(e) => { e.stopPropagation(); setPayItem(b); }}><CreditCard className="h-3.5 w-3.5" /></Button>
         <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); setEditItem(b); }}><Edit2 className="h-3.5 w-3.5" /></Button>
         <Button variant="ghost" size="icon-sm" className="text-red-600 hover:text-red-700" onClick={(e) => { e.stopPropagation(); setDeleteItem(b); }}><Trash2 className="h-3.5 w-3.5" /></Button>
@@ -1390,6 +1404,17 @@ export default function BookingsPage() {
           accounts={accounts || []}
           onOpenChange={(o) => !o && setPayItem(null)}
           onSuccess={() => { setPayItem(null); refetch(); }}
+        />
+      )}
+
+      {/* Assign Rooms Dialog */}
+      {assignItem && (
+        <AssignRoomsDialog
+          booking={assignItem}
+          allRooms={rooms || []}
+          allBookings={allBookings}
+          onClose={() => setAssignItem(null)}
+          onSaved={() => { setAssignItem(null); refetch(); }}
         />
       )}
 
