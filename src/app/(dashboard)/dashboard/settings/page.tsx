@@ -37,6 +37,7 @@ const DEFAULTS: SettingsMap = {
   price_kitchen_55plus: "500",
   price_kitchen_30to50: "400",
   price_kitchen_below20: "250",
+  price_common_hall: "300",
   price_wedding_grounds: "4000",
   notif_new_booking: "true",
   notif_payment: "true",
@@ -331,6 +332,13 @@ export default function SettingsPage() {
           </div>
 
           <div className="rounded-xl border border-border/60 bg-card p-5 space-y-5">
+            <h3 className="text-sm font-semibold">Common Hall</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <PriceField label="Common Hall (per day)" value={settings.price_common_hall} onChange={(v) => update("price_common_hall", v)} />
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border/60 bg-card p-5 space-y-5">
             <h3 className="text-sm font-semibold">Wedding Grounds</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <PriceField label="Wedding Grounds (flat rate)" value={settings.price_wedding_grounds} onChange={(v) => update("price_wedding_grounds", v)} />
@@ -340,7 +348,7 @@ export default function SettingsPage() {
           <SaveButton section="pricing" saving={saving} saved={saved} onClick={() => saveSection("pricing", [
             "price_2in1", "price_3in1", "price_4in1", "price_6in1", "price_suite_fan", "price_suite_ac", "price_apartment",
             "price_faith_hall_no_ac", "price_faith_hall_ac", "price_pavilion_canopy", "price_pavilion_no_canopy",
-            "price_kitchen_55plus", "price_kitchen_30to50", "price_kitchen_below20", "price_wedding_grounds",
+            "price_kitchen_55plus", "price_kitchen_30to50", "price_kitchen_below20", "price_common_hall", "price_wedding_grounds",
           ])} />
         </div>
       )}

@@ -17,6 +17,7 @@ const PRICE_DEFAULTS: Record<string, number> = {
   price_kitchen_55plus: 500,
   price_kitchen_30to50: 400,
   price_kitchen_below20: 250,
+  price_common_hall: 300,
   price_wedding_grounds: 4000,
 };
 
@@ -43,6 +44,7 @@ export async function GET() {
         { label: "Faith Hall (with AC)", price: pricing.price_faith_hall_ac },
         { label: "Pavilion (with canopy)", price: pricing.price_pavilion_canopy },
         { label: "Pavilion (without canopy)", price: pricing.price_pavilion_no_canopy },
+        { label: "Common Hall", price: pricing.price_common_hall },
       ],
       kitchen: [
         { label: "Kitchen & Dining (55+ persons)", price: pricing.price_kitchen_55plus },

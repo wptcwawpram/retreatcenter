@@ -14,16 +14,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { NumberStepper } from "@/components/ui/number-stepper";
-import { BOOKING_STATUS_CONFIG } from "@/lib/constants";
-import { getBookings, updateBooking, deleteBooking, getGuests } from "@/lib/supabase/queries";
+import { BOOKING_STATUS_CONFIG, PAYMENT_METHOD_LABELS } from "@/lib/constants";
+import { getBookings, updateBooking, deleteBooking, getGuests, createFinanceRecord, getFinanceAccounts } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatCurrency, formatDate } from "@/lib/format";
 import {
   Search, Loader2, Eye, Edit2, Trash2, AlertCircle, CheckCircle,
-  BedDouble, Church, Users, User, ChevronDown, Download,
+  BedDouble, Church, Users, User, ChevronDown, Download, Plus, X, CreditCard,
 } from "lucide-react";
 import { downloadCSV } from "@/lib/export-csv";
-import type { Booking, Guest } from "@/lib/supabase/types";
+import type { Booking, Guest, FinanceAccount } from "@/lib/supabase/types";
 
 type BookingWithGuest = Booking & { guest: Guest };
 
@@ -107,6 +107,10 @@ function NewBookingDialog({
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [specialRequests, setSpecialRequests] = useState("");
+
+  // Discount
+  const [discountType, setDiscountType] = useState<"amount" | "percent">("amount");
+  const [discountValue, setDiscountValue] = useState<string>("");
 
   // Submission
   const [submitting, setSubmitting] = useState(false);
@@ -204,6 +208,13 @@ function NewBookingDialog({
   }, [needsHall, hallOption, hallDays, needsGrounds]);
 
   const totalAmount = roomPrice + hallPrice;
+  const discountAmt = useMemo(() => {
+    const v = parseFloat(discountValue) || 0;
+    if (v <= 0) return 0;
+    if (discountType === "percent") return Math.min(totalAmount, (totalAmount * v) / 100);
+    return Math.min(totalAmount, v);
+  }, [discountValue, discountType, totalAmount]);
+  const finalAmount = totalAmount - discountAmt;
 
   // Reset form
   const resetForm = useCallback(() => {
@@ -214,6 +225,7 @@ function NewBookingDialog({
     setIsLodging(true); setSelectedRoom(""); setRoomQuantities({}); setNights(1);
     setNeedsHall(false); setSelectedHall(""); setHallDays(1); setNeedsGrounds(false);
     setCheckIn(""); setCheckOut(""); setSpecialRequests("");
+    setDiscountType("amount"); setDiscountValue("");
     setError(""); setSuccess("");
   }, []);
 
@@ -231,6 +243,10 @@ function NewBookingDialog({
     }
     if (totalAmount <= 0) {
       setError("Please select at least one room or hall.");
+      return;
+    }
+    if (finalAmount <= 0 && totalAmount > 0) {
+      setError("Discount cannot exceed the total amount.");
       return;
     }
 
@@ -256,7 +272,7 @@ function NewBookingDialog({
             nights,
             adults: 1,
             children: 0,
-            total_amount: totalAmount,
+            total_amount: finalAmount,
             booking_type: bookingType === "group" ? "GROUP" : "INDIVIDUAL",
             special_requests: specialRequests || undefined,
             hall_days: needsHall ? hallDays : 0,
@@ -598,8 +614,44 @@ function NewBookingDialog({
               ))}
 
               <div className="flex items-center justify-between pt-2 border-t border-sidebar-primary/30">
-                <span className="text-sm font-bold">Total</span>
-                <span className="text-base font-bold text-sidebar-primary">GH₵{totalAmount.toFixed(2)}</span>
+                <span className="text-sm font-bold">Subtotal</span>
+                <span className="text-sm font-bold text-sidebar-primary">GH₵{totalAmount.toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* ─── Discount ─── */}
+            <div className="space-y-3 rounded-xl border border-border/60 bg-card p-4">
+              <h3 className="text-sm font-semibold text-muted-foreground">Discount (optional)</h3>
+              <div className="flex gap-2 items-end">
+                <div className="flex rounded-lg border border-border/60 overflow-hidden text-xs">
+                  <button type="button" onClick={() => setDiscountType("amount")}
+                    className={`px-3 py-1.5 font-medium transition-colors ${discountType === "amount" ? "bg-sidebar-primary/10 text-sidebar-primary" : "text-muted-foreground hover:bg-muted/50"}`}>
+                    GH₵
+                  </button>
+                  <button type="button" onClick={() => setDiscountType("percent")}
+                    className={`px-3 py-1.5 font-medium transition-colors ${discountType === "percent" ? "bg-sidebar-primary/10 text-sidebar-primary" : "text-muted-foreground hover:bg-muted/50"}`}>
+                    %
+                  </button>
+                </div>
+                <Input
+                  type="number" min="0" step="0.01"
+                  placeholder={discountType === "amount" ? "Enter amount" : "Enter %"}
+                  value={discountValue}
+                  onChange={(e) => setDiscountValue(e.target.value)}
+                  className="h-9 flex-1"
+                />
+              </div>
+              {discountAmt > 0 && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">
+                    Discount: {discountType === "percent" ? `${discountValue}% of GH₵${totalAmount.toFixed(2)}` : "Amount"}
+                  </span>
+                  <span className="text-red-400 font-semibold">-GH₵{discountAmt.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between pt-2 border-t border-sidebar-primary/30">
+                <span className="text-sm font-bold">Final Total</span>
+                <span className="text-base font-bold text-teal-500">GH₵{finalAmount.toFixed(2)}</span>
               </div>
             </div>
 
@@ -615,12 +667,165 @@ function NewBookingDialog({
               <Button type="button" variant="outline" onClick={() => { resetForm(); onOpenChange(false); }} disabled={submitting}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={submitting || totalAmount <= 0}>
+              <Button type="submit" disabled={submitting || finalAmount <= 0}>
                 {submitting ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" />Creating...</> : "Create Booking"}
               </Button>
             </DialogFooter>
           </form>
         )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Record Payment Dialog ────────────────────────────────────────────
+
+type PaymentLine = { amount: string; method: string; account_id: string };
+
+function RecordPaymentDialog({
+  booking,
+  accounts,
+  onOpenChange,
+  onSuccess,
+}: {
+  booking: BookingWithGuest;
+  accounts: FinanceAccount[];
+  onOpenChange: (o: boolean) => void;
+  onSuccess: () => void;
+}) {
+  const balance = Math.max(0, Number(booking.total_amount) - Number(booking.paid_amount));
+  const [lines, setLines] = useState<PaymentLine[]>([{ amount: balance > 0 ? String(balance) : "", method: "CASH", account_id: "" }]);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const totalEntered = lines.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
+  const activeAccounts = accounts.filter((a) => a.is_active);
+
+  const updateLine = (i: number, field: keyof PaymentLine, value: string) => {
+    setLines((prev) => prev.map((l, idx) => idx === i ? { ...l, [field]: value } : l));
+  };
+
+  const addLine = () => setLines((prev) => [...prev, { amount: "", method: "CASH", account_id: "" }]);
+
+  const removeLine = (i: number) => setLines((prev) => prev.filter((_, idx) => idx !== i));
+
+  const handleSubmit = async () => {
+    if (totalEntered <= 0) { setError("Enter at least one payment amount."); return; }
+    setSubmitting(true);
+    setError("");
+    try {
+      const newPaid = Number(booking.paid_amount) + totalEntered;
+      const total = Number(booking.total_amount);
+      const newBalance = Math.max(0, total - newPaid);
+      const payStatus: Booking["payment_status"] = newPaid >= total && total > 0 ? "PAID" : newPaid > 0 ? "PARTIAL" : "UNPAID";
+
+      // Update booking
+      await updateBooking(booking.id, {
+        paid_amount: newPaid,
+        balance: newBalance,
+        payment_status: payStatus,
+      });
+
+      // Create one finance record per line
+      const today = new Date().toISOString().split("T")[0];
+      for (const line of lines) {
+        const amt = parseFloat(line.amount) || 0;
+        if (amt <= 0) continue;
+        await createFinanceRecord({
+          type: "INCOME",
+          category: "Booking Payment",
+          description: `${PAYMENT_METHOD_LABELS[line.method] ?? line.method} payment for booking ${booking.reference} (${booking.guest?.full_name ?? ""})`,
+          amount: amt,
+          date: today,
+          booking_id: booking.id,
+          account_id: line.account_id || null,
+          category_id: null,
+          reference: booking.reference,
+          payment_method: line.method,
+          recorded_by: null,
+        });
+      }
+      onSuccess();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Record Payment</DialogTitle>
+          <DialogDescription>
+            Booking {booking.reference} &bull; {booking.guest?.full_name} &bull; Balance: <strong className="text-sidebar-primary">GH₵{balance.toFixed(2)}</strong>
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          {lines.map((line, i) => (
+            <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end">
+              <div className="space-y-1">
+                {i === 0 && <Label className="text-xs">Amount (GH₵)</Label>}
+                <Input type="number" min="0" step="0.01" placeholder="0.00" value={line.amount}
+                  onChange={(e) => updateLine(i, "amount", e.target.value)} className="h-9" />
+              </div>
+              <div className="space-y-1">
+                {i === 0 && <Label className="text-xs">Method</Label>}
+                <Select value={line.method || ""} onValueChange={(v) => updateLine(i, "method", v ?? "CASH")}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(PAYMENT_METHOD_LABELS).filter(([k]) => k !== "PAYSTACK").map(([k, v]) => (
+                      <SelectItem key={k} value={k}>{v}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button type="button" variant="ghost" size="icon-sm" className="text-red-500 mt-5"
+                onClick={() => removeLine(i)} disabled={lines.length === 1}>
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          ))}
+
+          {activeAccounts.length > 0 && lines.map((line, i) => (
+            <div key={`acc-${i}`} className="space-y-1">
+              <Label className="text-xs">Account for line {i + 1}</Label>
+              <Select value={line.account_id || ""} onValueChange={(v) => updateLine(i, "account_id", v ?? "")}>
+                <SelectTrigger className="h-9"><SelectValue placeholder="No account" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No account</SelectItem>
+                  {activeAccounts.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>{a.name} ({a.type})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ))}
+
+          <Button type="button" variant="outline" size="sm" className="w-full gap-1.5 text-xs" onClick={addLine}>
+            <Plus className="h-3.5 w-3.5" /> Add Payment Line
+          </Button>
+
+          <div className="flex justify-between text-sm font-semibold pt-1 border-t border-border/60">
+            <span>Total being recorded</span>
+            <span className="text-teal-500">GH₵{totalEntered.toFixed(2)}</span>
+          </div>
+
+          {error && (
+            <div className="flex items-start gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />{error}
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>Cancel</Button>
+          <Button onClick={handleSubmit} disabled={submitting || totalEntered <= 0}>
+            {submitting ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" />Saving...</> : "Record Payment"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -638,7 +843,9 @@ export default function BookingsPage() {
   const [editItem, setEditItem] = useState<BookingWithGuest | null>(null);
   const [viewItem, setViewItem] = useState<BookingWithGuest | null>(null);
   const [deleteItem, setDeleteItem] = useState<BookingWithGuest | null>(null);
+  const [payItem, setPayItem] = useState<BookingWithGuest | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const { data: accounts } = useSupabaseQuery(() => getFinanceAccounts(), []);
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-sidebar-primary" /></div>;
@@ -674,6 +881,7 @@ export default function BookingsPage() {
     if (!editItem) return;
     const total = Number(values.total_amount) || 0;
     const paid = Number(values.paid_amount) || 0;
+    const oldPaid = Number(editItem.paid_amount) || 0;
     const bal = Math.max(0, total - paid);
     let payStatus = values.payment_status as Booking["payment_status"];
     if (paid >= total && total > 0) payStatus = "PAID";
@@ -690,6 +898,23 @@ export default function BookingsPage() {
       balance: bal,
       special_requests: (values.special_requests as string) || null,
     });
+    // Create income record for any new payment
+    const newPayment = paid - oldPaid;
+    if (newPayment > 0) {
+      await createFinanceRecord({
+        type: "INCOME",
+        category: "Booking Payment",
+        description: `${payStatus === "PAID" ? "Full" : "Partial"} payment for booking ${editItem.reference} (${editItem.guest?.full_name ?? ""})`,
+        amount: newPayment,
+        date: new Date().toISOString().split("T")[0],
+        booking_id: editItem.id,
+        account_id: null,
+        category_id: null,
+        reference: editItem.reference,
+        payment_method: null,
+        recorded_by: null,
+      });
+    }
     setEditItem(null);
     refetch();
   };
@@ -725,6 +950,7 @@ export default function BookingsPage() {
     { header: "Actions", accessor: (b) => (
       <div className="flex items-center gap-1">
         <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); setViewItem(b); }}><Eye className="h-3.5 w-3.5" /></Button>
+        <Button variant="ghost" size="icon-sm" title="Record Payment" className="text-teal-600 hover:text-teal-700" onClick={(e) => { e.stopPropagation(); setPayItem(b); }}><CreditCard className="h-3.5 w-3.5" /></Button>
         <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); setEditItem(b); }}><Edit2 className="h-3.5 w-3.5" /></Button>
         <Button variant="ghost" size="icon-sm" className="text-red-600 hover:text-red-700" onClick={(e) => { e.stopPropagation(); setDeleteItem(b); }}><Trash2 className="h-3.5 w-3.5" /></Button>
       </div>
@@ -786,6 +1012,16 @@ export default function BookingsPage() {
         existingGuests={allGuests}
         onSuccess={refetch}
       />
+
+      {/* Record Payment Dialog */}
+      {payItem && (
+        <RecordPaymentDialog
+          booking={payItem}
+          accounts={accounts || []}
+          onOpenChange={(o) => !o && setPayItem(null)}
+          onSuccess={() => { setPayItem(null); refetch(); }}
+        />
+      )}
 
       {/* Edit Dialog */}
       {editItem && (
