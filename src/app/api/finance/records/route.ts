@@ -171,3 +171,54 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Failed to update record" }, { status: 500 });
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const user = await getAuthUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const { id } = await request.json();
+    if (!id) return NextResponse.json({ error: "Record ID required" }, { status: 400 });
+
+    const supabase = serviceClient();
+
+    // Read the record first so we can reverse the account balance
+    const { data: record, error: fetchError } = await supabase
+      .from("finance_records")
+      .select("account_id, amount, type")
+      .eq("id", id)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    // Reverse the account balance before deleting
+    if (record?.account_id) {
+      const { data: account } = await supabase
+        .from("finance_accounts")
+        .select("balance")
+        .eq("id", record.account_id)
+        .single();
+
+      if (account) {
+        const amount = Number(record.amount);
+        // INCOME was added → subtract it back; EXPENSE was subtracted → add it back
+        const newBalance = record.type === "INCOME"
+          ? Number(account.balance) - amount
+          : Number(account.balance) + amount;
+
+        await supabase
+          .from("finance_accounts")
+          .update({ balance: newBalance, updated_at: new Date().toISOString() })
+          .eq("id", record.account_id);
+      }
+    }
+
+    const { error } = await supabase.from("finance_records").delete().eq("id", id);
+    if (error) throw error;
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Delete finance record error:", error);
+    return NextResponse.json({ error: "Failed to delete record" }, { status: 500 });
+  }
+}

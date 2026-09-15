@@ -417,7 +417,15 @@ export async function updateFinanceRecord(id: string, updates: Partial<FinanceRe
 }
 
 export async function deleteFinanceRecord(id: string) {
-  await adminDelete("finance_records", id);
+  const res = await fetch("/api/finance/records", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id }),
+  });
+  if (!res.ok) {
+    const d = await res.json();
+    throw new Error(d.error || "Failed to delete record");
+  }
 }
 
 // ── Finance Accounts ─────────────────────────────────────────

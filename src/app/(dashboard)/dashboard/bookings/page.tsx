@@ -4,7 +4,6 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { DataTable, type Column } from "@/components/dashboard/data-table";
-import { FormDialog, type FormField } from "@/components/dashboard/form-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -678,6 +677,243 @@ function NewBookingDialog({
   );
 }
 
+// ─── Edit Booking Dialog ──────────────────────────────────────────────
+
+function EditBookingDialog({
+  booking,
+  onOpenChange,
+  onSuccess,
+}: {
+  booking: BookingWithGuest;
+  onOpenChange: (o: boolean) => void;
+  onSuccess: () => void;
+}) {
+  const [status, setStatus] = useState<Booking["status"]>(booking.status);
+  const [source, setSource] = useState(booking.source);
+  const [bookingType, setBookingType] = useState(booking.booking_type);
+  const [checkIn, setCheckIn] = useState(booking.check_in);
+  const [checkOut, setCheckOut] = useState(booking.check_out);
+  const [nights, setNights] = useState(booking.nights);
+  const [adults, setAdults] = useState(booking.adults || 1);
+  const [children, setChildren] = useState(booking.children || 0);
+  const [roomAmount, setRoomAmount] = useState(String(Number(booking.total_amount) - Number(booking.hall_amount || 0)));
+  const [hallAmount, setHallAmount] = useState(String(booking.hall_amount || 0));
+  const [hallDays, setHallDays] = useState(booking.hall_days || 0);
+  const [discountType, setDiscountType] = useState<"amount" | "percent">("amount");
+  const [discountValue, setDiscountValue] = useState("");
+  const [specialRequests, setSpecialRequests] = useState(booking.special_requests || "");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  // Sync nights when dates change
+  useEffect(() => {
+    if (checkIn && checkOut) {
+      const diff = Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000);
+      if (diff > 0 && diff !== nights) setNights(diff);
+    }
+  }, [checkOut]);
+
+  useEffect(() => {
+    if (checkIn && nights > 0) {
+      const d = new Date(checkIn);
+      d.setDate(d.getDate() + nights);
+      setCheckOut(d.toISOString().split("T")[0]);
+    }
+  }, [checkIn, nights]);
+
+  const subtotal = (parseFloat(roomAmount) || 0) + (parseFloat(hallAmount) || 0);
+  const discountAmt = (() => {
+    const v = parseFloat(discountValue) || 0;
+    if (v <= 0) return 0;
+    if (discountType === "percent") return Math.min(subtotal, (subtotal * v) / 100);
+    return Math.min(subtotal, v);
+  })();
+  const finalTotal = Math.max(0, subtotal - discountAmt);
+
+  const handleSave = async () => {
+    if (!checkIn || !checkOut) { setError("Check-in and check-out dates are required."); return; }
+    if (finalTotal <= 0) { setError("Total amount must be greater than zero."); return; }
+    setSubmitting(true);
+    setError("");
+    try {
+      const oldPaid = Number(booking.paid_amount) || 0;
+      const bal = Math.max(0, finalTotal - oldPaid);
+      const payStatus: Booking["payment_status"] = oldPaid >= finalTotal && finalTotal > 0 ? "PAID" : oldPaid > 0 ? "PARTIAL" : "UNPAID";
+
+      await updateBooking(booking.id, {
+        status,
+        source,
+        booking_type: bookingType,
+        check_in: checkIn,
+        check_out: checkOut,
+        nights,
+        adults,
+        children,
+        total_amount: finalTotal,
+        hall_amount: parseFloat(hallAmount) || 0,
+        hall_days: hallDays,
+        balance: bal,
+        payment_status: payStatus,
+        special_requests: specialRequests || null,
+      });
+      onSuccess();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Edit Booking {booking.reference}</DialogTitle>
+          <DialogDescription>{booking.guest?.full_name} &bull; {booking.guest?.phone}</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-5">
+          {/* Status + Source */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Booking Status</Label>
+              <Select value={status} onValueChange={(v) => setStatus(v as Booking["status"])}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(BOOKING_STATUS_CONFIG).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Source</Label>
+              <Select value={source} onValueChange={(v) => setSource(v as Booking["source"])}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="WALK_IN">Walk-in</SelectItem>
+                  <SelectItem value="PHONE">Phone</SelectItem>
+                  <SelectItem value="WEBSITE">Website</SelectItem>
+                  <SelectItem value="AGENT">Agent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Booking Type</Label>
+              <Select value={bookingType} onValueChange={(v) => setBookingType(v as Booking["booking_type"])}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="INDIVIDUAL">Individual</SelectItem>
+                  <SelectItem value="GROUP">Group</SelectItem>
+                  <SelectItem value="EVENT">Event</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Dates */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Check-in</Label>
+              <Input type="date" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} className="h-9" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Check-out</Label>
+              <Input type="date" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} className="h-9" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Nights</Label>
+              <Input type="number" min="1" value={nights} onChange={(e) => setNights(Number(e.target.value))} className="h-9" />
+            </div>
+          </div>
+
+          {/* Guests */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Adults</Label>
+              <Input type="number" min="1" value={adults} onChange={(e) => setAdults(Number(e.target.value))} className="h-9" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Children</Label>
+              <Input type="number" min="0" value={children} onChange={(e) => setChildren(Number(e.target.value))} className="h-9" />
+            </div>
+          </div>
+
+          {/* Pricing */}
+          <div className="rounded-xl border border-border/60 bg-card p-4 space-y-3">
+            <h3 className="text-sm font-semibold">Pricing</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Room/Lodging Amount (GH₵)</Label>
+                <Input type="number" min="0" step="0.01" value={roomAmount} onChange={(e) => setRoomAmount(e.target.value)} className="h-9" placeholder="0.00" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Hall Amount (GH₵)</Label>
+                <Input type="number" min="0" step="0.01" value={hallAmount} onChange={(e) => setHallAmount(e.target.value)} className="h-9" placeholder="0.00" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Hall Days</Label>
+                <Input type="number" min="0" value={hallDays} onChange={(e) => setHallDays(Number(e.target.value))} className="h-9" />
+              </div>
+            </div>
+            {/* Discount */}
+            <div className="space-y-2 pt-1 border-t border-border/40">
+              <Label className="text-xs text-muted-foreground">Discount (optional)</Label>
+              <div className="flex gap-2 items-end">
+                <div className="flex rounded-lg border border-border/60 overflow-hidden text-xs">
+                  <button type="button" onClick={() => setDiscountType("amount")}
+                    className={`px-3 py-1.5 font-medium transition-colors ${discountType === "amount" ? "bg-sidebar-primary/10 text-sidebar-primary" : "text-muted-foreground hover:bg-muted/50"}`}>GH₵</button>
+                  <button type="button" onClick={() => setDiscountType("percent")}
+                    className={`px-3 py-1.5 font-medium transition-colors ${discountType === "percent" ? "bg-sidebar-primary/10 text-sidebar-primary" : "text-muted-foreground hover:bg-muted/50"}`}>%</button>
+                </div>
+                <Input type="number" min="0" step="0.01" placeholder={discountType === "amount" ? "Enter amount" : "Enter %"}
+                  value={discountValue} onChange={(e) => setDiscountValue(e.target.value)} className="h-9 flex-1" />
+              </div>
+            </div>
+            <div className="space-y-1 pt-1">
+              {discountAmt > 0 && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span className="tabular-nums">{formatCurrency(subtotal)}</span>
+                </div>
+              )}
+              {discountAmt > 0 && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Discount</span>
+                  <span className="text-red-400 tabular-nums">-{formatCurrency(discountAmt)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-sm font-bold pt-1 border-t border-border/40">
+                <span>Total</span>
+                <span className="text-teal-500 tabular-nums">{formatCurrency(finalTotal)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Special Requests */}
+          <div className="space-y-1.5">
+            <Label className="text-xs">Special Requests</Label>
+            <Textarea value={specialRequests} onChange={(e) => setSpecialRequests(e.target.value)} rows={3} placeholder="Any special requests or notes..." className="resize-none" />
+          </div>
+
+          {error && (
+            <div className="flex items-start gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />{error}
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>Cancel</Button>
+          <Button onClick={handleSave} disabled={submitting}>
+            {submitting ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" />Saving...</> : "Save Changes"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Record Payment Dialog ────────────────────────────────────────────
 
 type PaymentLine = { amount: string; method: string; account_id: string };
@@ -866,58 +1102,6 @@ export default function BookingsPage() {
 
   const typeCounts = { ALL: allBookings.length, INDIVIDUAL: allBookings.filter(b => b.booking_type === "INDIVIDUAL").length, GROUP: allBookings.filter(b => b.booking_type === "GROUP").length, EVENT: allBookings.filter(b => b.booking_type === "EVENT").length };
 
-  const editFields: FormField[] = [
-    { name: "status", label: "Status", type: "select", required: true, options: Object.entries(BOOKING_STATUS_CONFIG).map(([k, v]) => ({ label: v.label, value: k })) },
-    { name: "payment_status", label: "Payment Status", type: "select", options: [{ label: "Unpaid", value: "UNPAID" }, { label: "Partial", value: "PARTIAL" }, { label: "Paid", value: "PAID" }, { label: "Refunded", value: "REFUNDED" }] },
-    { name: "check_in", label: "Check-in", type: "date", required: true },
-    { name: "check_out", label: "Check-out", type: "date", required: true },
-    { name: "nights", label: "Nights", type: "number", min: 1 },
-    { name: "total_amount", label: "Total Amount", type: "number", min: 0, step: 0.01 },
-    { name: "paid_amount", label: "Paid Amount", type: "number", min: 0, step: 0.01 },
-    { name: "special_requests", label: "Special Requests", type: "textarea", colSpan: 2 },
-  ];
-
-  const handleEdit = async (values: Record<string, unknown>) => {
-    if (!editItem) return;
-    const total = Number(values.total_amount) || 0;
-    const paid = Number(values.paid_amount) || 0;
-    const oldPaid = Number(editItem.paid_amount) || 0;
-    const bal = Math.max(0, total - paid);
-    let payStatus = values.payment_status as Booking["payment_status"];
-    if (paid >= total && total > 0) payStatus = "PAID";
-    else if (paid > 0) payStatus = "PARTIAL";
-    else payStatus = "UNPAID";
-    await updateBooking(editItem.id, {
-      status: values.status as Booking["status"],
-      payment_status: payStatus,
-      check_in: values.check_in as string,
-      check_out: values.check_out as string,
-      nights: Number(values.nights),
-      total_amount: total,
-      paid_amount: paid,
-      balance: bal,
-      special_requests: (values.special_requests as string) || null,
-    });
-    // Create income record for any new payment
-    const newPayment = paid - oldPaid;
-    if (newPayment > 0) {
-      await createFinanceRecord({
-        type: "INCOME",
-        category: "Booking Payment",
-        description: `${payStatus === "PAID" ? "Full" : "Partial"} payment for booking ${editItem.reference} (${editItem.guest?.full_name ?? ""})`,
-        amount: newPayment,
-        date: new Date().toISOString().split("T")[0],
-        booking_id: editItem.id,
-        account_id: null,
-        category_id: null,
-        reference: editItem.reference,
-        payment_method: null,
-        recorded_by: null,
-      });
-    }
-    setEditItem(null);
-    refetch();
-  };
 
   const handleDelete = async () => {
     if (!deleteItem) return;
@@ -941,10 +1125,35 @@ export default function BookingsPage() {
     )},
     { header: "Check-in", accessor: (b) => <span className="text-sm">{formatDate(b.check_in)}</span> },
     { header: "Check-out", accessor: (b) => <span className="text-sm">{formatDate(b.check_out)}</span> },
-    { header: "Total", accessor: (b) => <span className="font-semibold">{formatCurrency(Number(b.total_amount))}</span> },
-    { header: "Paid", accessor: (b) => {
-      const isPaid = Number(b.paid_amount) >= Number(b.total_amount);
-      return <span className={isPaid ? "text-teal-500" : "text-sidebar-primary"}>{formatCurrency(Number(b.paid_amount))}</span>;
+    { header: "Payment", accessor: (b) => {
+      const total = Number(b.total_amount);
+      const paid = Number(b.paid_amount);
+      const bal = Number(b.balance);
+      const payStatus = b.payment_status;
+      if (payStatus === "REFUNDED") return (
+        <div className="space-y-0.5">
+          <p className="text-xs font-semibold tabular-nums">{formatCurrency(total)}</p>
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">Refunded</span>
+        </div>
+      );
+      if (!paid || paid === 0) return (
+        <div className="space-y-0.5">
+          <p className="text-xs font-semibold tabular-nums">{formatCurrency(total)}</p>
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">Unpaid</span>
+        </div>
+      );
+      if (paid >= total) return (
+        <div className="space-y-0.5">
+          <p className="text-xs font-semibold tabular-nums text-teal-500">{formatCurrency(paid)}</p>
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20">Fully Paid</span>
+        </div>
+      );
+      return (
+        <div className="space-y-0.5">
+          <p className="text-xs tabular-nums"><span className="font-semibold text-amber-400">{formatCurrency(paid)}</span><span className="text-muted-foreground text-[10px]"> / {formatCurrency(total)}</span></p>
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">Partial &bull; bal {formatCurrency(bal)}</span>
+        </div>
+      );
     }},
     { header: "Status", accessor: (b) => <StatusBadge status={b.status} config={BOOKING_STATUS_CONFIG} /> },
     { header: "Actions", accessor: (b) => (
@@ -1025,14 +1234,10 @@ export default function BookingsPage() {
 
       {/* Edit Dialog */}
       {editItem && (
-        <FormDialog
-          open={!!editItem}
+        <EditBookingDialog
+          booking={editItem}
           onOpenChange={(o) => !o && setEditItem(null)}
-          title={`Edit Booking ${editItem.reference}`}
-          fields={editFields}
-          initialValues={editItem}
-          onSubmit={handleEdit}
-          isEdit
+          onSuccess={() => { setEditItem(null); refetch(); }}
         />
       )}
 
@@ -1040,27 +1245,61 @@ export default function BookingsPage() {
       <Dialog open={!!viewItem} onOpenChange={(o) => !o && setViewItem(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader><DialogTitle>Booking {viewItem?.reference}</DialogTitle></DialogHeader>
-          {viewItem && (
-            <div className="space-y-3 text-sm">
-              <div className="grid grid-cols-2 gap-2">
-                <div><span className="text-muted-foreground">Guest:</span><p className="font-medium">{viewItem.guest?.full_name}</p></div>
-                <div><span className="text-muted-foreground">Phone:</span><p>{viewItem.guest?.phone}</p></div>
-                <div><span className="text-muted-foreground">Check-in:</span><p>{formatDate(viewItem.check_in)}</p></div>
-                <div><span className="text-muted-foreground">Check-out:</span><p>{formatDate(viewItem.check_out)}</p></div>
-                <div><span className="text-muted-foreground">Nights:</span><p>{viewItem.nights}</p></div>
-                <div><span className="text-muted-foreground">Type:</span><p>{viewItem.booking_type}</p></div>
-                <div><span className="text-muted-foreground">Total:</span><p className="font-bold">{formatCurrency(Number(viewItem.total_amount))}</p></div>
-                <div><span className="text-muted-foreground">Paid:</span><p className="font-bold text-teal-500">{formatCurrency(Number(viewItem.paid_amount))}</p></div>
-                <div><span className="text-muted-foreground">Balance:</span><p className="font-bold text-sidebar-primary">{formatCurrency(Number(viewItem.balance))}</p></div>
-                <div><span className="text-muted-foreground">Source:</span><p>{viewItem.source}</p></div>
+          {viewItem && (() => {
+            const vTotal = Number(viewItem.total_amount);
+            const vPaid = Number(viewItem.paid_amount);
+            const vBal = Number(viewItem.balance);
+            const vPS = viewItem.payment_status;
+            const payColor = vPS === "PAID" ? "text-teal-400" : vPS === "PARTIAL" ? "text-amber-400" : vPS === "REFUNDED" ? "text-purple-400" : "text-red-400";
+            const payLabel = vPS === "PAID" ? "Fully Paid" : vPS === "PARTIAL" ? "Partial Payment" : vPS === "REFUNDED" ? "Refunded" : "Unpaid";
+            return (
+              <div className="space-y-4 text-sm">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                  <div><p className="text-[10px] text-muted-foreground uppercase tracking-wide">Guest</p><p className="font-medium">{viewItem.guest?.full_name}</p></div>
+                  <div><p className="text-[10px] text-muted-foreground uppercase tracking-wide">Phone</p><p>{viewItem.guest?.phone ?? "—"}</p></div>
+                  <div><p className="text-[10px] text-muted-foreground uppercase tracking-wide">Check-in</p><p>{formatDate(viewItem.check_in)}</p></div>
+                  <div><p className="text-[10px] text-muted-foreground uppercase tracking-wide">Check-out</p><p>{formatDate(viewItem.check_out)}</p></div>
+                  <div><p className="text-[10px] text-muted-foreground uppercase tracking-wide">Nights</p><p>{viewItem.nights}</p></div>
+                  <div><p className="text-[10px] text-muted-foreground uppercase tracking-wide">Type</p><p>{viewItem.booking_type}</p></div>
+                  <div><p className="text-[10px] text-muted-foreground uppercase tracking-wide">Source</p><p>{viewItem.source}</p></div>
+                  <div><p className="text-[10px] text-muted-foreground uppercase tracking-wide">Booking Status</p><StatusBadge status={viewItem.status} config={BOOKING_STATUS_CONFIG} /></div>
+                </div>
+                {/* Payment summary */}
+                <div className="rounded-xl border border-border/60 bg-muted/30 p-3 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Total Amount</span>
+                    <span className="font-bold tabular-nums">{formatCurrency(vTotal)}</span>
+                  </div>
+                  {vPaid > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Amount Paid</span>
+                      <span className={`font-semibold tabular-nums ${payColor}`}>{formatCurrency(vPaid)}</span>
+                    </div>
+                  )}
+                  {vBal > 0 && (
+                    <div className="flex justify-between items-center border-t border-border/60 pt-2">
+                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Balance Due</span>
+                      <span className="font-bold tabular-nums text-red-400">{formatCurrency(vBal)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-end">
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
+                      vPS === "PAID" ? "bg-teal-500/10 text-teal-400 border-teal-500/20" :
+                      vPS === "PARTIAL" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+                      vPS === "REFUNDED" ? "bg-purple-500/10 text-purple-400 border-purple-500/20" :
+                      "bg-red-500/10 text-red-400 border-red-500/20"
+                    }`}>{payLabel}</span>
+                  </div>
+                </div>
+                {viewItem.special_requests && (
+                  <div><p className="text-[10px] uppercase tracking-wide text-muted-foreground">Special Requests</p><p className="text-sm mt-0.5">{viewItem.special_requests}</p></div>
+                )}
               </div>
-              {viewItem.special_requests && (
-                <div><span className="text-muted-foreground">Special Requests:</span><p>{viewItem.special_requests}</p></div>
-              )}
-            </div>
-          )}
+            );
+          })()}
           <DialogFooter>
             <Button variant="outline" onClick={() => setViewItem(null)}>Close</Button>
+            <Button variant="outline" onClick={() => { setPayItem(viewItem); setViewItem(null); }} className="text-teal-600"><CreditCard className="h-3.5 w-3.5 mr-1.5" />Record Payment</Button>
             <Button onClick={() => { setEditItem(viewItem); setViewItem(null); }}>Edit</Button>
           </DialogFooter>
         </DialogContent>
