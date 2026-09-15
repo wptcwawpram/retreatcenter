@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   getFinanceRecords, createFinanceRecord, updateFinanceRecord, deleteFinanceRecord,
-  getFinanceAccounts, createFinanceAccount, updateFinanceAccount, deleteFinanceAccount, setDefaultFinanceAccount, recalculateAccountBalances,
+  getFinanceAccounts, createFinanceAccount, updateFinanceAccount, deleteFinanceAccount, setDefaultFinanceAccount,
   getFinanceCategories, createFinanceCategory, deleteFinanceCategory,
   getFinanceTransfers, createFinanceTransfer,
 } from "@/lib/supabase/queries";
@@ -13,7 +13,7 @@ import { downloadCSV } from "@/lib/export-csv";
 import {
   Loader2, Trash2, AlertCircle, Landmark, Smartphone, Banknote,
   ArrowRightLeft, X, Edit2, Tag, Wallet, PiggyBank,
-  Download, Plus, Star, ArrowUpRight, ArrowDownRight, RefreshCw,
+  Download, Plus, Star, ArrowUpRight, ArrowDownRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,7 +90,6 @@ export default function FinancePage() {
   const [typeFilter, setTypeFilter] = useState("ALL");
   const [showCategories, setShowCategories] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [recalcing, setRecalcing] = useState(false);
 
   // Transfer form
   const [txFrom, setTxFrom] = useState("");
@@ -271,14 +270,6 @@ export default function FinancePage() {
     try { await setDefaultFinanceAccount(id); refetchAccounts(); } catch {}
   };
 
-  const handleRecalc = async () => {
-    setRecalcing(true);
-    try {
-      await recalculateAccountBalances();
-      refetchAccounts();
-      setModal("none");
-    } catch {} finally { setRecalcing(false); }
-  };
 
   const handleAddCat = async () => {
     if (!ncName.trim()) return;
@@ -321,10 +312,6 @@ export default function FinancePage() {
             <p className="text-xs text-muted-foreground mt-0.5">{"Total across all accounts: "}<strong>{ss(formatCurrency(totalBal))}</strong></p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setModal("recalc")}
-              title="Reconcile balances to actual transactions (fixes drift from old deletions)">
-              <RefreshCw className="h-3.5 w-3.5" />{"Recalculate"}
-            </Button>
             <Button variant="outline" size="sm" className="gap-1.5" onClick={openTransfer}>
               <ArrowRightLeft className="h-3.5 w-3.5" />{"Transfer"}
             </Button>
@@ -701,29 +688,6 @@ export default function FinancePage() {
         </SimpleModal>
       )}
 
-      {modal === "recalc" && (
-        <SimpleModal open onClose={() => setModal("none")} title="Recalculate balances">
-          <div className="space-y-3 text-sm mb-4">
-            <div className="flex items-start gap-3">
-              <RefreshCw className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-              <p>{"This recomputes every account balance from its actual transactions:"}</p>
-            </div>
-            <p className="rounded-lg bg-muted/50 border border-border/60 p-3 text-xs font-mono">
-              {"balance = income − expenses + transfers in − transfers out"}
-            </p>
-            <div className="flex items-start gap-2 text-xs text-amber-500 bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
-              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-              <p>{"Opening balances are treated as zero. If an account had money before you started recording transactions, add that as an "}<strong>{"Opening Balance"}</strong>{" income transaction first, then recalculate."}</p>
-            </div>
-          </div>
-          <div className="-mx-5 -mb-5 flex gap-2 justify-end rounded-b-xl border-t bg-muted/50 p-4">
-            <Button variant="outline" onClick={() => setModal("none")} disabled={recalcing}>{"Cancel"}</Button>
-            <Button onClick={handleRecalc} disabled={recalcing}>
-              {recalcing ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" />{"Recalculating…"}</> : "Recalculate now"}
-            </Button>
-          </div>
-        </SimpleModal>
-      )}
     </div>
   );
 }
