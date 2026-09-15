@@ -492,7 +492,7 @@ function LoginForm() {
                   <Label className="text-warm-muted text-xs tracking-wide">New Password</Label>
                   <div className="relative">
                     <Input type={showNewPassword ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
-                      className={inputClass + " pr-10"} required />
+                      className={inputClass + " pr-10 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden"} required />
                     <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-warm-muted/50 hover:text-warm-white" tabIndex={-1}>
                       {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -603,7 +603,7 @@ function LoginForm() {
                   <Label htmlFor="password" className="text-warm-muted text-xs tracking-wide">Password</Label>
                   <div className="relative">
                     <Input id="password" type={showPassword ? "text" : "password"} placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)}
-                      required autoComplete="current-password" className={inputClass + " pr-10"} />
+                      required autoComplete="current-password" className={inputClass + " pr-10 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden"} />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-warm-muted/50 hover:text-warm-white transition-colors" tabIndex={-1}>
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
