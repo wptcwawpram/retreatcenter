@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { PAYMENT_STATUS_CONFIG, PAYMENT_METHOD_LABELS } from "@/lib/constants";
-import { getPayments, getBookings, createPayment, deletePayment, createFinanceRecord, getFinanceAccounts, updateBookingPayment } from "@/lib/supabase/queries";
+import { getPayments, getBookings, deletePayment, getFinanceAccounts } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { Search, Wallet, Clock, CreditCard, TrendingUp, Loader2, Trash2, AlertCircle, Download } from "lucide-react";
@@ -79,44 +79,22 @@ export default function PaymentsPage() {
   ];
 
   const handleAdd = async (values: Record<string, unknown>) => {
-    const bookingId = values.booking_id as string;
-    const amount = Number(values.amount);
-    const method = values.method as "CASH" | "MOBILE_MONEY" | "CARD" | "BANK_TRANSFER" | "PAYSTACK";
-    const booking = allBookings.find((b) => b.id === bookingId);
-
-    await createPayment({
-      booking_id: bookingId,
-      amount,
-      method,
-      status: (values.status as "PENDING" | "COMPLETED" | "FAILED" | "REFUNDED") || "COMPLETED",
-      reference: `MAN-${Date.now()}`,
-      paystack_reference: null,
-      notes: (values.notes as string) || null,
-      recorded_by: null,
+    const res = await fetch("/api/payments/record", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        booking_id: values.booking_id,
+        amount: Number(values.amount),
+        method: values.method || "CASH",
+        status: values.status || "COMPLETED",
+        notes: values.notes || null,
+        account_id: values.account_id || null,
+      }),
     });
 
-    try {
-      await createFinanceRecord({
-        type: "INCOME",
-        category: "Booking Payment",
-        description: `Manual ${PAYMENT_METHOD_LABELS[method] ?? method} payment for booking ${booking?.reference ?? bookingId}`,
-        amount,
-        date: new Date().toISOString().split("T")[0],
-        booking_id: bookingId,
-        recorded_by: null,
-        account_id: (values.account_id as string) || null,
-        category_id: null,
-        reference: null,
-        payment_method: method,
-      });
-    } catch {}
-
-    // Update booking paid_amount + balance when a COMPLETED payment is recorded
-    if ((values.status as string) === "COMPLETED" && booking) {
-      const newPaid = Number(booking.paid_amount || 0) + amount;
-      const total = Number(booking.total_amount || 0);
-      const payStatus = newPaid >= total && total > 0 ? "PAID" : newPaid > 0 ? "PARTIAL" : "UNPAID";
-      try { await updateBookingPayment(bookingId, newPaid, total, payStatus); } catch {}
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || "Failed to record payment");
     }
 
     refetch();
