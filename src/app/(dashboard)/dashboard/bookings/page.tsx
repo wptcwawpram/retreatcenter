@@ -10,19 +10,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { NumberStepper } from "@/components/ui/number-stepper";
 import { BOOKING_STATUS_CONFIG, PAYMENT_METHOD_LABELS } from "@/lib/constants";
-import { getBookings, updateBooking, deleteBooking, getGuests, createFinanceRecord, getFinanceAccounts } from "@/lib/supabase/queries";
+import { getBookings, updateBookingFull, deleteBooking, getGuests, getFinanceAccounts } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { formatCurrency, formatDate } from "@/lib/format";
 import {
   Search, Loader2, Eye, Edit2, Trash2, AlertCircle, CheckCircle,
-  BedDouble, Church, Users, User, ChevronDown, Download, Plus, X, CreditCard,
+  BedDouble, Church, Users, User, ChevronDown, Download, Plus, X, CreditCard, Tag,
 } from "lucide-react";
 import { downloadCSV } from "@/lib/export-csv";
-import type { Booking, Guest, FinanceAccount } from "@/lib/supabase/types";
+import type { Booking, Guest, FinanceAccount, BookingSelection } from "@/lib/supabase/types";
 
 type BookingWithGuest = Booking & { guest: Guest };
 
@@ -276,6 +274,21 @@ function NewBookingDialog({
             special_requests: specialRequests || undefined,
             hall_days: needsHall ? hallDays : 0,
             hall_amount: hallPrice,
+            room_amount: roomPrice,
+            subtotal: totalAmount,
+            discount_type: discountAmt > 0 ? discountType : null,
+            discount_value: discountAmt > 0 ? parseFloat(discountValue) || 0 : 0,
+            discount_amount: discountAmt,
+            selection: {
+              bookingType,
+              isLodging,
+              selectedRoom: bookingType === "individual" ? selectedRoom : undefined,
+              roomQuantities: bookingType === "group" ? roomQuantities : undefined,
+              needsHall,
+              selectedHall,
+              hallDays,
+              needsGrounds,
+            },
           },
           source, // dashboard adds source
         }),
@@ -688,31 +701,64 @@ function EditBookingDialog({
   onOpenChange: (o: boolean) => void;
   onSuccess: () => void;
 }) {
+  const sel = booking.selection || null;
+  const hasSelection = !!sel;
+
   const [status, setStatus] = useState<Booking["status"]>(booking.status);
   const [source, setSource] = useState(booking.source);
   const [bookingType, setBookingType] = useState(booking.booking_type);
   const [checkIn, setCheckIn] = useState(booking.check_in);
   const [checkOut, setCheckOut] = useState(booking.check_out);
   const [nights, setNights] = useState(booking.nights);
-  const [adults, setAdults] = useState(booking.adults || 1);
-  const [children, setChildren] = useState(booking.children || 0);
-  const [roomAmount, setRoomAmount] = useState(String(Number(booking.total_amount) - Number(booking.hall_amount || 0)));
+
+  // Room selection (structured) — mirrors the New Booking form
+  const initialMode: "individual" | "group" = sel?.bookingType
+    ? sel.bookingType
+    : booking.booking_type === "INDIVIDUAL" ? "individual" : "group";
+  const [roomMode, setRoomMode] = useState<"individual" | "group">(initialMode);
+  const [isLodging, setIsLodging] = useState(sel?.isLodging ?? true);
+  const [selectedRoom, setSelectedRoom] = useState(sel?.selectedRoom || "");
+  const [roomQuantities, setRoomQuantities] = useState<Record<string, number>>(sel?.roomQuantities || {});
+  const [needsHall, setNeedsHall] = useState(sel?.needsHall ?? Number(booking.hall_amount || 0) > 0);
+  const [selectedHall, setSelectedHall] = useState(sel?.selectedHall || "");
+  const [hallDays, setHallDays] = useState(sel?.hallDays ?? (booking.hall_days || 1));
+  const [needsGrounds, setNeedsGrounds] = useState(sel?.needsGrounds ?? false);
+
+  // Manual amount fallback (legacy bookings with no stored selection, or custom override)
+  const [manualMode, setManualMode] = useState(!hasSelection);
+  const initialRoomAmount = booking.room_amount != null
+    ? Number(booking.room_amount)
+    : Math.max(0, Number(booking.total_amount) - Number(booking.hall_amount || 0) + Number(booking.discount_amount || 0));
+  const [roomAmount, setRoomAmount] = useState(String(initialRoomAmount));
   const [hallAmount, setHallAmount] = useState(String(booking.hall_amount || 0));
-  const [hallDays, setHallDays] = useState(booking.hall_days || 0);
-  const [discountType, setDiscountType] = useState<"amount" | "percent">("amount");
-  const [discountValue, setDiscountValue] = useState("");
+
+  // Discount — pre-filled so it can be re-edited (not lost)
+  const [discountType, setDiscountType] = useState<"amount" | "percent">(booking.discount_type === "percent" ? "percent" : "amount");
+  const [discountValue, setDiscountValue] = useState(booking.discount_value ? String(booking.discount_value) : "");
   const [specialRequests, setSpecialRequests] = useState(booking.special_requests || "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  // Sync nights when dates change
+  // Live pricing
+  const [HALL_OPTIONS, setHallOptions] = useState(DEFAULT_HALL_OPTIONS);
+  const [WEDDING_GROUNDS_PRICE, setWeddingGroundsPrice] = useState(DEFAULT_WEDDING_GROUNDS_PRICE);
+  useEffect(() => {
+    fetch("/api/settings/pricing")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.halls?.length > 0 || data.kitchen?.length > 0) setHallOptions([...(data.halls || []), ...(data.kitchen || [])]);
+        if (typeof data.wedding_grounds === "number") setWeddingGroundsPrice(data.wedding_grounds);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Date/nights auto-sync
   useEffect(() => {
     if (checkIn && checkOut) {
       const diff = Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000);
       if (diff > 0 && diff !== nights) setNights(diff);
     }
   }, [checkOut]);
-
   useEffect(() => {
     if (checkIn && nights > 0) {
       const d = new Date(checkIn);
@@ -721,7 +767,30 @@ function EditBookingDialog({
     }
   }, [checkIn, nights]);
 
-  const subtotal = (parseFloat(roomAmount) || 0) + (parseFloat(hallAmount) || 0);
+  // Room price from structured selection
+  const roomBreakdownLines = useMemo(() => {
+    const lines: { label: string; calc: string; amount: number }[] = [];
+    if (!isLodging) return lines;
+    if (roomMode === "individual" && selectedRoom) {
+      const room = ROOM_OPTIONS.find((r) => r.label === selectedRoom);
+      if (room) lines.push({ label: room.label, calc: `GH₵${room.price} × ${nights} night${nights > 1 ? "s" : ""}`, amount: room.price * nights });
+    } else if (roomMode === "group") {
+      ROOM_OPTIONS.forEach((room) => {
+        const qty = roomQuantities[room.label] || 0;
+        if (qty > 0) lines.push({ label: `${room.label} × ${qty}`, calc: `GH₵${room.price} × ${qty} × ${nights}n`, amount: room.price * qty * nights });
+      });
+    }
+    return lines;
+  }, [isLodging, roomMode, selectedRoom, nights, roomQuantities]);
+
+  const hallOption = HALL_OPTIONS.find((h) => h.label === selectedHall);
+  const structuredRoomPrice = roomBreakdownLines.reduce((s, l) => s + l.amount, 0);
+  const structuredHallPrice = (needsHall && hallOption ? hallOption.price * hallDays : 0) + (needsGrounds ? WEDDING_GROUNDS_PRICE : 0);
+
+  const roomPrice = manualMode ? (parseFloat(roomAmount) || 0) : structuredRoomPrice;
+  const hallPrice = manualMode ? (parseFloat(hallAmount) || 0) : structuredHallPrice;
+  const subtotal = roomPrice + hallPrice;
+
   const discountAmt = (() => {
     const v = parseFloat(discountValue) || 0;
     if (v <= 0) return 0;
@@ -732,7 +801,7 @@ function EditBookingDialog({
 
   const handleSave = async () => {
     if (!checkIn || !checkOut) { setError("Check-in and check-out dates are required."); return; }
-    if (finalTotal <= 0) { setError("Total amount must be greater than zero."); return; }
+    if (finalTotal <= 0) { setError("Total must be greater than zero. Select a room/hall or enter an amount."); return; }
     setSubmitting(true);
     setError("");
     try {
@@ -740,18 +809,30 @@ function EditBookingDialog({
       const bal = Math.max(0, finalTotal - oldPaid);
       const payStatus: Booking["payment_status"] = oldPaid >= finalTotal && finalTotal > 0 ? "PAID" : oldPaid > 0 ? "PARTIAL" : "UNPAID";
 
-      await updateBooking(booking.id, {
+      const selection: BookingSelection | null = manualMode ? null : {
+        bookingType: roomMode,
+        isLodging,
+        selectedRoom: roomMode === "individual" ? selectedRoom : undefined,
+        roomQuantities: roomMode === "group" ? roomQuantities : undefined,
+        needsHall, selectedHall, hallDays, needsGrounds,
+      };
+
+      await updateBookingFull(booking.id, {
         status,
         source,
         booking_type: bookingType,
         check_in: checkIn,
         check_out: checkOut,
         nights,
-        adults,
-        children,
         total_amount: finalTotal,
-        hall_amount: parseFloat(hallAmount) || 0,
-        hall_days: hallDays,
+        room_amount: roomPrice,
+        subtotal,
+        hall_amount: hallPrice,
+        hall_days: needsHall || manualMode ? hallDays : 0,
+        discount_type: discountAmt > 0 ? discountType : null,
+        discount_value: discountAmt > 0 ? parseFloat(discountValue) || 0 : 0,
+        discount_amount: discountAmt,
+        selection,
         balance: bal,
         payment_status: payStatus,
         special_requests: specialRequests || null,
@@ -773,16 +854,14 @@ function EditBookingDialog({
         </DialogHeader>
 
         <div className="space-y-5">
-          {/* Status + Source */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Status + Source + Type */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs">Booking Status</Label>
               <Select value={status} onValueChange={(v) => setStatus(v as Booking["status"])}>
                 <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {Object.entries(BOOKING_STATUS_CONFIG).map(([k, v]) => (
-                    <SelectItem key={k} value={k}>{v.label}</SelectItem>
-                  ))}
+                  {Object.entries(BOOKING_STATUS_CONFIG).map(([k, v]) => (<SelectItem key={k} value={k}>{v.label}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
@@ -800,7 +879,11 @@ function EditBookingDialog({
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Booking Type</Label>
-              <Select value={bookingType} onValueChange={(v) => setBookingType(v as Booking["booking_type"])}>
+              <Select value={bookingType} onValueChange={(v) => {
+                const bt = v as Booking["booking_type"];
+                setBookingType(bt);
+                setRoomMode(bt === "INDIVIDUAL" ? "individual" : "group");
+              }}>
                 <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="INDIVIDUAL">Individual</SelectItem>
@@ -823,26 +906,99 @@ function EditBookingDialog({
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Nights</Label>
-              <Input type="number" min="1" value={nights} onChange={(e) => setNights(Number(e.target.value))} className="h-9" />
+              <NumberStepper value={nights} onChange={setNights} min={1} max={90} />
             </div>
           </div>
 
-          {/* Guests */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Adults</Label>
-              <Input type="number" min="1" value={adults} onChange={(e) => setAdults(Number(e.target.value))} className="h-9" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Children</Label>
-              <Input type="number" min="0" value={children} onChange={(e) => setChildren(Number(e.target.value))} className="h-9" />
+          {/* Pricing mode toggle */}
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold flex items-center gap-2 text-sm">
+              <BedDouble className="h-4 w-4 text-sidebar-primary" /> Rooms &amp; Pricing
+            </h3>
+            <div className="flex gap-2">
+              <button type="button" onClick={() => setManualMode(false)}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold border-2 transition-all ${!manualMode ? "border-sidebar-primary bg-sidebar-primary/10 text-sidebar-primary" : "border-border text-muted-foreground hover:border-sidebar-primary/40"}`}>
+                Select rooms
+              </button>
+              <button type="button" onClick={() => setManualMode(true)}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold border-2 transition-all ${manualMode ? "border-sidebar-primary bg-sidebar-primary/10 text-sidebar-primary" : "border-border text-muted-foreground hover:border-sidebar-primary/40"}`}>
+                Enter amounts
+              </button>
             </div>
           </div>
 
-          {/* Pricing */}
-          <div className="rounded-xl border border-border/60 bg-card p-4 space-y-3">
-            <h3 className="text-sm font-semibold">Pricing</h3>
-            <div className="grid grid-cols-2 gap-3">
+          {!manualMode ? (
+            <div className="space-y-4 rounded-xl border border-border/60 bg-card p-4">
+              {/* Lodging toggle */}
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Lodging / rooms</Label>
+                <div className="flex gap-2">
+                  {([true, false] as const).map((opt) => (
+                    <button key={String(opt)} type="button" onClick={() => setIsLodging(opt)}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold border-2 transition-all ${isLodging === opt ? "border-sidebar-primary bg-sidebar-primary/10 text-sidebar-primary" : "border-border text-muted-foreground hover:border-sidebar-primary/40"}`}>
+                      {opt ? "Yes" : "No rooms"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {isLodging && (roomMode === "individual" ? (
+                <select value={selectedRoom} onChange={(e) => setSelectedRoom(e.target.value)}
+                  className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                  <option value="">Select a room type</option>
+                  {ROOM_OPTIONS.map((r) => (<option key={r.label} value={r.label}>{r.label} — GH₵{r.price}/night</option>))}
+                </select>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {ROOM_OPTIONS.map((r) => (
+                    <div key={r.label} className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-background">
+                      <div>
+                        <p className="text-xs font-medium">{r.label}</p>
+                        <p className="text-[10px] text-muted-foreground">GH₵{r.price}/night</p>
+                      </div>
+                      <NumberStepper value={roomQuantities[r.label] || 0} onChange={(val) => setRoomQuantities((prev) => ({ ...prev, [r.label]: val }))} min={0} max={20} />
+                    </div>
+                  ))}
+                </div>
+              ))}
+
+              {/* Hall (group/event) */}
+              {roomMode === "group" && (
+                <div className="space-y-3 pt-2 border-t border-border/40">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs flex items-center gap-1.5"><Church className="h-3.5 w-3.5 text-sidebar-primary" /> Hall / Venue</Label>
+                    <div className="flex gap-2">
+                      {([true, false] as const).map((opt) => (
+                        <button key={String(opt)} type="button" onClick={() => setNeedsHall(opt)}
+                          className={`px-3 py-1 rounded-lg text-xs font-semibold border-2 transition-all ${needsHall === opt ? "border-sidebar-primary bg-sidebar-primary/10 text-sidebar-primary" : "border-border text-muted-foreground hover:border-sidebar-primary/40"}`}>
+                          {opt ? "Yes" : "No hall"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {needsHall && (
+                    <div className="space-y-2">
+                      <select value={selectedHall} onChange={(e) => setSelectedHall(e.target.value)}
+                        className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                        <option value="">Select a hall</option>
+                        {HALL_OPTIONS.map((h) => (<option key={h.label} value={h.label}>{h.label} — GH₵{h.price}/day</option>))}
+                      </select>
+                      <div className="flex items-center gap-3">
+                        <Label className="text-xs whitespace-nowrap">Hall days:</Label>
+                        <NumberStepper value={hallDays} onChange={setHallDays} min={1} max={30} />
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" id="edit-wedding" checked={needsGrounds} onChange={(e) => setNeedsGrounds(e.target.checked)}
+                      className="h-4 w-4 rounded border-border text-sidebar-primary focus:ring-sidebar-primary" />
+                    <Label htmlFor="edit-wedding" className="text-xs cursor-pointer">Wedding Grounds (GH₵{WEDDING_GROUNDS_PRICE.toLocaleString()})</Label>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 rounded-xl border border-border/60 bg-card p-4">
               <div className="space-y-1.5">
                 <Label className="text-xs">Room/Lodging Amount (GH₵)</Label>
                 <Input type="number" min="0" step="0.01" value={roomAmount} onChange={(e) => setRoomAmount(e.target.value)} className="h-9" placeholder="0.00" />
@@ -856,7 +1012,23 @@ function EditBookingDialog({
                 <Input type="number" min="0" value={hallDays} onChange={(e) => setHallDays(Number(e.target.value))} className="h-9" />
               </div>
             </div>
-            {/* Discount */}
+          )}
+
+          {/* Discount + totals */}
+          <div className="rounded-xl border border-border/60 bg-card p-4 space-y-3">
+            <div className="flex justify-between text-xs">
+              <span className="text-muted-foreground">Rooms</span>
+              <span className="tabular-nums">{formatCurrency(roomPrice)}</span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className="text-muted-foreground">Halls / Grounds</span>
+              <span className="tabular-nums">{formatCurrency(hallPrice)}</span>
+            </div>
+            <div className="flex justify-between text-xs font-semibold pt-1 border-t border-border/40">
+              <span>Subtotal (before discount)</span>
+              <span className="tabular-nums">{formatCurrency(subtotal)}</span>
+            </div>
+
             <div className="space-y-2 pt-1 border-t border-border/40">
               <Label className="text-xs text-muted-foreground">Discount (optional)</Label>
               <div className="flex gap-2 items-end">
@@ -870,23 +1042,15 @@ function EditBookingDialog({
                   value={discountValue} onChange={(e) => setDiscountValue(e.target.value)} className="h-9 flex-1" />
               </div>
             </div>
-            <div className="space-y-1 pt-1">
-              {discountAmt > 0 && (
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span className="tabular-nums">{formatCurrency(subtotal)}</span>
-                </div>
-              )}
-              {discountAmt > 0 && (
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Discount</span>
-                  <span className="text-red-400 tabular-nums">-{formatCurrency(discountAmt)}</span>
-                </div>
-              )}
-              <div className="flex justify-between text-sm font-bold pt-1 border-t border-border/40">
-                <span>Total</span>
-                <span className="text-teal-500 tabular-nums">{formatCurrency(finalTotal)}</span>
+            {discountAmt > 0 && (
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Discount {discountType === "percent" ? `(${discountValue}%)` : ""}</span>
+                <span className="text-red-400 tabular-nums">-{formatCurrency(discountAmt)}</span>
               </div>
+            )}
+            <div className="flex justify-between text-sm font-bold pt-1 border-t border-border/40">
+              <span>Total</span>
+              <span className="text-teal-500 tabular-nums">{formatCurrency(finalTotal)}</span>
             </div>
           </div>
 
@@ -950,36 +1114,23 @@ function RecordPaymentDialog({
     setSubmitting(true);
     setError("");
     try {
-      const newPaid = Number(booking.paid_amount) + totalEntered;
-      const total = Number(booking.total_amount);
-      const newBalance = Math.max(0, total - newPaid);
-      const payStatus: Booking["payment_status"] = newPaid >= total && total > 0 ? "PAID" : newPaid > 0 ? "PARTIAL" : "UNPAID";
-
-      // Update booking
-      await updateBooking(booking.id, {
-        paid_amount: newPaid,
-        balance: newBalance,
-        payment_status: payStatus,
-      });
-
-      // Create one finance record per line
-      const today = new Date().toISOString().split("T")[0];
-      for (const line of lines) {
-        const amt = parseFloat(line.amount) || 0;
-        if (amt <= 0) continue;
-        await createFinanceRecord({
-          type: "INCOME",
-          category: "Booking Payment",
-          description: `${PAYMENT_METHOD_LABELS[line.method] ?? line.method} payment for booking ${booking.reference} (${booking.guest?.full_name ?? ""})`,
-          amount: amt,
-          date: today,
+      // Single endpoint keeps payments page, bookings, and accounting in sync:
+      // inserts a payment row + finance record per line and updates the booking.
+      const res = await fetch("/api/payments/record", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           booking_id: booking.id,
-          account_id: line.account_id || null,
-          category_id: null,
-          reference: booking.reference,
-          payment_method: line.method,
-          recorded_by: null,
-        });
+          amount: totalEntered,
+          status: "COMPLETED",
+          payment_lines: lines
+            .filter((l) => (parseFloat(l.amount) || 0) > 0)
+            .map((l) => ({ amount: parseFloat(l.amount) || 0, method: l.method, account_id: l.account_id || null })),
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || "Failed to record payment");
       }
       onSuccess();
     } catch (err) {
@@ -1116,7 +1267,16 @@ export default function BookingsPage() {
   };
 
   const columns: Column<BookingWithGuest>[] = [
-    { header: "Reference", accessor: (b) => <span className="font-mono text-xs font-bold">{b.reference}</span> },
+    { header: "Reference", accessor: (b) => (
+      <div className="space-y-0.5">
+        <span className="font-mono text-xs font-bold">{b.reference}</span>
+        {Number(b.discount_amount || 0) > 0 && (
+          <span className="flex w-fit items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20" title={`Discount applied: ${formatCurrency(Number(b.discount_amount))}`}>
+            <Tag className="h-2.5 w-2.5" />Discounted
+          </span>
+        )}
+      </div>
+    )},
     { header: "Guest", accessor: (b) => (
       <div>
         <p className="font-medium">{b.guest?.full_name ?? "—"}</p>
@@ -1266,6 +1426,18 @@ export default function BookingsPage() {
                 </div>
                 {/* Payment summary */}
                 <div className="rounded-xl border border-border/60 bg-muted/30 p-3 space-y-2">
+                  {Number(viewItem.discount_amount || 0) > 0 && (
+                    <>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Subtotal</span>
+                        <span className="tabular-nums text-muted-foreground">{formatCurrency(Number(viewItem.subtotal || vTotal + Number(viewItem.discount_amount || 0)))}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] uppercase tracking-wide text-violet-400 flex items-center gap-1"><Tag className="h-3 w-3" />Discount{viewItem.discount_type === "percent" ? ` (${viewItem.discount_value}%)` : ""}</span>
+                        <span className="tabular-nums text-violet-400">-{formatCurrency(Number(viewItem.discount_amount))}</span>
+                      </div>
+                    </>
+                  )}
                   <div className="flex justify-between items-center">
                     <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Total Amount</span>
                     <span className="font-bold tabular-nums">{formatCurrency(vTotal)}</span>

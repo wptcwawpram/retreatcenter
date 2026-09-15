@@ -56,32 +56,50 @@ export async function POST(request: NextRequest) {
 
     // 2. Create booking (NO SMS here — SMS is sent only after payment succeeds)
     const totalAmount = Number(booking.total_amount) || 0;
-    const { data: bookingRecord, error: bookingError } = await supabase
-      .from("bookings")
-      .insert({
-        guest_id: guestRecord.id,
-        room_ids: booking.room_ids || [],
-        check_in: booking.check_in,
-        check_out: booking.check_out,
-        nights: booking.nights || 1,
-        adults: booking.adults || 1,
-        children: booking.children || 0,
-        total_amount: totalAmount,
-        paid_amount: 0,
-        balance: totalAmount,
-        status: "PENDING",
-        booking_type: booking.booking_type || "INDIVIDUAL",
-        special_requests: booking.special_requests || null,
-        hall_id: booking.hall_id || null,
-        hall_days: booking.hall_days || 0,
-        hall_amount: booking.hall_amount || 0,
-        payment_status: "UNPAID",
-        source: bookingSource || "WEBSITE",
-      })
-      .select()
-      .single();
+    const baseInsert = {
+      guest_id: guestRecord.id,
+      room_ids: booking.room_ids || [],
+      check_in: booking.check_in,
+      check_out: booking.check_out,
+      nights: booking.nights || 1,
+      adults: booking.adults || 1,
+      children: booking.children || 0,
+      total_amount: totalAmount,
+      paid_amount: 0,
+      balance: totalAmount,
+      status: "PENDING",
+      booking_type: booking.booking_type || "INDIVIDUAL",
+      special_requests: booking.special_requests || null,
+      hall_id: booking.hall_id || null,
+      hall_days: booking.hall_days || 0,
+      hall_amount: booking.hall_amount || 0,
+      payment_status: "UNPAID",
+      source: bookingSource || "WEBSITE",
+    };
+    // Optional columns from migration-booking-discount.sql — dropped on retry if absent
+    const fullInsert = {
+      ...baseInsert,
+      room_amount: Number(booking.room_amount) || 0,
+      subtotal: Number(booking.subtotal) || totalAmount,
+      discount_type: booking.discount_type || null,
+      discount_value: Number(booking.discount_value) || 0,
+      discount_amount: Number(booking.discount_amount) || 0,
+      selection: booking.selection || null,
+    };
 
-    if (bookingError) throw bookingError;
+    let bookingRecord;
+    {
+      const { data, error } = await supabase.from("bookings").insert(fullInsert).select().single();
+      if (error && /column/i.test(error.message)) {
+        const { data: d2, error: e2 } = await supabase.from("bookings").insert(baseInsert).select().single();
+        if (e2) throw e2;
+        bookingRecord = d2;
+      } else if (error) {
+        throw error;
+      } else {
+        bookingRecord = data;
+      }
+    }
 
     // 3. Notify admin (non-blocking) - income is only recorded when payment is actually received
     notifyAdmin({

@@ -185,6 +185,21 @@ export async function updateBooking(id: string, updates: Partial<Omit<Booking, "
   if (error) throw error;
 }
 
+// Full edit save — routes through a resilient service-role API that drops the
+// discount/selection columns if the migration hasn't been run yet.
+export async function updateBookingFull(id: string, updates: Partial<Omit<Booking, "id" | "reference" | "created_at" | "updated_at">>) {
+  const res = await fetch("/api/bookings/update", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, updates }),
+  });
+  if (!res.ok) {
+    const d = await res.json().catch(() => ({}));
+    throw new Error(d.error || "Failed to update booking");
+  }
+  return (await res.json()).data as Booking;
+}
+
 export async function updateBookingPayment(id: string, paidAmount: number, totalAmount: number, paymentStatus: Booking["payment_status"]) {
   const balance = Math.max(0, totalAmount - paidAmount);
   const { error } = await supabase()

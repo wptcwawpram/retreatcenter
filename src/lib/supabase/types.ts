@@ -56,6 +56,17 @@ export interface Guest {
   updated_at: string;
 }
 
+export interface BookingSelection {
+  bookingType: "individual" | "group";
+  isLodging: boolean;
+  selectedRoom?: string;
+  roomQuantities?: Record<string, number>;
+  needsHall?: boolean;
+  selectedHall?: string;
+  hallDays?: number;
+  needsGrounds?: boolean;
+}
+
 export interface Booking {
   id: string;
   reference: string;
@@ -71,6 +82,12 @@ export interface Booking {
   total_amount: number;
   paid_amount: number;
   balance: number;
+  room_amount?: number;
+  subtotal?: number;
+  discount_type?: "amount" | "percent" | null;
+  discount_value?: number;
+  discount_amount?: number;
+  selection?: BookingSelection | null;
   status:
     | "PENDING"
     | "CONFIRMED"

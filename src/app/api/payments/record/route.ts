@@ -60,75 +60,66 @@ export async function POST(request: NextRequest) {
 
     const oldPaid = Number(booking.paid_amount) || 0;
     const bookingTotal = Number(booking.total_amount) || 0;
-    const newPaid = oldPaid + totalAmount;
-    const newBalance = Math.max(0, bookingTotal - newPaid);
-    const payStatus = newPaid >= bookingTotal && bookingTotal > 0 ? "PAID"
-      : newPaid > 0 ? "PARTIAL"
-      : "UNPAID";
     const guestName = (booking.guest as { full_name?: string } | null)?.full_name ?? "";
 
-    // 2. Insert payment record
-    const { data: payment, error: payErr } = await supabase
-      .from("payments")
-      .insert({
-        booking_id,
-        amount: totalAmount,
-        method: method || "CASH",
-        status: status || "COMPLETED",
-        reference: `MAN-${Date.now()}`,
-        paystack_reference: null,
-        notes: notes || null,
-        recorded_by: user.id,
-      })
-      .select()
-      .single();
-
-    if (payErr) throw payErr;
-
-    // 3. Update booking paid_amount, balance, payment_status
-    const { error: bookingUpdateErr } = await supabase
-      .from("bookings")
-      .update({ paid_amount: newPaid, balance: newBalance, payment_status: payStatus })
-      .eq("id", booking_id);
-
-    if (bookingUpdateErr) throw bookingUpdateErr;
-
-    // 4. Create finance income record(s)
-    // If split payment_lines provided, create one per line; otherwise one record
+    // Normalise into lines. Split payments create one payment row + finance record
+    // per line so the Payments page and Accounting both reflect every entry.
     const lines: Array<{ amount: number; method: string; account_id: string | null }> =
       Array.isArray(payment_lines) && payment_lines.length > 0
         ? payment_lines
         : [{ amount: totalAmount, method: method || "CASH", account_id: account_id || null }];
 
+    const createdPayments: unknown[] = [];
+    let recordedTotal = 0;
+
     for (const line of lines) {
       const lineAmt = Number(line.amount) || 0;
       if (lineAmt <= 0) continue;
+      recordedTotal += lineAmt;
+      const lineMethod = line.method || "CASH";
 
+      // 1. Insert payment row (shows on Payments page)
+      const { data: payment, error: payErr } = await supabase
+        .from("payments")
+        .insert({
+          booking_id,
+          amount: lineAmt,
+          method: lineMethod,
+          status: status || "COMPLETED",
+          reference: `MAN-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          paystack_reference: null,
+          notes: notes || null,
+          recorded_by: user.id,
+        })
+        .select()
+        .single();
+      if (payErr) throw payErr;
+      createdPayments.push(payment);
+
+      // 2. Create finance income record
       const { error: finErr } = await supabase
         .from("finance_records")
         .insert({
           type: "INCOME",
           category: "Booking Payment",
-          description: `${line.method} payment for booking ${booking.reference} (${guestName})`,
+          description: `${lineMethod} payment for booking ${booking.reference} (${guestName})`,
           amount: lineAmt,
           date: today,
           booking_id,
           account_id: line.account_id || null,
           reference: booking.reference,
-          payment_method: line.method,
+          payment_method: lineMethod,
           recorded_by: user.id,
         });
-
       if (finErr) console.error("Finance record error:", finErr);
 
-      // Update account balance
+      // 3. Credit the account balance
       if (line.account_id) {
         const { data: acct } = await supabase
           .from("finance_accounts")
           .select("balance")
           .eq("id", line.account_id)
           .single();
-
         if (acct) {
           await supabase
             .from("finance_accounts")
@@ -138,7 +129,20 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, payment, newPaid, newBalance, payStatus });
+    // 4. Update booking paid_amount, balance, payment_status once
+    const newPaid = oldPaid + recordedTotal;
+    const newBalance = Math.max(0, bookingTotal - newPaid);
+    const payStatus = newPaid >= bookingTotal && bookingTotal > 0 ? "PAID"
+      : newPaid > 0 ? "PARTIAL"
+      : "UNPAID";
+
+    const { error: bookingUpdateErr } = await supabase
+      .from("bookings")
+      .update({ paid_amount: newPaid, balance: newBalance, payment_status: payStatus })
+      .eq("id", booking_id);
+    if (bookingUpdateErr) throw bookingUpdateErr;
+
+    return NextResponse.json({ success: true, payments: createdPayments, newPaid, newBalance, payStatus });
   } catch (error) {
     console.error("Record payment error:", error);
     const msg = error instanceof Error ? error.message : "Failed to record payment";
