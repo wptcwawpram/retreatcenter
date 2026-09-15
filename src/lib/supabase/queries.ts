@@ -483,6 +483,20 @@ export async function deleteFinanceAccount(id: string) {
   await adminDelete("finance_accounts", id);
 }
 
+// Reconcile every account balance to actual records + transfers (flushes drift)
+export async function recalculateAccountBalances(accountId?: string) {
+  const res = await fetch("/api/finance/accounts/recalculate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(accountId ? { account_id: accountId } : {}),
+  });
+  if (!res.ok) {
+    const d = await res.json().catch(() => ({}));
+    throw new Error(d.error || "Failed to recalculate balances");
+  }
+  return (await res.json()).accounts as Array<{ id: string; name: string; balance: number }>;
+}
+
 // ── Finance Categories ───────────────────────────────────────
 
 export async function getFinanceCategories() {
