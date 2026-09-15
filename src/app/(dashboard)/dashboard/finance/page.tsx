@@ -8,6 +8,7 @@ import {
   getFinanceTransfers, createFinanceTransfer,
 } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
+import { useUndoableDelete } from "@/hooks/use-undoable-delete";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { downloadCSV } from "@/lib/export-csv";
 import {
@@ -90,6 +91,7 @@ export default function FinancePage() {
   const [typeFilter, setTypeFilter] = useState("ALL");
   const [showCategories, setShowCategories] = useState(false);
   const [saving, setSaving] = useState(false);
+  const { pendingIds, scheduleDelete } = useUndoableDelete(() => { refetchRecords(); refetchAccounts(); refetchCats(); });
 
   // Transfer form
   const [txFrom, setTxFrom] = useState("");
@@ -143,13 +145,15 @@ export default function FinancePage() {
   })();
   const allTransfers = Array.isArray(transfers) ? transfers as FinanceTransfer[] : [];
 
-  const incomeCategories = allCategories.filter((c) => ss(c.type) === "INCOME" && c.is_active);
-  const expenseCategories = allCategories.filter((c) => ss(c.type) === "EXPENSE" && c.is_active);
-  const activeAccounts = allAccounts.filter((a) => a.is_active);
-  const filtered = allRecords.filter((f) => typeFilter === "ALL" || ss(f.type) === typeFilter);
+  // Hide rows pending an undoable delete
+  const visibleRecords = allRecords.filter((f) => !pendingIds.has(ss(f.id)));
+  const incomeCategories = allCategories.filter((c) => ss(c.type) === "INCOME" && c.is_active && !pendingIds.has(ss(c.id)));
+  const expenseCategories = allCategories.filter((c) => ss(c.type) === "EXPENSE" && c.is_active && !pendingIds.has(ss(c.id)));
+  const activeAccounts = allAccounts.filter((a) => a.is_active && !pendingIds.has(ss(a.id)));
+  const filtered = visibleRecords.filter((f) => typeFilter === "ALL" || ss(f.type) === typeFilter);
 
-  const totalIncome = allRecords.filter((f) => ss(f.type) === "INCOME").reduce((sum, f) => sum + Number(f.amount), 0);
-  const totalExpenses = allRecords.filter((f) => ss(f.type) === "EXPENSE").reduce((sum, f) => sum + Number(f.amount), 0);
+  const totalIncome = visibleRecords.filter((f) => ss(f.type) === "INCOME").reduce((sum, f) => sum + Number(f.amount), 0);
+  const totalExpenses = visibleRecords.filter((f) => ss(f.type) === "EXPENSE").reduce((sum, f) => sum + Number(f.amount), 0);
   const totalBal = activeAccounts.reduce((sum, a) => sum + Number(a.balance), 0);
 
   const accountMap: Record<string, string> = {};
@@ -157,7 +161,7 @@ export default function FinancePage() {
 
   const accountIn: Record<string, number> = {};
   const accountOut: Record<string, number> = {};
-  allRecords.forEach((r) => {
+  visibleRecords.forEach((r) => {
     const aid = ss(r.account_id);
     if (!aid) return;
     if (ss(r.type) === "INCOME") accountIn[aid] = (accountIn[aid] || 0) + Number(r.amount);
@@ -255,15 +259,14 @@ export default function FinancePage() {
     setDeleteTarget({ id, type, label }); setModal("delete");
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!deleteTarget) return;
-    setSaving(true);
-    try {
-      if (deleteTarget.type === "record") await deleteFinanceRecord(deleteTarget.id);
-      else if (deleteTarget.type === "account") await deleteFinanceAccount(deleteTarget.id);
-      else if (deleteTarget.type === "category") await deleteFinanceCategory(deleteTarget.id);
-      setModal("none"); setDeleteTarget(null); refetchRecords(); refetchAccounts(); refetchCats();
-    } catch {} finally { setSaving(false); }
+    const t = deleteTarget;
+    const perform = t.type === "record" ? () => deleteFinanceRecord(t.id)
+      : t.type === "account" ? () => deleteFinanceAccount(t.id)
+      : () => deleteFinanceCategory(t.id);
+    setModal("none"); setDeleteTarget(null);
+    scheduleDelete({ id: t.id, label: t.label || t.type, performDelete: perform });
   };
 
   const handleSetDefault = async (id: string) => {
@@ -677,13 +680,11 @@ export default function FinancePage() {
         <SimpleModal open onClose={() => { setModal("none"); setDeleteTarget(null); }} title={"Delete " + ss(deleteTarget.type)}>
           <div className="flex items-start gap-3 text-sm mb-4">
             <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
-            <p>{"Delete "}<strong>{ss(deleteTarget.label)}</strong>{"? This cannot be undone."}</p>
+            <p>{"Delete "}<strong>{ss(deleteTarget.label)}</strong>{"? You'll have a few seconds to undo."}</p>
           </div>
           <div className="-mx-5 -mb-5 flex gap-2 justify-end rounded-b-xl border-t bg-muted/50 p-4">
-            <Button variant="outline" onClick={() => { setModal("none"); setDeleteTarget(null); }} disabled={saving}>{"Cancel"}</Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={saving}>
-              {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" />{"Deleting…"}</> : "Delete"}
-            </Button>
+            <Button variant="outline" onClick={() => { setModal("none"); setDeleteTarget(null); }}>{"Cancel"}</Button>
+            <Button variant="destructive" onClick={handleDelete}>{"Delete"}</Button>
           </div>
         </SimpleModal>
       )}

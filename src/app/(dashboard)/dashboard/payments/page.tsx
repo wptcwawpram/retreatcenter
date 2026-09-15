@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { PAYMENT_STATUS_CONFIG, PAYMENT_METHOD_LABELS } from "@/lib/constants";
 import { getPayments, getBookings, deletePayment, getFinanceAccounts } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
+import { useUndoableDelete } from "@/hooks/use-undoable-delete";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { Search, Wallet, Clock, CreditCard, TrendingUp, Loader2, Trash2, AlertCircle, Download } from "lucide-react";
 import { downloadCSV } from "@/lib/export-csv";
@@ -38,12 +39,13 @@ export default function PaymentsPage() {
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [deleteItem, setDeleteItem] = useState<PaymentRow | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const { pendingIds, scheduleDelete } = useUndoableDelete(refetch);
 
   const allPayments = (payments || []) as PaymentRow[];
   const allBookings = bookings || [];
 
   const filtered = useMemo(() => allPayments.filter((p) => {
+    if (pendingIds.has(p.id)) return false;
     if (statusFilter !== "ALL" && p.status !== statusFilter) return false;
     if (methodFilter !== "ALL" && p.method !== methodFilter) return false;
     if (search) {
@@ -51,7 +53,7 @@ export default function PaymentsPage() {
       return p.reference.toLowerCase().includes(q) || p.booking?.guest?.full_name?.toLowerCase().includes(q) || p.booking?.reference?.toLowerCase().includes(q);
     }
     return true;
-  }), [allPayments, statusFilter, methodFilter, search]);
+  }), [allPayments, statusFilter, methodFilter, search, pendingIds]);
 
   const totalCompleted = useMemo(() => allPayments.filter((p) => p.status === "COMPLETED").reduce((s, p) => s + Number(p.amount), 0), [allPayments]);
   const totalPending = useMemo(() => allPayments.filter((p) => p.status === "PENDING").reduce((s, p) => s + Number(p.amount), 0), [allPayments]);
@@ -100,11 +102,15 @@ export default function PaymentsPage() {
     refetch();
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!deleteItem) return;
-    setDeleting(true);
-    try { await deletePayment(deleteItem.id); setDeleteItem(null); refetch(); }
-    finally { setDeleting(false); }
+    const item = deleteItem;
+    setDeleteItem(null);
+    scheduleDelete({
+      id: item.id,
+      label: `Payment ${item.reference}`,
+      performDelete: () => deletePayment(item.id),
+    });
   };
 
   const columns: Column<PaymentRow>[] = [
@@ -175,13 +181,11 @@ export default function PaymentsPage() {
           <DialogHeader><DialogTitle>Delete Payment</DialogTitle></DialogHeader>
           <div className="flex items-start gap-3 text-sm">
             <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
-            <p>Delete payment <strong>{deleteItem?.reference}</strong> for {formatCurrency(Number(deleteItem?.amount))}?</p>
+            <p>Delete payment <strong>{deleteItem?.reference}</strong> for {formatCurrency(Number(deleteItem?.amount))}? You&apos;ll have a few seconds to undo.</p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteItem(null)} disabled={deleting}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" />Deleting...</> : "Delete"}
-            </Button>
+            <Button variant="outline" onClick={() => setDeleteItem(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete}>Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

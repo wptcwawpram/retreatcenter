@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { getInventoryItems, createInventoryItem, updateInventoryItem, deleteInventoryItem } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
+import { useUndoableDelete } from "@/hooks/use-undoable-delete";
 import { formatCurrency } from "@/lib/format";
 import {
   Loader2, Edit2, Trash2, AlertCircle, Package, AlertTriangle,
@@ -45,9 +46,9 @@ export default function InventoryPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [editItem, setEditItem] = useState<InventoryItem | null>(null);
   const [deleteItem, setDeleteItem] = useState<InventoryItem | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const { pendingIds, scheduleDelete } = useUndoableDelete(refetch);
 
-  const allItems = items || [];
+  const allItems = useMemo(() => (items || []).filter((i) => !pendingIds.has(i.id)), [items, pendingIds]);
 
   // Filter by location
   const filteredItems = useMemo(() => {
@@ -121,16 +122,11 @@ export default function InventoryPage() {
     refetch();
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!deleteItem) return;
-    setDeleting(true);
-    try {
-      await deleteInventoryItem(deleteItem.id);
-      setDeleteItem(null);
-      refetch();
-    } finally {
-      setDeleting(false);
-    }
+    const item = deleteItem;
+    setDeleteItem(null);
+    scheduleDelete({ id: item.id, label: item.name, performDelete: () => deleteInventoryItem(item.id) });
   };
 
   const columns: Column<InventoryItem>[] = [
@@ -267,13 +263,11 @@ export default function InventoryPage() {
           <DialogHeader><DialogTitle>Delete Item</DialogTitle></DialogHeader>
           <div className="flex items-start gap-3 text-sm">
             <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
-            <p>Delete <strong>{deleteItem?.name}</strong> from inventory?</p>
+            <p>Delete <strong>{deleteItem?.name}</strong> from inventory? You&apos;ll have a few seconds to undo.</p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteItem(null)} disabled={deleting}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" />Deleting...</> : "Delete"}
-            </Button>
+            <Button variant="outline" onClick={() => setDeleteItem(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete}>Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

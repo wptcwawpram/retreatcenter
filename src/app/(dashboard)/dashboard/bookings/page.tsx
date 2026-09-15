@@ -14,6 +14,7 @@ import { NumberStepper } from "@/components/ui/number-stepper";
 import { BOOKING_STATUS_CONFIG, PAYMENT_METHOD_LABELS } from "@/lib/constants";
 import { getBookings, updateBookingFull, deleteBooking, getGuests, getFinanceAccounts } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
+import { useUndoableDelete } from "@/hooks/use-undoable-delete";
 import { formatCurrency, formatDate } from "@/lib/format";
 import {
   Search, Loader2, Eye, Edit2, Trash2, AlertCircle, CheckCircle,
@@ -1231,8 +1232,8 @@ export default function BookingsPage() {
   const [viewItem, setViewItem] = useState<BookingWithGuest | null>(null);
   const [deleteItem, setDeleteItem] = useState<BookingWithGuest | null>(null);
   const [payItem, setPayItem] = useState<BookingWithGuest | null>(null);
-  const [deleting, setDeleting] = useState(false);
   const { data: accounts } = useSupabaseQuery(() => getFinanceAccounts(), []);
+  const { pendingIds, scheduleDelete } = useUndoableDelete(refetch);
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-sidebar-primary" /></div>;
@@ -1242,6 +1243,7 @@ export default function BookingsPage() {
   const allGuests = guests || [];
 
   const filtered = allBookings.filter((b) => {
+    if (pendingIds.has(b.id)) return false;
     if (typeTab !== "ALL" && b.booking_type !== typeTab) return false;
     if (statusFilter !== "ALL" && b.status !== statusFilter) return false;
     if (search) {
@@ -1254,16 +1256,15 @@ export default function BookingsPage() {
   const typeCounts = { ALL: allBookings.length, INDIVIDUAL: allBookings.filter(b => b.booking_type === "INDIVIDUAL").length, GROUP: allBookings.filter(b => b.booking_type === "GROUP").length, EVENT: allBookings.filter(b => b.booking_type === "EVENT").length };
 
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!deleteItem) return;
-    setDeleting(true);
-    try {
-      await deleteBooking(deleteItem.id);
-      setDeleteItem(null);
-      refetch();
-    } finally {
-      setDeleting(false);
-    }
+    const item = deleteItem;
+    setDeleteItem(null);
+    scheduleDelete({
+      id: item.id,
+      label: `Booking ${item.reference}`,
+      performDelete: () => deleteBooking(item.id),
+    });
   };
 
   const columns: Column<BookingWithGuest>[] = [
@@ -1483,13 +1484,11 @@ export default function BookingsPage() {
           <DialogHeader><DialogTitle>Delete Booking</DialogTitle></DialogHeader>
           <div className="flex items-start gap-3 text-sm">
             <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
-            <p>Are you sure you want to delete booking <strong>{deleteItem?.reference}</strong>? This action cannot be undone.</p>
+            <p>Delete booking <strong>{deleteItem?.reference}</strong>? You&apos;ll have a few seconds to undo.</p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteItem(null)} disabled={deleting}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" />Deleting...</> : "Delete"}
-            </Button>
+            <Button variant="outline" onClick={() => setDeleteItem(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete}>Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

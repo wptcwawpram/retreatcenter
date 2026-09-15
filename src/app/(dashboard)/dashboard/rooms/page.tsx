@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { ROOM_STATUS_CONFIG } from "@/lib/constants";
 import { getRooms, createRoom, updateRoom, updateRoomStatus, deleteRoom } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
+import { useUndoableDelete } from "@/hooks/use-undoable-delete";
 import { formatCurrency, roomSortKey } from "@/lib/format";
 import {
   BedDouble, LayoutGrid, List, Search, Loader2, Edit2, Trash2, AlertCircle,
@@ -88,7 +89,7 @@ export default function RoomsPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [editItem, setEditItem] = useState<Room | null>(null);
   const [deleteItem, setDeleteItem] = useState<Room | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const { pendingIds, scheduleDelete } = useUndoableDelete(refetch);
   const [saving, setSaving] = useState(false);
   const [seeding, setSeeding] = useState(false);
 
@@ -150,7 +151,7 @@ export default function RoomsPage() {
     }
   };
 
-  const allRooms = rooms || [];
+  const allRooms = (rooms || []).filter((r) => !pendingIds.has(r.id));
   const buildings = useMemo(() => [...new Set(allRooms.map((r) => r.building))], [allRooms]);
 
   const [sortBy, setSortBy] = useState<"default" | "type" | "status" | "building">("default");
@@ -232,11 +233,11 @@ export default function RoomsPage() {
     finally { setSaving(false); }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!deleteItem) return;
-    setDeleting(true);
-    try { await deleteRoom(deleteItem.id); setDeleteItem(null); refetch(); }
-    finally { setDeleting(false); }
+    const item = deleteItem;
+    setDeleteItem(null);
+    scheduleDelete({ id: item.id, label: `Room ${item.number}`, performDelete: () => deleteRoom(item.id) });
   };
 
   return (
@@ -559,13 +560,11 @@ export default function RoomsPage() {
           <DialogHeader><DialogTitle>Delete Room</DialogTitle></DialogHeader>
           <div className="flex items-start gap-3 text-sm">
             <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
-            <p>Delete room <strong>{deleteItem?.number}</strong>? This cannot be undone.</p>
+            <p>Delete room <strong>{deleteItem?.number}</strong>? You&apos;ll have a few seconds to undo.</p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteItem(null)} disabled={deleting}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" />Deleting...</> : "Delete"}
-            </Button>
+            <Button variant="outline" onClick={() => setDeleteItem(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete}>Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { getHousekeepingTasks, createHousekeepingTask, updateHousekeepingStatus, deleteHousekeepingTask, getRooms, getProfiles } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
+import { useUndoableDelete } from "@/hooks/use-undoable-delete";
 import { BedDouble, Clock, User, CheckCircle, Loader2, Trash2, ArrowRight, AlertCircle, Sparkles, Download } from "lucide-react";
 import { downloadCSV } from "@/lib/export-csv";
 import { cn } from "@/lib/utils";
@@ -39,9 +40,9 @@ export default function HousekeepingPage() {
   const { data: staff } = useSupabaseQuery(() => getProfiles(), []);
   const [showAdd, setShowAdd] = useState(false);
   const [deleteItem, setDeleteItem] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const { pendingIds, scheduleDelete } = useUndoableDelete(refetch);
 
-  const allTasks = tasks || [];
+  const allTasks = (tasks || []).filter((t) => !pendingIds.has(t.id));
   const allRooms = rooms || [];
   const allStaff = staff || [];
 
@@ -86,11 +87,11 @@ export default function HousekeepingPage() {
     refetch();
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!deleteItem) return;
-    setDeleting(true);
-    try { await deleteHousekeepingTask(deleteItem); setDeleteItem(null); refetch(); }
-    finally { setDeleting(false); }
+    const id = deleteItem;
+    setDeleteItem(null);
+    scheduleDelete({ id, label: "Task", performDelete: () => deleteHousekeepingTask(id) });
   };
 
   const nextStatus: Record<string, "IN_PROGRESS" | "COMPLETED"> = {
@@ -213,13 +214,11 @@ export default function HousekeepingPage() {
           <DialogHeader><DialogTitle>Delete Task</DialogTitle></DialogHeader>
           <div className="flex items-start gap-3 text-sm">
             <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
-            <p>Delete this housekeeping task? This cannot be undone.</p>
+            <p>Delete this housekeeping task? You&apos;ll have a few seconds to undo.</p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteItem(null)} disabled={deleting}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" />Deleting...</> : "Delete"}
-            </Button>
+            <Button variant="outline" onClick={() => setDeleteItem(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete}>Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

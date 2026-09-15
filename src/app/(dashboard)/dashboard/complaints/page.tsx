@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { COMPLAINT_CATEGORY_LABELS } from "@/lib/constants";
 import { getComplaints, createComplaint, updateComplaint, deleteComplaint, getGuests } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
+import { useUndoableDelete } from "@/hooks/use-undoable-delete";
 import { formatDate } from "@/lib/format";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Edit2, Trash2, AlertCircle, MessageSquareWarning, Download, Send, CheckCircle } from "lucide-react";
@@ -41,7 +42,7 @@ export default function ComplaintsPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [editItem, setEditItem] = useState<ComplaintRow | null>(null);
   const [deleteItem, setDeleteItem] = useState<ComplaintRow | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const { pendingIds, scheduleDelete } = useUndoableDelete(() => refetch());
   const [statusTab, setStatusTab] = useState("ALL");
   const [notifyItem, setNotifyItem] = useState<ComplaintRow | null>(null);
   const [guestMessage, setGuestMessage] = useState("");
@@ -57,9 +58,10 @@ export default function ComplaintsPage() {
   const allGuests = guests || [];
 
   const filtered = useMemo(() => {
-    if (statusTab === "ALL") return allComplaints;
-    return allComplaints.filter((c) => c.status === statusTab);
-  }, [allComplaints, statusTab]);
+    const base = allComplaints.filter((c) => !pendingIds.has(c.id));
+    if (statusTab === "ALL") return base;
+    return base.filter((c) => c.status === statusTab);
+  }, [allComplaints, statusTab, pendingIds]);
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -152,11 +154,11 @@ export default function ComplaintsPage() {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!deleteItem) return;
-    setDeleting(true);
-    try { await deleteComplaint(deleteItem.id); setDeleteItem(null); refetch(); }
-    finally { setDeleting(false); }
+    const item = deleteItem;
+    setDeleteItem(null);
+    scheduleDelete({ id: item.id, label: `Complaint "${item.subject}"`, performDelete: () => deleteComplaint(item.id) });
   };
 
   const columns: Column<ComplaintRow>[] = [
@@ -326,13 +328,11 @@ export default function ComplaintsPage() {
           <DialogHeader><DialogTitle>Delete Complaint</DialogTitle></DialogHeader>
           <div className="flex items-start gap-3 text-sm">
             <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
-            <p>Delete complaint <strong>{deleteItem?.subject}</strong>?</p>
+            <p>Delete complaint <strong>{deleteItem?.subject}</strong>? You&apos;ll have a few seconds to undo.</p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteItem(null)} disabled={deleting}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" />Deleting...</> : "Delete"}
-            </Button>
+            <Button variant="outline" onClick={() => setDeleteItem(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete}>Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

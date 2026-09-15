@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { formatCurrency, formatDate } from "@/lib/format";
 import { getEvents, createEvent, updateEvent, deleteEvent, getVenues } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
+import { useUndoableDelete } from "@/hooks/use-undoable-delete";
 import { Calendar, MapPin, Users, Loader2, Edit2, Trash2, AlertCircle, Download } from "lucide-react";
 import { downloadCSV } from "@/lib/export-csv";
 import { cn } from "@/lib/utils";
@@ -30,9 +31,9 @@ export default function EventsPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [editItem, setEditItem] = useState<EventRow | null>(null);
   const [deleteItem, setDeleteItem] = useState<EventRow | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const { pendingIds, scheduleDelete } = useUndoableDelete(refetch);
 
-  const allEvents = (events || []) as EventRow[];
+  const allEvents = ((events || []) as EventRow[]).filter((e) => !pendingIds.has(e.id));
   const allVenues = venues || [];
 
   const upcomingCount = useMemo(() => allEvents.filter((e) => e.status === "UPCOMING" || e.status === "IN_PROGRESS").length, [allEvents]);
@@ -85,11 +86,11 @@ export default function EventsPage() {
     refetch();
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!deleteItem) return;
-    setDeleting(true);
-    try { await deleteEvent(deleteItem.id); setDeleteItem(null); refetch(); }
-    finally { setDeleting(false); }
+    const item = deleteItem;
+    setDeleteItem(null);
+    scheduleDelete({ id: item.id, label: `Event "${item.name}"`, performDelete: () => deleteEvent(item.id) });
   };
 
   const columns: Column<EventRow>[] = [
@@ -200,13 +201,11 @@ export default function EventsPage() {
           <DialogHeader><DialogTitle>Delete Event</DialogTitle></DialogHeader>
           <div className="flex items-start gap-3 text-sm">
             <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
-            <p>Delete event <strong>{deleteItem?.name}</strong>?</p>
+            <p>Delete event <strong>{deleteItem?.name}</strong>? You&apos;ll have a few seconds to undo.</p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteItem(null)} disabled={deleting}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" />Deleting...</> : "Delete"}
-            </Button>
+            <Button variant="outline" onClick={() => setDeleteItem(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete}>Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { getGuests, createGuest, updateGuest, deleteGuest } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
+import { useUndoableDelete } from "@/hooks/use-undoable-delete";
 import { formatDate } from "@/lib/format";
 import { Search, Loader2, Edit2, Trash2, AlertCircle, Users, Phone, Mail, Download } from "lucide-react";
 import { downloadCSV } from "@/lib/export-csv";
@@ -33,17 +34,18 @@ export default function GuestsPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [editItem, setEditItem] = useState<Guest | null>(null);
   const [deleteItem, setDeleteItem] = useState<Guest | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const { pendingIds, scheduleDelete } = useUndoableDelete(refetch);
 
   const allGuests = guests || [];
 
   const filtered = useMemo(() => {
-    if (!search) return allGuests;
+    const base = allGuests.filter((g) => !pendingIds.has(g.id));
+    if (!search) return base;
     const q = search.toLowerCase();
-    return allGuests.filter((g) =>
+    return base.filter((g) =>
       g.full_name.toLowerCase().includes(q) || g.phone.includes(q) || (g.email ?? "").toLowerCase().includes(q)
     );
-  }, [allGuests, search]);
+  }, [allGuests, search, pendingIds]);
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -79,11 +81,11 @@ export default function GuestsPage() {
     refetch();
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!deleteItem) return;
-    setDeleting(true);
-    try { await deleteGuest(deleteItem.id); setDeleteItem(null); refetch(); }
-    finally { setDeleting(false); }
+    const item = deleteItem;
+    setDeleteItem(null);
+    scheduleDelete({ id: item.id, label: item.full_name, performDelete: () => deleteGuest(item.id) });
   };
 
   const columns: Column<Guest>[] = [
@@ -167,13 +169,11 @@ export default function GuestsPage() {
           <DialogHeader><DialogTitle>Delete Guest</DialogTitle></DialogHeader>
           <div className="flex items-start gap-3 text-sm">
             <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
-            <p>Delete <strong>{deleteItem?.full_name}</strong>? This will also remove their booking history.</p>
+            <p>Delete <strong>{deleteItem?.full_name}</strong>? This also removes their booking history. You&apos;ll have a few seconds to undo.</p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteItem(null)} disabled={deleting}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" />Deleting...</> : "Delete"}
-            </Button>
+            <Button variant="outline" onClick={() => setDeleteItem(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete}>Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
