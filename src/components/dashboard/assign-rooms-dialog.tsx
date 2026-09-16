@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { assignBookingRooms } from "@/lib/supabase/queries";
 import { sortRooms } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { Loader2, AlertCircle, BedDouble, Check } from "lucide-react";
+import { Loader2, AlertCircle, BedDouble, BedSingle, Bed, Check } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type { Room, Booking, Guest } from "@/lib/supabase/types";
 
 type BookingWithGuest = Booking & { guest?: Guest };
@@ -16,6 +17,12 @@ const ROOM_TYPE_SHORT: Record<string, string> = {
   SUITE_FAN: "Suite (Fan)", SUITE_AC: "Suite (AC)", APARTMENT: "Apartment",
   "3_IN_1": "3-in-1", KITCHEN: "Kitchen",
 };
+
+function bedIconFor(type: string): LucideIcon {
+  if (type === "SUITE_FAN" || type === "SUITE_AC") return BedSingle;
+  if (type === "APARTMENT") return BedDouble;
+  return Bed;
+}
 
 function overlaps(aStart: string, aEnd: string, bStart: string, bEnd: string) {
   return aStart < bEnd && bStart < aEnd;
@@ -96,11 +103,14 @@ export function AssignRoomsDialog({
         <div className="space-y-4">
           {Object.entries(roomsByBuilding).map(([building, rooms]) => (
             <div key={building} className="space-y-2">
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{building}</h4>
+              <h4 className="text-sm font-bold text-foreground/90 uppercase tracking-wide flex items-center gap-2">
+                <BedDouble className="h-4 w-4 text-sidebar-primary" />{building}
+              </h4>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {rooms.map((room) => {
                   const isSelected = selected.includes(room.id);
                   const isConflict = conflictRoomIds.has(room.id) && !isSelected;
+                  const BedIcon = bedIconFor(room.type);
                   return (
                     <button
                       key={room.id}
@@ -108,17 +118,22 @@ export function AssignRoomsDialog({
                       disabled={isConflict}
                       onClick={() => toggle(room.id)}
                       className={cn(
-                        "relative text-left rounded-lg border-2 p-2.5 transition-all",
+                        "relative flex items-center gap-2.5 text-left rounded-xl border-2 p-3 transition-all",
                         isSelected ? "border-sidebar-primary bg-sidebar-primary/10"
                           : isConflict ? "border-border/40 bg-muted/30 opacity-50 cursor-not-allowed"
                           : "border-border hover:border-sidebar-primary/40",
                       )}
                       title={isConflict ? "Occupied by another booking on these dates" : ""}
                     >
-                      {isSelected && <Check className="absolute top-2 right-2 h-3.5 w-3.5 text-sidebar-primary" />}
-                      <p className="text-sm font-bold">{room.number}</p>
-                      <p className="text-[10px] text-muted-foreground">{ROOM_TYPE_SHORT[room.type] || room.type}</p>
-                      {isConflict && <p className="text-[9px] text-red-400 font-medium mt-0.5">Occupied</p>}
+                      {isSelected && <Check className="absolute top-2 right-2 h-4 w-4 text-sidebar-primary" />}
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary/10 text-sidebar-primary">
+                        <BedIcon className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-lg font-bold leading-none">{room.number}</p>
+                        <p className="text-xs font-semibold text-foreground/70 mt-1">{ROOM_TYPE_SHORT[room.type] || room.type}</p>
+                        {isConflict && <p className="text-[10px] text-red-400 font-semibold mt-0.5">Occupied</p>}
+                      </div>
                     </button>
                   );
                 })}

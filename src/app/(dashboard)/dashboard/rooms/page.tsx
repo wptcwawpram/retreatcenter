@@ -377,7 +377,9 @@ export default function RoomsPage() {
                 <p className={cn("text-[10px] font-semibold uppercase tracking-wider mb-2", cfg?.color)}>{cfg?.label}</p>
 
                 {/* Type */}
-                <p className="text-[11px] text-muted-foreground mb-1.5">{room.type.replace(/_/g, " ")}</p>
+                <p className="text-sm font-semibold text-foreground/80 mb-1.5 flex items-center gap-1.5">
+                  <BedDouble className="h-3.5 w-3.5 text-sidebar-primary shrink-0" />{room.type.replace(/_/g, " ")}
+                </p>
 
                 {/* Price */}
                 <p className="text-xs font-semibold tabular-nums">{formatCurrency(Number(room.price_per_night))}<span className="text-muted-foreground font-normal">/night</span></p>
