@@ -28,10 +28,59 @@ export function RecycleBin() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [emptying, setEmptying] = useState(false);
   const [bounce, setBounce] = useState(false);
+  const [lidOpen, setLidOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const confirmEmptyRef = useRef(false);
+  const binRef = useRef<HTMLButtonElement>(null);
+  const lastPointer = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   useEffect(() => setMounted(true), []);
+
+  // Track the last click point so we can fly the deleted item from there
+  useEffect(() => {
+    const onDown = (e: PointerEvent) => { lastPointer.current = { x: e.clientX, y: e.clientY }; };
+    window.addEventListener("pointerdown", onDown, true);
+    return () => window.removeEventListener("pointerdown", onDown, true);
+  }, []);
+
+  const flyToBin = useCallback(() => {
+    const bin = binRef.current;
+    if (!bin) { setBounce(true); setTimeout(() => setBounce(false), 600); return; }
+    const rect = bin.getBoundingClientRect();
+    const tx = rect.left + rect.width / 2;
+    const ty = rect.top + rect.height / 2;
+    const sx = lastPointer.current.x || window.innerWidth / 2;
+    const sy = lastPointer.current.y || window.innerHeight / 2;
+
+    const chip = document.createElement("div");
+    chip.style.cssText = [
+      "position:fixed", `left:${sx}px`, `top:${sy}px`, "z-index:60",
+      "width:38px", "height:38px", "margin:-19px 0 0 -19px", "border-radius:9999px",
+      "display:flex", "align-items:center", "justify-content:center",
+      "background:#c8a44e", "color:#1a1a1a", "box-shadow:0 8px 24px rgba(0,0,0,.3)",
+      "pointer-events:none",
+    ].join(";");
+    chip.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
+    document.body.appendChild(chip);
+
+    const dx = tx - sx;
+    const dy = ty - sy;
+    setLidOpen(true);
+    const anim = chip.animate(
+      [
+        { transform: "translate(0,0) scale(1) rotate(0deg)", opacity: 1 },
+        { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 70}px) scale(0.95) rotate(180deg)`, opacity: 0.95, offset: 0.5 },
+        { transform: `translate(${dx}px, ${dy}px) scale(0.12) rotate(360deg)`, opacity: 0.2 },
+      ],
+      { duration: 700, easing: "cubic-bezier(0.5, -0.2, 0.35, 1.2)" },
+    );
+    anim.onfinish = () => {
+      chip.remove();
+      setBounce(true);
+      setTimeout(() => setBounce(false), 600);
+      setTimeout(() => setLidOpen(false), 350);
+    };
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -47,14 +96,11 @@ export function RecycleBin() {
   useEffect(() => {
     const onChange = (e: Event) => {
       load();
-      if ((e as CustomEvent).detail?.added) {
-        setBounce(true);
-        setTimeout(() => setBounce(false), 700);
-      }
+      if ((e as CustomEvent).detail?.added) flyToBin();
     };
     window.addEventListener("trash:changed", onChange);
     return () => window.removeEventListener("trash:changed", onChange);
-  }, [load]);
+  }, [load, flyToBin]);
 
   const restore = async (item: TrashItem) => {
     setBusyId(item.id);
@@ -94,16 +140,18 @@ export function RecycleBin() {
     <>
       {/* Floating bin button */}
       <button
+        ref={binRef}
         onClick={() => setOpen((o) => !o)}
         aria-label="Recycle bin"
         className={cn(
-          "fixed bottom-5 right-5 z-40 flex h-12 w-12 items-center justify-center rounded-full border shadow-lg transition-all",
+          "fixed bottom-5 right-5 z-40 flex h-12 w-12 items-center justify-center rounded-full border shadow-lg transition-all duration-300",
           "bg-card border-border/70 hover:border-sidebar-primary/50 hover:shadow-xl",
           bounce && "animate-bounce",
-          count > 0 ? "text-sidebar-primary" : "text-muted-foreground",
+          (lidOpen || count > 0) ? "text-sidebar-primary" : "text-muted-foreground",
+          lidOpen && "scale-110 ring-2 ring-sidebar-primary/40",
         )}
       >
-        <Trash2 className={cn("h-5 w-5 transition-transform", bounce && "scale-125")} />
+        <Trash2 className={cn("h-5 w-5 transition-transform duration-200", bounce && "scale-125", lidOpen && "-translate-y-0.5")} />
         {count > 0 && (
           <span className="absolute -top-1 -right-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-sidebar-primary px-1 text-[10px] font-bold text-sidebar-primary-foreground">
             {count > 99 ? "99+" : count}

@@ -88,9 +88,9 @@ export function useUndoableDelete(refetch?: () => void, duration = 6000) {
               },
             },
           });
-        } catch {
+        } catch (err) {
           unhide(id);
-          toast.error("Could not delete");
+          toast.error(err instanceof Error ? err.message : "Could not delete");
         }
       })();
       return;

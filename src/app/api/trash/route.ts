@@ -33,6 +33,21 @@ const LABELS: Record<string, string> = {
   housekeeping_tasks: "Task", complaints: "Complaint", events: "Event", finance_categories: "Category",
 };
 
+// Non-cascade child references that must be detached before a parent can be deleted.
+// (nullable columns only — we set them to null so the child rows survive)
+const DETACH: Record<string, Array<{ table: string; column: string }>> = {
+  bookings: [
+    { table: "finance_records", column: "booking_id" },
+    { table: "complaints", column: "booking_id" },
+  ],
+  rooms: [
+    { table: "complaints", column: "room_id" },
+  ],
+  guests: [
+    { table: "complaints", column: "guest_id" },
+  ],
+};
+
 // GET /api/trash — list items currently in the bin
 export async function GET() {
   try {
@@ -74,11 +89,19 @@ export async function POST(request: NextRequest) {
       .single();
     if (insErr) throw insErr;
 
+    // Detach non-cascade child references so the delete isn't blocked by FKs
+    for (const d of DETACH[table] || []) {
+      await supabase.from(d.table).update({ [d.column]: null }).eq(d.column, id).then(() => {}, () => {});
+    }
+
     const { error: delErr } = await supabase.from(table).delete().eq("id", id);
     if (delErr) {
       // roll back the snapshot so we don't leave an orphan bin entry
       await supabase.from("deleted_items").delete().eq("id", trash.id);
-      throw delErr;
+      const friendly = /foreign key|violates/i.test(delErr.message)
+        ? "Can't delete - it still has linked records that block removal."
+        : delErr.message;
+      return NextResponse.json({ error: friendly }, { status: 409 });
     }
 
     return NextResponse.json({ success: true, trashId: trash.id });
