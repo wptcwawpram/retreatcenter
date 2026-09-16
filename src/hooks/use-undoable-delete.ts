@@ -132,6 +132,14 @@ export function useUndoableDelete(refetch?: () => void, duration = 6000) {
     });
   }, [commit, duration, unhide]);
 
+  // Refetch when something is restored from the recycle bin so the row reappears
+  // on the current page without a manual refresh.
+  useEffect(() => {
+    const onRestored = () => refetchRef.current?.();
+    window.addEventListener("trash:restored", onRestored);
+    return () => window.removeEventListener("trash:restored", onRestored);
+  }, []);
+
   // On unmount, flush any still-pending deletes so a confirmed delete isn't lost
   // if the admin navigates away before the window closes.
   useEffect(() => {
