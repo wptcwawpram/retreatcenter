@@ -1235,6 +1235,7 @@ export default function BookingsPage() {
   const [deleteItem, setDeleteItem] = useState<BookingWithGuest | null>(null);
   const [payItem, setPayItem] = useState<BookingWithGuest | null>(null);
   const [assignItem, setAssignItem] = useState<BookingWithGuest | null>(null);
+  const [rechecking, setRechecking] = useState(false);
   const { data: accounts } = useSupabaseQuery(() => getFinanceAccounts(), []);
   const { data: rooms } = useSupabaseQuery(() => getRooms(), []);
   const { pendingIds, scheduleDelete } = useUndoableDelete(refetch);
@@ -1267,7 +1268,6 @@ export default function BookingsPage() {
     scheduleDelete({ id: item.id, label: `Booking ${item.reference}`, table: "bookings" });
   };
 
-  const [rechecking, setRechecking] = useState(false);
   const handleRecheck = async (b: BookingWithGuest) => {
     setRechecking(true);
     try {
