@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DataTable, type Column } from "@/components/dashboard/data-table";
+import { SmsCreditsPanel } from "@/components/dashboard/sms-credits-panel";
+import { toast } from "sonner";
 import { downloadCSV } from "@/lib/export-csv";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -94,6 +96,26 @@ export default function MessagingPage() {
   }, []);
 
   useEffect(() => { fetchMessages(); }, [fetchMessages]);
+
+  const [resendingId, setResendingId] = useState<string | null>(null);
+  const handleResend = async (m: Message) => {
+    setResendingId(m.id);
+    try {
+      const res = await fetch("/api/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: m.to_phone, recipient_name: m.recipient_name, subject: m.subject, message: m.body }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok && d.success) toast.success("Message resent");
+      else toast.error(d.error || "Still couldn't send — check your SMS credits");
+      fetchMessages();
+    } catch {
+      toast.error("Resend failed");
+    } finally {
+      setResendingId(null);
+    }
+  };
 
   const handleSingleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -229,6 +251,12 @@ export default function MessagingPage() {
         <span className={cn("text-xs font-medium", m.status === "SENT" ? "text-teal-400" : "text-red-700")}>{m.status}</span>
       </div>
     )},
+    { header: "", accessor: (m) => m.status === "FAILED" ? (
+      <Button variant="ghost" size="sm" className="gap-1 text-xs text-sidebar-primary" disabled={resendingId === m.id}
+        onClick={() => handleResend(m)}>
+        {resendingId === m.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}Resend
+      </Button>
+    ) : null },
   ];
 
   return (
@@ -238,6 +266,8 @@ export default function MessagingPage() {
           <Download className="h-3.5 w-3.5" />Export History
         </Button>
       </PageHeader>
+
+      <SmsCreditsPanel />
 
       {/* Tabs */}
       <div className="flex gap-1.5 border-b border-border/60 pb-0 overflow-x-auto">

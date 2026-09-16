@@ -1,3 +1,5 @@
+import { isCreditsActive, hasCreditsFor, deductCreditsForSend, NoCreditsError } from "@/lib/sms-credits";
+
 const HUBTEL_CLIENT_ID = process.env.HUBTEL_CLIENT_ID!;
 const HUBTEL_CLIENT_SECRET = process.env.HUBTEL_CLIENT_SECRET!;
 const HUBTEL_SENDER_ID = process.env.HUBTEL_SENDER_ID || "WPTC";
@@ -5,6 +7,8 @@ const HUBTEL_SENDER_ID = process.env.HUBTEL_SENDER_ID || "WPTC";
 interface SendSmsParams {
   to: string; // Ghana phone number e.g. "0241234567" or "+233241234567"
   message: string;
+  critical?: boolean; // bypass the credit gate (login OTPs, low-credit alerts)
+  purpose?: string;   // shown in the SMS audit
 }
 
 interface HubtelSmsResponse {
@@ -30,7 +34,17 @@ function formatPhoneNumber(phone: string): string {
 export async function sendSms({
   to,
   message,
+  critical,
+  purpose,
 }: SendSmsParams): Promise<HubtelSmsResponse> {
+  // Credit paywall — only active once the owner has sold credits. Critical
+  // messages (login OTPs, low-credit alerts) always bypass the gate.
+  const active = await isCreditsActive().catch(() => false);
+  if (active && !critical) {
+    const ok = await hasCreditsFor(message).catch(() => true);
+    if (!ok) throw new NoCreditsError();
+  }
+
   const formattedTo = formatPhoneNumber(to);
 
   const auth = Buffer.from(
@@ -50,6 +64,11 @@ export async function sendSms({
   if (!res.ok) {
     const error = await res.text();
     throw new Error(`Hubtel SMS error: ${res.status} ${error}`);
+  }
+
+  // Deduct credits after a successful send (records the usage in the audit)
+  if (active) {
+    await deductCreditsForSend(message, to, purpose).catch(() => {});
   }
 
   return res.json();
