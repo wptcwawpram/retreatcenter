@@ -122,6 +122,27 @@ function BuyDialog({ price, adminEmail, purchaseConfigured, onClose, onDone }: {
   const [waiting, setWaiting] = useState(false);
 
   const amount = credits * price;
+  const publicKey = process.env.NEXT_PUBLIC_SMS_PAYSTACK_PUBLIC_KEY;
+
+  // Load Paystack inline script so the popup opens in-window (not a new tab)
+  useEffect(() => {
+    if (document.getElementById("paystack-inline-script")) return;
+    const script = document.createElement("script");
+    script.id = "paystack-inline-script";
+    script.src = "https://js.paystack.co/v2/inline.js";
+    script.async = true;
+    document.head.appendChild(script);
+  }, []);
+
+  const verify = async (reference: string) => {
+    const vr = await fetch("/api/sms-credits/verify", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reference }),
+    });
+    const vd = await vr.json();
+    if (vr.ok && vd.success) { toast.success(`${credits} credits added`); onDone(); }
+    else { setError("Payment could not be verified. If you were charged, contact support with the reference."); setBusy(false); }
+  };
 
   const handleBuy = async () => {
     if (!email) { setError("Enter an email for the receipt."); return; }
@@ -136,10 +157,26 @@ function BuyDialog({ price, adminEmail, purchaseConfigured, onClose, onDone }: {
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Failed to start payment");
 
-      const win = window.open(d.authorization_url, "_blank");
-      if (!win) { setError("Allow pop-ups, then try again."); setBusy(false); return; }
+      // Preferred: in-window Paystack modal (same as the booking flow)
+      if (publicKey && d.access_code && window.PaystackPop) {
+        setWaiting(true);
+        const handler = window.PaystackPop.setup({
+          key: publicKey,
+          email,
+          amount: Math.round(amount * 100),
+          currency: "GHS",
+          ref: d.reference,
+          access_code: d.access_code,
+          onClose: () => { setWaiting(false); setBusy(false); },
+          callback: (response) => { verify(response.reference); },
+        });
+        handler.openIframe();
+        return;
+      }
 
-      // Poll verification until success (or timeout ~3 min)
+      // Fallback if the public key isn't configured: hosted page + poll
+      const win = window.open(d.authorization_url, "_blank");
+      if (!win) { setError("Add NEXT_PUBLIC_SMS_PAYSTACK_PUBLIC_KEY for the in-app popup, or allow pop-ups."); setBusy(false); return; }
       setWaiting(true);
       const reference = d.reference as string;
       let attempts = 0;
@@ -151,13 +188,9 @@ function BuyDialog({ price, adminEmail, purchaseConfigured, onClose, onDone }: {
             body: JSON.stringify({ reference }),
           });
           const vd = await vr.json();
-          if (vr.ok && vd.success) {
-            clearInterval(poll);
-            toast.success(`${credits} credits added`);
-            onDone();
-          }
+          if (vr.ok && vd.success) { clearInterval(poll); toast.success(`${credits} credits added`); onDone(); }
         } catch {}
-        if (attempts >= 45) { clearInterval(poll); setWaiting(false); setBusy(false); setError("Still waiting on payment. If you paid, click Buy Credits again to refresh — it won't double-charge."); }
+        if (attempts >= 45) { clearInterval(poll); setWaiting(false); setBusy(false); setError("Still waiting on payment. If you paid, reopen Buy Credits — it won't double-charge."); }
       }, 4000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");

@@ -148,6 +148,13 @@
   a {
     color: inherit;
   }
+  /* Readable booking/reference codes — clear 0 vs 8, spaced, tabular */
+  .ref-code {
+    font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    font-variant-numeric: tabular-nums slashed-zero;
+  }
   /* Hide browser native password reveal button - we use our own toggle */
   input[type="password"]::-ms-reveal,
   input[type="password"]::-ms-clear {

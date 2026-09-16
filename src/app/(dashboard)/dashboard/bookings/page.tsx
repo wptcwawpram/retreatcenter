@@ -1271,16 +1271,33 @@ export default function BookingsPage() {
   };
 
   const columns: Column<BookingWithGuest>[] = [
-    { header: "Reference", accessor: (b) => (
+    { header: "Reference", accessor: (b) => {
+      const online = b.source === "WEBSITE";
+      const unpaidOnline = online && Number(b.paid_amount || 0) <= 0 && b.status !== "CANCELLED";
+      return (
       <div className="space-y-0.5">
-        <span className="font-mono text-xs font-bold">{b.reference}</span>
-        {Number(b.discount_amount || 0) > 0 && (
-          <span className="flex w-fit items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20" title={`Discount applied: ${formatCurrency(Number(b.discount_amount))}`}>
-            <Tag className="h-2.5 w-2.5" />Discounted
+        <span className="ref-code text-sm">{b.reference}</span>
+        <div className="flex flex-wrap gap-1">
+          {/* Source: distinguishes a self-service website booking from one an admin entered */}
+          <span className={`flex w-fit items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full border ${
+            online ? "bg-blue-500/10 text-blue-400 border-blue-500/20" : "bg-muted text-muted-foreground border-border/60"
+          }`}>
+            {online ? "Online" : b.source === "WALK_IN" ? "Walk-in" : b.source === "PHONE" ? "Phone" : b.source === "AGENT" ? "Agent" : "Admin"}
           </span>
-        )}
+          {unpaidOnline && (
+            <span className="flex w-fit items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20" title="Booked on the website but payment not completed — a good candidate to follow up">
+              Unpaid · follow up
+            </span>
+          )}
+          {Number(b.discount_amount || 0) > 0 && (
+            <span className="flex w-fit items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20" title={`Discount applied: ${formatCurrency(Number(b.discount_amount))}`}>
+              <Tag className="h-2.5 w-2.5" />Discounted
+            </span>
+          )}
+        </div>
       </div>
-    )},
+      );
+    }},
     { header: "Guest", accessor: (b) => (
       <div>
         <p className="font-medium">{b.guest?.full_name ?? "—"}</p>

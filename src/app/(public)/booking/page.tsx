@@ -581,7 +581,7 @@ function BookingPage() {
               </div>
               <h2 className="font-[family-name:var(--font-playfair)] text-2xl font-bold text-warm-white mb-3">Booking Confirmed!</h2>
               <p className="text-warm-muted mb-2">Your booking reference is:</p>
-              <p className="text-3xl font-bold text-gold font-mono mb-6">{bookingRef}</p>
+              <p className="ref-code text-3xl text-gold mb-6">{bookingRef}</p>
               <p className="text-sm text-warm-muted mb-8">
                 Payment received! A confirmation SMS has been sent to {formData.phone}.
                 Please save your reference number for check-in.

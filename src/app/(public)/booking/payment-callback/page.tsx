@@ -102,7 +102,7 @@ function PaymentCallbackContent() {
               <>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-warm-muted">Booking Ref</span>
-                  <span className="font-mono text-sm font-bold text-gold">
+                  <span className="ref-code text-base text-gold">
                     {paymentData.booking_reference}
                   </span>
                 </div>
