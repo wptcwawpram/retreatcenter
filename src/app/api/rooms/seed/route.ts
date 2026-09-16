@@ -27,12 +27,12 @@ function createServiceClient() {
 }
 
 const SEED_ROOMS = [
-  // Main Building: 2-in-1 (rooms 1-5)
+  // Faith Block: 2-in-1 (rooms 1-5)
   ...Array.from({ length: 5 }, (_, i) => ({
     number: String(i + 1),
     name: `Room ${i + 1}`,
     type: "2_IN_1" as const,
-    building: "Main Building",
+    building: "Faith Block",
     floor: 0,
     capacity: 2,
     beds: 2,
@@ -45,12 +45,12 @@ const SEED_ROOMS = [
     description: null,
     display_order: i + 1,
   })),
-  // Main Building: Room 6 (4-in-1)
+  // Faith Block: Room 6 (4-in-1)
   {
     number: "6",
     name: "Room 6",
     type: "4_IN_1" as const,
-    building: "Main Building",
+    building: "Faith Block",
     floor: 0,
     capacity: 4,
     beds: 4,
@@ -68,7 +68,7 @@ const SEED_ROOMS = [
     number: "ST1",
     name: "Suite 1",
     type: "SUITE_AC" as const,
-    building: "Main Building",
+    building: "Faith Block",
     floor: 0,
     capacity: 2,
     beds: 1,
@@ -86,7 +86,7 @@ const SEED_ROOMS = [
     number: "ST2",
     name: "Suite 2",
     type: "SUITE_AC" as const,
-    building: "Main Building",
+    building: "Faith Block",
     floor: 0,
     capacity: 2,
     beds: 1,
@@ -99,12 +99,12 @@ const SEED_ROOMS = [
     description: "Premium suite with air conditioning and full amenities",
     display_order: 8,
   },
-  // Main Building: 4-in-1 (rooms 7-13)
+  // 4-in-1 (rooms 7-13): 7-12 Faith Block, 13 Dominion Block
   ...Array.from({ length: 7 }, (_, i) => ({
     number: String(i + 7),
     name: `Room ${i + 7}`,
     type: "4_IN_1" as const,
-    building: "Main Building",
+    building: (i + 7) <= 12 ? "Faith Block" : "Dominion Block",
     floor: 0,
     capacity: 4,
     beds: 4,
@@ -117,12 +117,12 @@ const SEED_ROOMS = [
     description: null,
     display_order: 9 + i,
   })),
-  // Main Building: 6-in-1 (rooms 14-21)
+  // Dominion Block: 6-in-1 (rooms 14-21)
   ...Array.from({ length: 8 }, (_, i) => ({
     number: String(i + 14),
     name: `Room ${i + 14}`,
     type: "6_IN_1" as const,
-    building: "Main Building",
+    building: "Dominion Block",
     floor: 0,
     capacity: 6,
     beds: 6,

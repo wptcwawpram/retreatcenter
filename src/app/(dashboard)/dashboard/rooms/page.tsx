@@ -158,7 +158,10 @@ export default function RoomsPage() {
 
   const filtered = useMemo(() => {
     const numSort = roomSortKey;
-    const buildingOrder = (b: string) => b === "Holy Family" ? 2 : b === "Main Building" ? 0 : 1;
+    const buildingOrder = (b: string) => {
+      const order: Record<string, number> = { "Faith Block": 0, "Dominion Block": 1, "Holy Family": 2 };
+      return order[b] ?? 3;
+    };
     const typeOrder = (t: string) => {
       const order: Record<string, number> = { "2_IN_1": 0, "3_IN_1": 1, "4_IN_1": 2, "SUITE_FAN": 3, "SUITE_AC": 4, "6_IN_1": 5, "APARTMENT": 6, "KITCHEN": 7 };
       return order[t] ?? 99;
