@@ -10,17 +10,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { ROOM_STATUS_CONFIG } from "@/lib/constants";
-import { getRooms, createRoom, updateRoom, updateRoomStatus, deleteRoom } from "@/lib/supabase/queries";
+import { getRooms, createRoom, updateRoom, updateRoomStatus, deleteRoom, getBookingsWithRooms } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { useUndoableDelete } from "@/hooks/use-undoable-delete";
-import { formatCurrency, roomSortKey } from "@/lib/format";
+import { formatCurrency, formatDate, roomSortKey } from "@/lib/format";
 import {
   BedDouble, LayoutGrid, List, Search, Loader2, Edit2, Trash2, AlertCircle,
-  Wind, Tv, Refrigerator, Users, CheckCircle, Database, Download,
+  Wind, Tv, Refrigerator, Users, CheckCircle, Database, Download, User,
 } from "lucide-react";
 import { downloadCSV } from "@/lib/export-csv";
 import { cn } from "@/lib/utils";
-import type { Room } from "@/lib/supabase/types";
+import type { Room, Booking, Guest } from "@/lib/supabase/types";
+
+type BookingWithGuest = Booking & { guest?: Guest };
+type Occupant = { name: string; checkIn: string; checkOut: string; tag: "in" | "today" | "soon" };
 
 const ROOM_TYPES = [
   { label: "2 in 1", value: "2_IN_1" },
@@ -82,6 +85,7 @@ const roomFields: FormField[] = [
 
 export default function RoomsPage() {
   const { data: rooms, loading, refetch } = useSupabaseQuery(() => getRooms(), []);
+  const { data: bookings } = useSupabaseQuery(() => getBookingsWithRooms(), []);
   const [view, setView] = useState<"grid" | "table">("grid");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [buildingFilter, setBuildingFilter] = useState("ALL");
@@ -186,6 +190,23 @@ export default function RoomsPage() {
     acc[r.status] = (acc[r.status] || 0) + 1;
     return acc;
   }, {} as Record<string, number>), [allRooms]);
+
+  // Who is in / arriving to each room (the booking covering today, else next arrival)
+  const occupantByRoom = useMemo(() => {
+    const today = new Date().toISOString().split("T")[0];
+    const active = ((bookings || []) as BookingWithGuest[]).filter((b) => !["CANCELLED", "NO_SHOW", "CHECKED_OUT"].includes(b.status));
+    const map: Record<string, Occupant> = {};
+    for (const room of rooms || []) {
+      const forRoom = active.filter((b) => (b.room_ids || []).includes(room.id)).sort((a, b) => a.check_in.localeCompare(b.check_in));
+      const current = forRoom.find((b) => b.check_in <= today && b.check_out > today);
+      const upcoming = forRoom.find((b) => b.check_in > today);
+      const pick = current || upcoming;
+      if (!pick) continue;
+      const tag: Occupant["tag"] = pick.status === "CHECKED_IN" ? "in" : (current || pick.check_in === today) ? "today" : "soon";
+      map[room.id] = { name: pick.guest?.full_name || "Guest", checkIn: pick.check_in, checkOut: pick.check_out, tag };
+    }
+    return map;
+  }, [rooms, bookings]);
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -336,6 +357,7 @@ export default function RoomsPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5">
           {filtered.map((room) => {
             const cfg = ROOM_STATUS_CONFIG[room.status];
+            const occ = occupantByRoom[room.id];
             return (
               <div
                 key={room.id}
@@ -370,6 +392,24 @@ export default function RoomsPage() {
                   {room.has_tv && <Tv className="h-3 w-3 text-muted-foreground" />}
                   {room.has_fridge && <Refrigerator className="h-3 w-3 text-muted-foreground" />}
                 </div>
+
+                {/* Occupant */}
+                {occ && (
+                  <div className="mt-2 pt-2 border-t border-border/40">
+                    <p className="text-[10px] font-semibold truncate flex items-center gap-1">
+                      <User className="h-2.5 w-2.5 shrink-0" />{occ.name}
+                    </p>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <span className={cn(
+                        "text-[8px] font-bold px-1 py-0.5 rounded",
+                        occ.tag === "in" ? "bg-blue-500/15 text-blue-400" : occ.tag === "today" ? "bg-amber-500/15 text-amber-500" : "bg-muted text-muted-foreground",
+                      )}>
+                        {occ.tag === "in" ? "CHECKED IN" : occ.tag === "today" ? "ARRIVING TODAY" : "ARRIVING SOON"}
+                      </span>
+                    </div>
+                    <p className="text-[9px] text-muted-foreground mt-0.5">{formatDate(occ.checkIn)} → {formatDate(occ.checkOut)}</p>
+                  </div>
+                )}
 
                 {/* Quick actions */}
                 <div className="absolute top-2 right-2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -422,12 +462,15 @@ export default function RoomsPage() {
                 <th className="text-left p-3 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Building</th>
                 <th className="text-center p-3 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Floor</th>
                 <th className="text-left p-3 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                <th className="text-left p-3 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Occupant</th>
                 <th className="text-right p-3 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Price</th>
                 <th className="text-right p-3 text-[11px] font-medium text-muted-foreground uppercase tracking-wider w-20"></th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((room) => (
+              {filtered.map((room) => {
+                const occ = occupantByRoom[room.id];
+                return (
                 <tr key={room.id} className="border-b border-border/40 last:border-0 hover:bg-muted/20 transition-colors">
                   <td className="p-3">
                     <span className="font-bold">{room.number}</span>
@@ -437,6 +480,19 @@ export default function RoomsPage() {
                   <td className="p-3">{room.building}</td>
                   <td className="p-3 text-center">{room.floor}</td>
                   <td className="p-3"><StatusBadge status={room.status} config={ROOM_STATUS_CONFIG} /></td>
+                  <td className="p-3">
+                    {occ ? (
+                      <div>
+                        <span className="text-xs font-medium">{occ.name}</span>
+                        <span className={cn(
+                          "ml-1.5 text-[9px] font-bold px-1 py-0.5 rounded",
+                          occ.tag === "in" ? "bg-blue-500/15 text-blue-400" : occ.tag === "today" ? "bg-amber-500/15 text-amber-500" : "bg-muted text-muted-foreground",
+                        )}>
+                          {occ.tag === "in" ? "IN" : occ.tag === "today" ? "TODAY" : "SOON"}
+                        </span>
+                      </div>
+                    ) : <span className="text-xs text-muted-foreground">—</span>}
+                  </td>
                   <td className="p-3 text-right font-semibold tabular-nums">{formatCurrency(Number(room.price_per_night))}</td>
                   <td className="p-3">
                     <div className="flex items-center justify-end gap-0.5">
@@ -445,7 +501,8 @@ export default function RoomsPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
           {filtered.length === 0 && (
