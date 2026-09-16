@@ -16,10 +16,10 @@ import { getBookings, updateBookingFull, deleteBooking, getGuests, getFinanceAcc
 import { AssignRoomsDialog } from "@/components/dashboard/assign-rooms-dialog";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { useUndoableDelete } from "@/hooks/use-undoable-delete";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, formatTime } from "@/lib/format";
 import {
   Search, Loader2, Eye, Edit2, Trash2, AlertCircle, CheckCircle,
-  BedDouble, Church, Users, User, ChevronDown, Download, Plus, X, CreditCard, Tag,
+  BedDouble, Church, Users, User, ChevronDown, Download, Plus, X, CreditCard, Tag, CalendarCheck,
 } from "lucide-react";
 import { downloadCSV } from "@/lib/export-csv";
 import type { Booking, Guest, FinanceAccount, BookingSelection } from "@/lib/supabase/types";
@@ -1276,7 +1276,7 @@ export default function BookingsPage() {
       const unpaidOnline = online && Number(b.paid_amount || 0) <= 0 && b.status !== "CANCELLED";
       return (
       <div className="space-y-0.5">
-        <span className="ref-code text-sm">{b.reference}</span>
+        <button className="ref-code text-sm hover:text-sidebar-primary hover:underline text-left" onClick={(e) => { e.stopPropagation(); setViewItem(b); }}>{b.reference}</button>
         <div className="flex flex-wrap gap-1">
           {/* Source: distinguishes a self-service website booking from one an admin entered */}
           <span className={`flex w-fit items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full border ${
@@ -1300,8 +1300,14 @@ export default function BookingsPage() {
     }},
     { header: "Guest", accessor: (b) => (
       <div>
-        <p className="font-medium">{b.guest?.full_name ?? "—"}</p>
+        <button className="font-medium hover:text-sidebar-primary hover:underline text-left" onClick={(e) => { e.stopPropagation(); setViewItem(b); }}>{b.guest?.full_name ?? "—"}</button>
         <p className="text-xs text-muted-foreground">{b.guest?.phone ?? "—"}</p>
+      </div>
+    )},
+    { header: "Booked", accessor: (b) => (
+      <div className="text-xs">
+        <p>{formatDate(b.created_at)}</p>
+        <p className="text-muted-foreground">{formatTime(b.created_at)}</p>
       </div>
     )},
     { header: "Check-in", accessor: (b) => <span className="text-sm">{formatDate(b.check_in)}</span> },
@@ -1444,70 +1450,100 @@ export default function BookingsPage() {
         />
       )}
 
-      {/* View Dialog */}
+      {/* View Dialog — full booking details */}
       <Dialog open={!!viewItem} onOpenChange={(o) => !o && setViewItem(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>Booking {viewItem?.reference}</DialogTitle></DialogHeader>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="ref-code text-base">{viewItem?.reference}</span>
+            </DialogTitle>
+            <DialogDescription>Full details for this booking</DialogDescription>
+          </DialogHeader>
           {viewItem && (() => {
+            const g = viewItem.guest;
             const vTotal = Number(viewItem.total_amount);
             const vPaid = Number(viewItem.paid_amount);
             const vBal = Number(viewItem.balance);
             const vPS = viewItem.payment_status;
             const payColor = vPS === "PAID" ? "text-teal-400" : vPS === "PARTIAL" ? "text-amber-400" : vPS === "REFUNDED" ? "text-purple-400" : "text-red-400";
             const payLabel = vPS === "PAID" ? "Fully Paid" : vPS === "PARTIAL" ? "Partial Payment" : vPS === "REFUNDED" ? "Refunded" : "Unpaid";
+            const subtotal = Number(viewItem.subtotal || 0) || (vTotal + Number(viewItem.discount_amount || 0));
+            const roomAmt = viewItem.room_amount != null ? Number(viewItem.room_amount) : Math.max(0, subtotal - Number(viewItem.hall_amount || 0));
+            const Field = ({ label, value }: { label: string; value: React.ReactNode }) => (
+              <div className="space-y-0.5">
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wide">{label}</p>
+                <p className="text-sm font-medium break-words">{value || <span className="text-muted-foreground font-normal">—</span>}</p>
+              </div>
+            );
             return (
-              <div className="space-y-4 text-sm">
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                  <div><p className="text-[10px] text-muted-foreground uppercase tracking-wide">Guest</p><p className="font-medium">{viewItem.guest?.full_name}</p></div>
-                  <div><p className="text-[10px] text-muted-foreground uppercase tracking-wide">Phone</p><p>{viewItem.guest?.phone ?? "—"}</p></div>
-                  <div><p className="text-[10px] text-muted-foreground uppercase tracking-wide">Check-in</p><p>{formatDate(viewItem.check_in)}</p></div>
-                  <div><p className="text-[10px] text-muted-foreground uppercase tracking-wide">Check-out</p><p>{formatDate(viewItem.check_out)}</p></div>
-                  <div><p className="text-[10px] text-muted-foreground uppercase tracking-wide">Nights</p><p>{viewItem.nights}</p></div>
-                  <div><p className="text-[10px] text-muted-foreground uppercase tracking-wide">Type</p><p>{viewItem.booking_type}</p></div>
-                  <div><p className="text-[10px] text-muted-foreground uppercase tracking-wide">Source</p><p>{viewItem.source}</p></div>
-                  <div><p className="text-[10px] text-muted-foreground uppercase tracking-wide">Booking Status</p><StatusBadge status={viewItem.status} config={BOOKING_STATUS_CONFIG} /></div>
-                </div>
-                {/* Payment summary */}
-                <div className="rounded-xl border border-border/60 bg-muted/30 p-3 space-y-2">
-                  {Number(viewItem.discount_amount || 0) > 0 && (
-                    <>
-                      <div className="flex justify-between items-center">
-                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Subtotal</span>
-                        <span className="tabular-nums text-muted-foreground">{formatCurrency(Number(viewItem.subtotal || vTotal + Number(viewItem.discount_amount || 0)))}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-[10px] uppercase tracking-wide text-violet-400 flex items-center gap-1"><Tag className="h-3 w-3" />Discount{viewItem.discount_type === "percent" ? ` (${viewItem.discount_value}%)` : ""}</span>
-                        <span className="tabular-nums text-violet-400">-{formatCurrency(Number(viewItem.discount_amount))}</span>
-                      </div>
-                    </>
-                  )}
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Total Amount</span>
-                    <span className="font-bold tabular-nums">{formatCurrency(vTotal)}</span>
+              <div className="space-y-5">
+                {/* Guest */}
+                <section className="space-y-2">
+                  <h3 className="text-sm font-semibold flex items-center gap-2"><User className="h-4 w-4 text-sidebar-primary" />Guest</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3 rounded-xl border border-border/60 bg-card p-4">
+                    <Field label="Full Name" value={g?.full_name} />
+                    <Field label="Phone" value={g?.phone} />
+                    <Field label="Email" value={g?.email} />
+                    <Field label="ID Type" value={g?.id_type} />
+                    <Field label="ID Number" value={g?.id_number} />
+                    <Field label="Nationality" value={g?.nationality} />
+                    <Field label="Address" value={g?.address} />
+                    <Field label="Guest Notes" value={g?.notes} />
                   </div>
-                  {vPaid > 0 && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Amount Paid</span>
-                      <span className={`font-semibold tabular-nums ${payColor}`}>{formatCurrency(vPaid)}</span>
+                </section>
+
+                {/* Booking */}
+                <section className="space-y-2">
+                  <h3 className="text-sm font-semibold flex items-center gap-2"><CalendarCheck className="h-4 w-4 text-sidebar-primary" />Booking</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3 rounded-xl border border-border/60 bg-card p-4">
+                    <Field label="Booked On" value={`${formatDate(viewItem.created_at)} · ${formatTime(viewItem.created_at)}`} />
+                    <Field label="Source" value={viewItem.source} />
+                    <Field label="Type" value={viewItem.booking_type} />
+                    <Field label="Check-in" value={formatDate(viewItem.check_in)} />
+                    <Field label="Check-out" value={formatDate(viewItem.check_out)} />
+                    <Field label="Nights" value={viewItem.nights} />
+                    <Field label="Adults" value={viewItem.adults} />
+                    <Field label="Children" value={viewItem.children} />
+                    <Field label="Rooms Assigned" value={viewItem.room_ids?.length || 0} />
+                    <Field label="Hall Days" value={viewItem.hall_days || 0} />
+                    <div className="space-y-0.5">
+                      <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Status</p>
+                      <StatusBadge status={viewItem.status} config={BOOKING_STATUS_CONFIG} />
                     </div>
-                  )}
-                  {vBal > 0 && (
-                    <div className="flex justify-between items-center border-t border-border/60 pt-2">
-                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Balance Due</span>
-                      <span className="font-bold tabular-nums text-red-400">{formatCurrency(vBal)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-end">
-                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
-                      vPS === "PAID" ? "bg-teal-500/10 text-teal-400 border-teal-500/20" :
-                      vPS === "PARTIAL" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
-                      vPS === "REFUNDED" ? "bg-purple-500/10 text-purple-400 border-purple-500/20" :
-                      "bg-red-500/10 text-red-400 border-red-500/20"
-                    }`}>{payLabel}</span>
                   </div>
-                </div>
+                </section>
+
+                {/* Pricing / Payment */}
+                <section className="space-y-2">
+                  <h3 className="text-sm font-semibold flex items-center gap-2"><CreditCard className="h-4 w-4 text-sidebar-primary" />Pricing &amp; Payment</h3>
+                  <div className="rounded-xl border border-border/60 bg-muted/30 p-4 space-y-2 text-sm">
+                    <div className="flex justify-between"><span className="text-muted-foreground">Room / Lodging</span><span className="tabular-nums">{formatCurrency(roomAmt)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Hall / Grounds</span><span className="tabular-nums">{formatCurrency(Number(viewItem.hall_amount || 0))}</span></div>
+                    {Number(viewItem.discount_amount || 0) > 0 && (
+                      <>
+                        <div className="flex justify-between border-t border-border/50 pt-2"><span className="text-muted-foreground">Subtotal</span><span className="tabular-nums text-muted-foreground">{formatCurrency(subtotal)}</span></div>
+                        <div className="flex justify-between"><span className="text-violet-400 flex items-center gap-1"><Tag className="h-3 w-3" />Discount{viewItem.discount_type === "percent" ? ` (${viewItem.discount_value}%)` : ""}</span><span className="tabular-nums text-violet-400">-{formatCurrency(Number(viewItem.discount_amount))}</span></div>
+                      </>
+                    )}
+                    <div className="flex justify-between border-t border-border/50 pt-2"><span className="font-semibold">Total</span><span className="font-bold tabular-nums">{formatCurrency(vTotal)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Paid</span><span className={`font-semibold tabular-nums ${payColor}`}>{formatCurrency(vPaid)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Balance</span><span className="font-bold tabular-nums text-red-400">{formatCurrency(vBal)}</span></div>
+                    <div className="flex justify-end pt-1">
+                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
+                        vPS === "PAID" ? "bg-teal-500/10 text-teal-400 border-teal-500/20" :
+                        vPS === "PARTIAL" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+                        vPS === "REFUNDED" ? "bg-purple-500/10 text-purple-400 border-purple-500/20" :
+                        "bg-red-500/10 text-red-400 border-red-500/20"
+                      }`}>{payLabel}</span>
+                    </div>
+                  </div>
+                </section>
+
                 {viewItem.special_requests && (
-                  <div><p className="text-[10px] uppercase tracking-wide text-muted-foreground">Special Requests</p><p className="text-sm mt-0.5">{viewItem.special_requests}</p></div>
+                  <section className="space-y-1">
+                    <h3 className="text-sm font-semibold">Special Requests</h3>
+                    <p className="text-sm rounded-xl border border-border/60 bg-card p-3">{viewItem.special_requests}</p>
+                  </section>
                 )}
               </div>
             );
