@@ -135,7 +135,13 @@ export function useUndoableDelete(refetch?: () => void, duration = 6000) {
   // Refetch when something is restored from the recycle bin so the row reappears
   // on the current page without a manual refresh.
   useEffect(() => {
-    const onRestored = () => refetchRef.current?.();
+    const onRestored = (e: Event) => {
+      const id = (e as CustomEvent).detail?.id as string | undefined;
+      // The row is still in pendingIds (hidden from the list) — unhide it so the
+      // refetched, restored row is visible again.
+      if (id) setPendingIds((prev) => { if (!prev.has(id)) return prev; const n = new Set(prev); n.delete(id); return n; });
+      refetchRef.current?.();
+    };
     window.addEventListener("trash:restored", onRestored);
     return () => window.removeEventListener("trash:restored", onRestored);
   }, []);

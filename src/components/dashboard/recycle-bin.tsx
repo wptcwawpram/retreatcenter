@@ -118,8 +118,8 @@ export function RecycleBin() {
       animateRestoreFromBin(binRef.current);
       setLidOpen(true); setTimeout(() => setLidOpen(false), 500);
       toast.success(`${item.label || "Item"} restored`);
-      // Tell the current page to refetch so the restored row reappears immediately
-      window.dispatchEvent(new CustomEvent("trash:restored", { detail: { entity_type: item.entity_type } }));
+      // Tell the current page to unhide + refetch so the restored row reappears immediately
+      window.dispatchEvent(new CustomEvent("trash:restored", { detail: { entity_type: item.entity_type, id: item.entity_id } }));
     } catch { toast.error("Restore failed"); }
     finally { setBusyId(null); }
   };
