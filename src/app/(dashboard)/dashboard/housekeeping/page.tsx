@@ -6,7 +6,7 @@ import { FormDialog, type FormField } from "@/components/dashboard/form-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { getHousekeepingTasks, createHousekeepingTask, updateHousekeepingStatus, deleteHousekeepingTask, getRooms, getProfiles } from "@/lib/supabase/queries";
+import { getHousekeepingTasks, createHousekeepingTask, updateHousekeepingStatus, getRooms, getProfiles } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { useUndoableDelete } from "@/hooks/use-undoable-delete";
 import { BedDouble, Clock, User, CheckCircle, Loader2, Trash2, ArrowRight, AlertCircle, Sparkles, Download } from "lucide-react";
@@ -91,7 +91,7 @@ export default function HousekeepingPage() {
     if (!deleteItem) return;
     const id = deleteItem;
     setDeleteItem(null);
-    scheduleDelete({ id, label: "Task", performDelete: () => deleteHousekeepingTask(id) });
+    scheduleDelete({ id, label: "Housekeeping task", table: "housekeeping_tasks" });
   };
 
   const nextStatus: Record<string, "IN_PROGRESS" | "COMPLETED"> = {

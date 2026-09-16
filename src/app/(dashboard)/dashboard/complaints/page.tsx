@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { COMPLAINT_CATEGORY_LABELS } from "@/lib/constants";
-import { getComplaints, createComplaint, updateComplaint, deleteComplaint, getGuests } from "@/lib/supabase/queries";
+import { getComplaints, createComplaint, updateComplaint, getGuests } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { useUndoableDelete } from "@/hooks/use-undoable-delete";
 import { formatDate } from "@/lib/format";
@@ -158,7 +158,7 @@ export default function ComplaintsPage() {
     if (!deleteItem) return;
     const item = deleteItem;
     setDeleteItem(null);
-    scheduleDelete({ id: item.id, label: `Complaint "${item.subject}"`, performDelete: () => deleteComplaint(item.id) });
+    scheduleDelete({ id: item.id, label: `Complaint "${item.subject}"`, table: "complaints" });
   };
 
   const columns: Column<ComplaintRow>[] = [

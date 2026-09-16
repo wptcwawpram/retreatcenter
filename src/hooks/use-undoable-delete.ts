@@ -49,14 +49,55 @@ export function useUndoableDelete(refetch?: () => void, duration = 6000) {
     }
   }, [unhide]);
 
+  // Recycle-bin mode: pass `table` and the row is snapshotted + moved to the bin
+  // (restorable any time). Legacy mode: pass `performDelete` for a deferred hard
+  // delete with a short undo window (used where delete has side effects, e.g. payments).
   const scheduleDelete = useCallback((opts: {
     id: string;
     label: string;
-    performDelete: () => Promise<void>;
+    performDelete?: () => Promise<void>;
+    table?: string;
   }) => {
-    const { id, label, performDelete } = opts;
+    const { id, label, performDelete, table } = opts;
 
-    // If this id is already pending, clear the old timer first
+    // ── Recycle-bin mode ──────────────────────────────────────────────
+    if (table) {
+      setPendingIds((prev) => new Set(prev).add(id));
+      (async () => {
+        try {
+          const res = await fetch("/api/trash", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ table, id, label }),
+          });
+          const d = await res.json();
+          if (!res.ok) throw new Error(d.error || "Failed");
+          refetchRef.current?.();
+          if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("trash:changed", { detail: { added: true } }));
+          toast(`${label} moved to bin`, {
+            duration,
+            action: {
+              label: "Undo",
+              onClick: async () => {
+                try {
+                  await fetch("/api/trash", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ trashId: d.trashId }) });
+                  refetchRef.current?.();
+                  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("trash:changed", {}));
+                  toast.success(`${label} restored`);
+                } catch { toast.error("Restore failed"); }
+              },
+            },
+          });
+        } catch {
+          unhide(id);
+          toast.error("Could not delete");
+        }
+      })();
+      return;
+    }
+
+    // ── Legacy deferred mode ──────────────────────────────────────────
+    if (!performDelete) return;
     const existing = pending.current.get(id);
     if (existing) clearTimeout(existing.timer);
 

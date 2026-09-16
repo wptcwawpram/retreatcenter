@@ -7,7 +7,7 @@ import { FormDialog, type FormField } from "@/components/dashboard/form-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { getInventoryItems, createInventoryItem, updateInventoryItem, deleteInventoryItem } from "@/lib/supabase/queries";
+import { getInventoryItems, createInventoryItem, updateInventoryItem } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { useUndoableDelete } from "@/hooks/use-undoable-delete";
 import { formatCurrency } from "@/lib/format";
@@ -126,7 +126,7 @@ export default function InventoryPage() {
     if (!deleteItem) return;
     const item = deleteItem;
     setDeleteItem(null);
-    scheduleDelete({ id: item.id, label: item.name, performDelete: () => deleteInventoryItem(item.id) });
+    scheduleDelete({ id: item.id, label: item.name, table: "inventory_items" });
   };
 
   const columns: Column<InventoryItem>[] = [

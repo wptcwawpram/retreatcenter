@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { ROOM_STATUS_CONFIG } from "@/lib/constants";
-import { getRooms, createRoom, updateRoom, updateRoomStatus, deleteRoom, getBookingsWithRooms } from "@/lib/supabase/queries";
+import { getRooms, createRoom, updateRoom, updateRoomStatus, getBookingsWithRooms } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { useUndoableDelete } from "@/hooks/use-undoable-delete";
 import { formatCurrency, formatDate, roomSortKey } from "@/lib/format";
@@ -261,7 +261,7 @@ export default function RoomsPage() {
     if (!deleteItem) return;
     const item = deleteItem;
     setDeleteItem(null);
-    scheduleDelete({ id: item.id, label: `Room ${item.number}`, performDelete: () => deleteRoom(item.id) });
+    scheduleDelete({ id: item.id, label: `Room ${item.number}`, table: "rooms" });
   };
 
   return (

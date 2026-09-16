@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DashboardSidebar } from "@/components/layout/dashboard-sidebar";
 import { DashboardTopbar } from "@/components/layout/dashboard-topbar";
+import { RecycleBin } from "@/components/dashboard/recycle-bin";
 import { getSiteImages } from "@/lib/get-site-images";
 import { SiteImagesProvider } from "@/lib/site-images-context";
 
@@ -29,6 +30,7 @@ export default async function DashboardLayout({
             {children}
           </main>
         </div>
+        <RecycleBin />
       </div>
     </SiteImagesProvider>
   );

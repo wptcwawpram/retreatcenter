@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { getEvents, createEvent, updateEvent, deleteEvent, getVenues } from "@/lib/supabase/queries";
+import { getEvents, createEvent, updateEvent, getVenues } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { useUndoableDelete } from "@/hooks/use-undoable-delete";
 import { Calendar, MapPin, Users, Loader2, Edit2, Trash2, AlertCircle, Download } from "lucide-react";
@@ -90,7 +90,7 @@ export default function EventsPage() {
     if (!deleteItem) return;
     const item = deleteItem;
     setDeleteItem(null);
-    scheduleDelete({ id: item.id, label: `Event "${item.name}"`, performDelete: () => deleteEvent(item.id) });
+    scheduleDelete({ id: item.id, label: `Event "${item.name}"`, table: "events" });
   };
 
   const columns: Column<EventRow>[] = [

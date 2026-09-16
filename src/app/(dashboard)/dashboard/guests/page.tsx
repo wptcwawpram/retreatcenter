@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { getGuests, createGuest, updateGuest, deleteGuest } from "@/lib/supabase/queries";
+import { getGuests, createGuest, updateGuest } from "@/lib/supabase/queries";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { useUndoableDelete } from "@/hooks/use-undoable-delete";
 import { formatDate } from "@/lib/format";
@@ -85,7 +85,7 @@ export default function GuestsPage() {
     if (!deleteItem) return;
     const item = deleteItem;
     setDeleteItem(null);
-    scheduleDelete({ id: item.id, label: item.full_name, performDelete: () => deleteGuest(item.id) });
+    scheduleDelete({ id: item.id, label: item.full_name, table: "guests" });
   };
 
   const columns: Column<Guest>[] = [

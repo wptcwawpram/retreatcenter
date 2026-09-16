@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { NumberStepper } from "@/components/ui/number-stepper";
 import { BOOKING_STATUS_CONFIG, PAYMENT_METHOD_LABELS } from "@/lib/constants";
-import { getBookings, updateBookingFull, deleteBooking, getGuests, getFinanceAccounts, getRooms } from "@/lib/supabase/queries";
+import { getBookings, updateBookingFull, getGuests, getFinanceAccounts, getRooms } from "@/lib/supabase/queries";
 import { AssignRoomsDialog } from "@/components/dashboard/assign-rooms-dialog";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { useUndoableDelete } from "@/hooks/use-undoable-delete";
@@ -1263,11 +1263,7 @@ export default function BookingsPage() {
     if (!deleteItem) return;
     const item = deleteItem;
     setDeleteItem(null);
-    scheduleDelete({
-      id: item.id,
-      label: `Booking ${item.reference}`,
-      performDelete: () => deleteBooking(item.id),
-    });
+    scheduleDelete({ id: item.id, label: `Booking ${item.reference}`, table: "bookings" });
   };
 
   const columns: Column<BookingWithGuest>[] = [
