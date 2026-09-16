@@ -9,7 +9,7 @@ import { ROLE_DASHBOARD_ACCESS } from "@/lib/constants";
 import {
   LayoutDashboard, BedDouble, CalendarCheck, SprayCan, Users,
   CreditCard, TrendingUp, MessageSquareWarning, Zap, Package,
-  UserCog, Send, Calendar, BarChart3, Settings, ClipboardCheck,
+  UserCog, Send, Calendar, BarChart3, Settings, ClipboardCheck, DoorOpen,
 } from "lucide-react";
 
 const navGroups = [
@@ -22,6 +22,7 @@ const navGroups = [
     items: [
       { label: "Rooms", href: "/dashboard/rooms", icon: BedDouble },
       { label: "Bookings", href: "/dashboard/bookings", icon: CalendarCheck },
+      { label: "Room Allocation", href: "/dashboard/allocation", icon: DoorOpen },
       { label: "Check-in/out", href: "/dashboard/checkin", icon: ClipboardCheck },
       { label: "Guests", href: "/dashboard/guests", icon: Users },
       { label: "Housekeeping", href: "/dashboard/housekeeping", icon: SprayCan },

@@ -182,8 +182,8 @@ export const ASSIGNABLE_ROLES = [
 export const ROLE_DASHBOARD_ACCESS: Record<string, string[]> = {
   super_admin: ["*"],
   admin: ["*"],
-  manager: ["dashboard", "rooms", "bookings", "checkin", "calendar", "guests", "housekeeping", "events", "finance", "payments", "reports", "complaints", "inventory", "employees", "utilities", "messaging", "settings"],
-  receptionist: ["dashboard", "rooms", "bookings", "checkin", "calendar", "guests", "payments"],
+  manager: ["dashboard", "rooms", "bookings", "allocation", "checkin", "calendar", "guests", "housekeeping", "events", "finance", "payments", "reports", "complaints", "inventory", "employees", "utilities", "messaging", "settings"],
+  receptionist: ["dashboard", "rooms", "bookings", "allocation", "checkin", "calendar", "guests", "payments"],
   housekeeping: ["dashboard", "housekeeping", "rooms", "inventory"],
   accountant: ["dashboard", "finance", "payments", "reports"],
   maintenance: ["dashboard", "utilities", "inventory", "housekeeping"],
@@ -193,6 +193,7 @@ export const ALL_DASHBOARD_PAGES = [
   { key: "dashboard", label: "Dashboard" },
   { key: "rooms", label: "Rooms" },
   { key: "bookings", label: "Bookings" },
+  { key: "allocation", label: "Room Allocation" },
   { key: "checkin", label: "Check-in/out" },
   { key: "calendar", label: "Calendar" },
   { key: "guests", label: "Guests" },
