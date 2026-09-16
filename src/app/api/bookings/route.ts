@@ -147,6 +147,8 @@ export async function POST(request: NextRequest) {
         if (payData.status && payData.data) {
           paymentAccessCode = payData.data.access_code;
           paymentReference = payData.data.reference;
+          // Persist the reference so admins can re-check this payment later
+          await supabase.from("bookings").update({ payment_reference: payRef }).eq("id", bookingRecord.id).then(() => {}, () => {});
         }
       } catch (payError) {
         console.error("Paystack init failed (non-blocking):", payError);

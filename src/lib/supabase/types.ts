@@ -88,6 +88,7 @@ export interface Booking {
   discount_value?: number;
   discount_amount?: number;
   selection?: BookingSelection | null;
+  payment_reference?: string | null;
   status:
     | "PENDING"
     | "CONFIRMED"

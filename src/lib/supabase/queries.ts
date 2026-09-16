@@ -237,6 +237,17 @@ export async function updateBookingFull(id: string, updates: Partial<Omit<Bookin
   return (await res.json()).data as Booking;
 }
 
+export async function recheckBookingPayment(id: string) {
+  const res = await fetch("/api/bookings/recheck-payment", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ booking_id: id }),
+  });
+  const d = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(d.error || "Failed to re-check payment");
+  return d as { paid: boolean; message?: string; amount?: number; payStatus?: string };
+}
+
 export async function updateBookingPayment(id: string, paidAmount: number, totalAmount: number, paymentStatus: Booking["payment_status"]) {
   const balance = Math.max(0, totalAmount - paidAmount);
   const { error } = await supabase()

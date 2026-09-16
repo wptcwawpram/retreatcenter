@@ -12,14 +12,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { NumberStepper } from "@/components/ui/number-stepper";
 import { BOOKING_STATUS_CONFIG, PAYMENT_METHOD_LABELS } from "@/lib/constants";
-import { getBookings, updateBookingFull, getGuests, getFinanceAccounts, getRooms } from "@/lib/supabase/queries";
+import { getBookings, updateBookingFull, getGuests, getFinanceAccounts, getRooms, recheckBookingPayment } from "@/lib/supabase/queries";
+import { toast } from "sonner";
 import { AssignRoomsDialog } from "@/components/dashboard/assign-rooms-dialog";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { useUndoableDelete } from "@/hooks/use-undoable-delete";
 import { formatCurrency, formatDate, formatTime } from "@/lib/format";
 import {
   Search, Loader2, Eye, Edit2, Trash2, AlertCircle, CheckCircle,
-  BedDouble, Church, Users, User, ChevronDown, Download, Plus, X, CreditCard, Tag, CalendarCheck,
+  BedDouble, Church, Users, User, ChevronDown, Download, Plus, X, CreditCard, Tag, CalendarCheck, RefreshCw,
 } from "lucide-react";
 import { downloadCSV } from "@/lib/export-csv";
 import type { Booking, Guest, FinanceAccount, BookingSelection } from "@/lib/supabase/types";
@@ -1266,10 +1267,24 @@ export default function BookingsPage() {
     scheduleDelete({ id: item.id, label: `Booking ${item.reference}`, table: "bookings" });
   };
 
+  const [rechecking, setRechecking] = useState(false);
+  const handleRecheck = async (b: BookingWithGuest) => {
+    setRechecking(true);
+    try {
+      const r = await recheckBookingPayment(b.id);
+      if (r.paid) { toast.success(`Payment found (${formatCurrency(Number(r.amount || 0))}) — booking updated`); setViewItem(null); refetch(); }
+      else toast(r.message || "No successful payment found yet");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Re-check failed");
+    } finally { setRechecking(false); }
+  };
+
   const columns: Column<BookingWithGuest>[] = [
     { header: "Reference", accessor: (b) => {
       const online = b.source === "WEBSITE";
       const unpaidOnline = online && Number(b.paid_amount || 0) <= 0 && b.status !== "CANCELLED";
+      const ageHours = (Date.now() - new Date(b.created_at).getTime()) / 3600000;
+      const abandoned = unpaidOnline && ageHours > 24 && b.status === "PENDING";
       return (
       <div className="space-y-0.5">
         <button className="ref-code text-sm hover:text-sidebar-primary hover:underline text-left" onClick={(e) => { e.stopPropagation(); setViewItem(b); }}>{b.reference}</button>
@@ -1280,9 +1295,14 @@ export default function BookingsPage() {
           }`}>
             {online ? "Online" : b.source === "WALK_IN" ? "Walk-in" : b.source === "PHONE" ? "Phone" : b.source === "AGENT" ? "Agent" : "Admin"}
           </span>
-          {unpaidOnline && (
+          {unpaidOnline && !abandoned && (
             <span className="flex w-fit items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20" title="Booked on the website but payment not completed — a good candidate to follow up">
               Unpaid · follow up
+            </span>
+          )}
+          {abandoned && (
+            <span className="flex w-fit items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-orange-600/10 text-orange-500 border border-orange-600/20" title="Website booking left unpaid for over 24h — likely abandoned. Try Re-check payment or reach out.">
+              Abandoned
             </span>
           )}
           {Number(b.discount_amount || 0) > 0 && (
@@ -1544,8 +1564,13 @@ export default function BookingsPage() {
               </div>
             );
           })()}
-          <DialogFooter>
+          <DialogFooter className="flex-wrap gap-2">
             <Button variant="outline" onClick={() => setViewItem(null)}>Close</Button>
+            {viewItem && viewItem.source === "WEBSITE" && viewItem.payment_status !== "PAID" && (
+              <Button variant="outline" onClick={() => viewItem && handleRecheck(viewItem)} disabled={rechecking} className="text-blue-500" title="Ask Paystack if this payment actually went through">
+                {rechecking ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5 mr-1.5" />}Re-check payment
+              </Button>
+            )}
             <Button variant="outline" onClick={() => { setPayItem(viewItem); setViewItem(null); }} className="text-teal-600"><CreditCard className="h-3.5 w-3.5 mr-1.5" />Record Payment</Button>
             <Button onClick={() => { setEditItem(viewItem); setViewItem(null); }}>Edit</Button>
           </DialogFooter>
