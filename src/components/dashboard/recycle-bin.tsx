@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { formatDate, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { animateRestoreFromBin } from "@/lib/delete-animation";
 import { Trash2, RotateCcw, X, Loader2, AlertCircle } from "lucide-react";
 
 type TrashItem = {
@@ -98,8 +99,14 @@ export function RecycleBin() {
       load();
       if ((e as CustomEvent).detail?.added) flyToBin();
     };
+    const onLanded = () => {
+      load();
+      setBounce(true); setTimeout(() => setBounce(false), 600);
+      setLidOpen(true); setTimeout(() => setLidOpen(false), 400);
+    };
     window.addEventListener("trash:changed", onChange);
-    return () => window.removeEventListener("trash:changed", onChange);
+    window.addEventListener("trash:landed", onLanded);
+    return () => { window.removeEventListener("trash:changed", onChange); window.removeEventListener("trash:landed", onLanded); };
   }, [load, flyToBin]);
 
   const restore = async (item: TrashItem) => {
@@ -108,6 +115,8 @@ export function RecycleBin() {
       const res = await fetch("/api/trash", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ trashId: item.id }) });
       if (!res.ok) throw new Error();
       setItems((prev) => prev.filter((i) => i.id !== item.id));
+      animateRestoreFromBin(binRef.current);
+      setLidOpen(true); setTimeout(() => setLidOpen(false), 500);
       toast.success(`${item.label || "Item"} restored`);
       window.dispatchEvent(new CustomEvent("trash:changed", {}));
     } catch { toast.error("Restore failed"); }
@@ -141,6 +150,7 @@ export function RecycleBin() {
       {/* Floating bin button */}
       <button
         ref={binRef}
+        data-recycle-bin
         onClick={() => setOpen((o) => !o)}
         aria-label="Recycle bin"
         className={cn(

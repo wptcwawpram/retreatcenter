@@ -111,6 +111,7 @@ export function DataTable<T>({
             {data.map((row) => (
               <TableRow
                 key={keyExtractor(row)}
+                data-row-id={keyExtractor(row)}
                 className={onRowClick ? "cursor-pointer hover:bg-muted/30" : "hover:bg-muted/20"}
                 onClick={() => onRowClick?.(row)}
               >

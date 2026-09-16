@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { animateRowToBin } from "@/lib/delete-animation";
 
 type PendingEntry = {
   timer: ReturnType<typeof setTimeout>;
@@ -62,6 +63,16 @@ export function useUndoableDelete(refetch?: () => void, duration = 6000) {
 
     // ── Recycle-bin mode ──────────────────────────────────────────────
     if (table) {
+      // Animate the actual row rolling into the bin (captured before it's hidden)
+      let animated = false;
+      if (typeof document !== "undefined") {
+        const rowEl = document.querySelector(`[data-row-id="${id}"]`) as HTMLElement | null;
+        const binEl = document.querySelector("[data-recycle-bin]") as HTMLElement | null;
+        if (rowEl) {
+          animated = true;
+          animateRowToBin(rowEl, binEl, () => window.dispatchEvent(new CustomEvent("trash:landed")));
+        }
+      }
       setPendingIds((prev) => new Set(prev).add(id));
       (async () => {
         try {
@@ -73,7 +84,7 @@ export function useUndoableDelete(refetch?: () => void, duration = 6000) {
           const d = await res.json();
           if (!res.ok) throw new Error(d.error || "Failed");
           refetchRef.current?.();
-          if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("trash:changed", { detail: { added: true } }));
+          if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("trash:changed", { detail: { added: !animated } }));
           toast(`${label} moved to bin`, {
             duration,
             action: {
