@@ -1,4 +1,5 @@
 import { isCreditsActive, hasCreditsFor, deductCreditsForSend, NoCreditsError } from "@/lib/sms-credits";
+import { recordHubtelUsage } from "@/lib/hubtel-balance";
 
 const HUBTEL_CLIENT_ID = process.env.HUBTEL_CLIENT_ID!;
 const HUBTEL_CLIENT_SECRET = process.env.HUBTEL_CLIENT_SECRET!;
@@ -70,6 +71,9 @@ export async function sendSms({
   if (active) {
     await deductCreditsForSend(message, to, purpose).catch(() => {});
   }
+
+  // Deduct from the tracked Hubtel wallet balance (superadmin monitor)
+  await recordHubtelUsage({ message, source: "retreatcenter", description: purpose || "SMS sent" }).catch(() => {});
 
   return res.json();
 }
