@@ -15,6 +15,9 @@ export default function HubtelAdminPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [balance, setBalance] = useState<number | null>(null);
+  const [creditBalance, setCreditBalance] = useState<number | null>(null);
+  const [newCredits, setNewCredits] = useState("");
+  const [savingCredits, setSavingCredits] = useState(false);
   const [costPerSms, setCostPerSms] = useState("0.03");
   const [alertNumbers, setAlertNumbers] = useState("");
   const [reportSecretSet, setReportSecretSet] = useState(false);
@@ -30,6 +33,7 @@ export default function HubtelAdminPage() {
       if (res.status === 404 || res.status === 401) { setNotFound(true); return; }
       const d = await res.json();
       setBalance(d.balance);
+      setCreditBalance(d.creditBalance ?? null);
       setCostPerSms(String(d.costPerSms ?? "0.03"));
       setAlertNumbers(d.alertNumbers || "");
       setReportSecretSet(!!d.reportSecretSet);
@@ -52,6 +56,21 @@ export default function HubtelAdminPage() {
       load();
     } catch { toast.error("Failed to update balance"); }
     finally { setSavingBal(false); }
+  };
+
+  const setCredits = async (mode: "set" | "grant") => {
+    const v = Number(newCredits);
+    if (Number.isNaN(v)) { toast.error("Enter a number"); return; }
+    setSavingCredits(true);
+    try {
+      const res = await fetch("/api/hubtel", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: mode === "set" ? "set_credits" : "grant_credits", credits: v }) });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error);
+      setCreditBalance(d.creditBalance);
+      setNewCredits("");
+      toast.success(mode === "set" ? `Credit balance set to ${d.creditBalance}` : `Granted ${v} credits`);
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+    finally { setSavingCredits(false); }
   };
 
   const saveConfig = async () => {
@@ -112,6 +131,29 @@ await fetch("${origin}/api/hubtel/usage", {
             </div>
             <Button onClick={saveBalance} disabled={savingBal} className="gap-1.5">
               {savingBal ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}Update balance
+            </Button>
+          </div>
+        </div>
+
+        {/* SMS credits grant (in-app resold credits, separate from Hubtel wallet) */}
+        <div className={cn("rounded-2xl border p-5 space-y-3", (creditBalance ?? 0) < 0 ? "border-red-500/30 bg-red-500/5" : "border-border/60 bg-card")}>
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold">SMS Credits (admin grant)</h2>
+            <span className={cn("text-lg font-bold tabular-nums", (creditBalance ?? 0) < 0 ? "text-red-400" : (creditBalance ?? 0) <= 50 ? "text-amber-500" : "text-foreground")}>
+              {creditBalance === null ? "…" : Math.floor(creditBalance).toLocaleString()} credits
+            </span>
+          </div>
+          <p className="text-[11px] text-muted-foreground">Grant credits to admins without a payment - e.g. to cancel out a negative balance from the alert bug. Set a target or add an amount.</p>
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
+            <div className="flex-1 space-y-1.5">
+              <Label className="text-xs">Amount</Label>
+              <Input type="number" step="1" placeholder="e.g. 0 to reset, or 500" value={newCredits} onChange={(e) => setNewCredits(e.target.value)} className="h-9" />
+            </div>
+            <Button variant="outline" onClick={() => setCredits("set")} disabled={savingCredits} className="gap-1.5">
+              {savingCredits ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}Set balance to
+            </Button>
+            <Button onClick={() => setCredits("grant")} disabled={savingCredits} className="gap-1.5">
+              {savingCredits ? <Loader2 className="h-4 w-4 animate-spin" /> : <TrendingUp className="h-4 w-4" />}Grant (add)
             </Button>
           </div>
         </div>

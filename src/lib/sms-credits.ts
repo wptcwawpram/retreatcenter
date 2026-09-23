@@ -121,6 +121,24 @@ export async function deductCreditsForSend(message: string, recipient: string, p
   return balanceAfter;
 }
 
+// Superadmin: grant credits (add) or set the balance to a target value.
+// Used to correct the balance without a payment (e.g. cancel out drift).
+export async function adjustCreditBalance(opts: { setTo?: number; add?: number; note?: string; userId?: string | null }) {
+  const sb = service();
+  const current = await getCreditBalance(sb);
+  const delta = opts.setTo != null ? opts.setTo - current : (opts.add ?? 0);
+  if (delta === 0) return current;
+  const balanceAfter = await recordCreditTransaction(sb, {
+    type: "ADJUSTMENT",
+    credits: delta,
+    description: opts.note || (opts.setTo != null ? `Superadmin set balance to ${opts.setTo}` : `Superadmin granted ${opts.add} credits`),
+    created_by: opts.userId || null,
+  });
+  // Re-arm the low-balance alert once the balance is healthy again
+  if (balanceAfter > SMS_LOW_THRESHOLD) await sb.from("settings").upsert({ key: "sms_low_alert_sent", value: "false" });
+  return balanceAfter;
+}
+
 // Returns true if there are enough credits to send `message`.
 export async function hasCreditsFor(message: string): Promise<boolean> {
   const balance = await getCreditBalance();
