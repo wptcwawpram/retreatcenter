@@ -83,6 +83,10 @@ async function maybeLowBalanceAlert(sb: SC, balanceAfter: number) {
     }
     if (alreadySent) return; // already warned for this low period
 
+    // Mark as sent FIRST so the alert SMS below (which themselves deduct credits)
+    // cannot re-enter this function and cause a send storm.
+    await sb.from("settings").upsert({ key: "sms_low_alert_sent", value: "true" });
+
     // Notify admins/managers with a phone number
     const { data: admins } = await sb
       .from("profiles")
@@ -94,7 +98,6 @@ async function maybeLowBalanceAlert(sb: SC, balanceAfter: number) {
       // critical so the alert itself is never blocked by the credit gate
       await sendSms({ to: phone, message: msg, critical: true, purpose: "Low-credit alert" }).catch(() => {});
     }
-    await sb.from("settings").upsert({ key: "sms_low_alert_sent", value: "true" });
   } catch {
     // best-effort
   }
@@ -104,7 +107,7 @@ async function maybeLowBalanceAlert(sb: SC, balanceAfter: number) {
  * Called by sendSms AFTER a successful Hubtel send to deduct credits and
  * trigger a low-balance alert when crossing the threshold.
  */
-export async function deductCreditsForSend(message: string, recipient: string, purpose?: string) {
+export async function deductCreditsForSend(message: string, recipient: string, purpose?: string, triggerAlert = true) {
   const sb = service();
   const segs = segmentsFor(message);
   const balanceAfter = await recordCreditTransaction(sb, {
@@ -113,7 +116,8 @@ export async function deductCreditsForSend(message: string, recipient: string, p
     description: purpose || "SMS sent",
     recipient,
   });
-  await maybeLowBalanceAlert(sb, balanceAfter);
+  // Alert SMS are themselves critical sends; never let them re-trigger the alert.
+  if (triggerAlert) await maybeLowBalanceAlert(sb, balanceAfter);
   return balanceAfter;
 }
 

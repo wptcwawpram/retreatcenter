@@ -67,13 +67,15 @@ export async function sendSms({
     throw new Error(`Hubtel SMS error: ${res.status} ${error}`);
   }
 
-  // Deduct credits after a successful send (records the usage in the audit)
+  // Deduct credits after a successful send (records the usage in the audit).
+  // Critical sends (OTPs, the low-balance alert itself) must NOT trigger the
+  // alert cascade, or the alert SMS would spam by re-triggering itself.
   if (active) {
-    await deductCreditsForSend(message, to, purpose).catch(() => {});
+    await deductCreditsForSend(message, to, purpose, !critical).catch(() => {});
   }
 
   // Deduct from the tracked Hubtel wallet balance (superadmin monitor)
-  await recordHubtelUsage({ message, source: "retreatcenter", description: purpose || "SMS sent" }).catch(() => {});
+  await recordHubtelUsage({ message, source: "retreatcenter", description: purpose || "SMS sent", triggerAlert: !critical }).catch(() => {});
 
   return res.json();
 }

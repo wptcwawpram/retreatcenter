@@ -71,18 +71,20 @@ async function maybeAlert(sb: SC, balance: number) {
   const lowest = Math.min(...crossed);
   if (state[String(lowest)]) return; // already alerted at this depth
 
+  // Mark alerted FIRST so the alert SMS (critical sends) can't re-enter and spam.
+  crossed.forEach((t) => { state[String(t)] = true; });
+  await setSetting(sb, "hubtel_alert_state", JSON.stringify(state));
+
   const numbers = ((await getSetting(sb, "hubtel_alert_numbers")) || "")
     .split(/[,\s]+/).map((n) => n.trim()).filter(Boolean);
   const msg = `WPTC Hubtel SMS balance is low: about GH₵${balance.toFixed(2)} left (below GH₵${lowest}). Please top up your Hubtel account.`;
   for (const to of numbers) {
     await sendSms({ to, message: msg, critical: true, purpose: "Hubtel low-balance alert" }).catch(() => {});
   }
-  crossed.forEach((t) => { state[String(t)] = true; });
-  await setSetting(sb, "hubtel_alert_state", JSON.stringify(state));
 }
 
 // Deduct the cost of an SMS (by segment count) from the tracked balance.
-export async function recordHubtelUsage(opts: { segments?: number; message?: string; source?: string; description?: string }) {
+export async function recordHubtelUsage(opts: { segments?: number; message?: string; source?: string; description?: string; triggerAlert?: boolean }) {
   const sb = service();
   if (!(await isTrackerActive(sb))) return; // not set up yet — don't track
   const segs = opts.segments ?? (opts.message ? segmentsFor(opts.message) : 1);
@@ -91,7 +93,7 @@ export async function recordHubtelUsage(opts: { segments?: number; message?: str
   const newBalance = Math.round((balance - cost * segs) * 10000) / 10000;
   await setSetting(sb, "hubtel_balance", String(newBalance));
   await ledger(sb, { type: "USAGE", amount: -(cost * segs), segments: segs, source: opts.source || "retreatcenter", description: opts.description || "SMS sent", balanceAfter: newBalance });
-  await maybeAlert(sb, newBalance);
+  if (opts.triggerAlert !== false) await maybeAlert(sb, newBalance);
   return newBalance;
 }
 
