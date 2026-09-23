@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { verifyTwofaToken, TWOFA_COOKIE } from "@/lib/twofa";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -30,22 +31,37 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
+  const protectedPath = path.startsWith("/dashboard") || path.startsWith("/admin");
+  const twofaOk = user ? await verifyTwofaToken(request.cookies.get(TWOFA_COOKIE)?.value, user.id) : false;
 
-  // /admin shortcut — redirect to dashboard if logged in, login if not
+  // /admin shortcut — redirect to dashboard if logged in (+2FA), login otherwise
   if (path === "/admin") {
-    if (user) return NextResponse.redirect(new URL("/dashboard", request.url));
+    if (user && twofaOk) return NextResponse.redirect(new URL("/dashboard", request.url));
+    if (user && !twofaOk) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("require2fa", "1");
+      return NextResponse.redirect(loginUrl);
+    }
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Logged-in users visiting /login — send them to dashboard
-  if (user && path === "/login") {
+  // Logged-in users visiting /login — only skip login if 2FA is also complete
+  if (user && twofaOk && path === "/login") {
     const redirect = request.nextUrl.searchParams.get("redirect") || "/dashboard";
     return NextResponse.redirect(new URL(redirect, request.url));
   }
 
-  // Protect dashboard routes — redirect to login if not authenticated
-  if (!user && path.startsWith("/dashboard")) {
+  // Not authenticated at all → login
+  if (!user && protectedPath) {
     const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("redirect", path);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // Authenticated but 2FA not completed for this browser session → finish 2FA
+  if (user && !twofaOk && protectedPath) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("require2fa", "1");
     loginUrl.searchParams.set("redirect", path);
     return NextResponse.redirect(loginUrl);
   }

@@ -47,6 +47,25 @@ function LoginForm() {
   const [otpSending, setOtpSending] = useState(false);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
+  // If middleware redirected here because 2FA isn't complete for an existing
+  // session, jump straight to the verification step (no need to re-enter password).
+  useEffect(() => {
+    if (searchParams.get("require2fa") !== "1") return;
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (!res.ok) return;
+        const d = await res.json();
+        if (d.user?.id) {
+          setUserId(d.user.id);
+          setEmail(d.user.email || "");
+          setStep("2fa-method");
+        }
+      } catch {}
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Forgot password state
   const [forgotPhone, setForgotPhone] = useState("");
   const [forgotOtp, setForgotOtp] = useState(["", "", "", "", "", ""]);
@@ -96,6 +115,8 @@ function LoginForm() {
       }
 
       if (data.user) {
+        // Invalidate any prior 2FA so this fresh login must verify again
+        await fetch("/api/auth/2fa-reset", { method: "POST" }).catch(() => {});
         setUserId(data.user.id);
         setStep("2fa-method");
       }

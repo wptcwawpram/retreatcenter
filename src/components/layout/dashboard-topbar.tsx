@@ -46,6 +46,7 @@ export function DashboardTopbar() {
     setLoggingOut(true);
     try {
       const supabase = createClient();
+      await fetch("/api/auth/2fa-reset", { method: "POST" }).catch(() => {});
       await supabase.auth.signOut();
       router.push("/login");
       router.refresh();
