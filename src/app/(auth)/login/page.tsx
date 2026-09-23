@@ -327,11 +327,7 @@ function LoginForm() {
                 <button
                   onClick={async () => {
                     try { await sendOTP(userId, "sms"); }
-                    catch {
-                      setStep("loading");
-                      await new Promise((r) => setTimeout(r, 1200));
-                      router.push(redirectTo); router.refresh();
-                    }
+                    catch (e) { setError(e instanceof Error && e.message ? e.message : "Couldn't send the code by SMS. Please try Email or retry."); }
                   }}
                   disabled={otpSending}
                   className="w-full flex items-center gap-3 rounded-xl border border-gold/20 bg-gold/[0.05] hover:bg-gold/[0.10] px-4 py-3.5 text-left transition-colors"
@@ -345,11 +341,7 @@ function LoginForm() {
                 <button
                   onClick={async () => {
                     try { await sendOTP(userId, "email"); }
-                    catch {
-                      setStep("loading");
-                      await new Promise((r) => setTimeout(r, 1200));
-                      router.push(redirectTo); router.refresh();
-                    }
+                    catch (e) { setError(e instanceof Error && e.message ? e.message : "Couldn't send the code by Email. Please try SMS or retry."); }
                   }}
                   disabled={otpSending}
                   className="w-full flex items-center gap-3 rounded-xl border border-gold/20 bg-gold/[0.05] hover:bg-gold/[0.10] px-4 py-3.5 text-left transition-colors"
