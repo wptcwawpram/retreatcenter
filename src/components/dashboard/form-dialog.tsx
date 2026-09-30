@@ -13,7 +13,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Combobox } from "@/components/ui/combobox";
 import { AlertCircle, Loader2 } from "lucide-react";
+
+// Lists this long get a searchable combobox instead of a plain select
+const SEARCHABLE_THRESHOLD = 10;
 
 export interface FormField {
   name: string;
@@ -123,18 +127,28 @@ export function FormDialog({
                       {field.required && <span className="text-red-500 ml-0.5">*</span>}
                     </Label>
                     {field.type === "select" ? (
-                      <select
-                        id={field.name}
-                        value={String(values[field.name] ?? "")}
-                        onChange={(e) => updateValue(field.name, e.target.value)}
-                        required={field.required}
-                        className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                      >
-                        <option value="">Select...</option>
-                        {field.options?.map((opt) => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
+                      (field.options?.length ?? 0) >= SEARCHABLE_THRESHOLD ? (
+                        <Combobox
+                          id={field.name}
+                          options={field.options ?? []}
+                          value={String(values[field.name] ?? "")}
+                          onChange={(v) => updateValue(field.name, v)}
+                          placeholder={field.placeholder || "Select..."}
+                        />
+                      ) : (
+                        <select
+                          id={field.name}
+                          value={String(values[field.name] ?? "")}
+                          onChange={(e) => updateValue(field.name, e.target.value)}
+                          required={field.required}
+                          className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        >
+                          <option value="">Select...</option>
+                          {field.options?.map((opt) => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                      )
                     ) : field.type === "textarea" ? (
                       <Textarea
                         id={field.name}
