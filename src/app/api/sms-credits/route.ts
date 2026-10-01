@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { getCreditBalance, isCreditsActive, SMS_CREDIT_PRICE, SMS_LOW_THRESHOLD } from "@/lib/sms-credits";
+import { getCreditBalance, isCreditsActive, getCreditPrice, SMS_LOW_THRESHOLD } from "@/lib/sms-credits";
 
 async function getAuthUser() {
   const cookieStore = await cookies();
@@ -41,7 +41,7 @@ export async function GET() {
     return NextResponse.json({
       balance,
       active,
-      price: SMS_CREDIT_PRICE,
+      price: await getCreditPrice(),
       lowThreshold: SMS_LOW_THRESHOLD,
       purchaseConfigured: !!process.env.SMS_PAYSTACK_SECRET_KEY,
       transactions: transactions || [],

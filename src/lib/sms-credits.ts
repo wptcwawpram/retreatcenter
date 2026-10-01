@@ -6,7 +6,8 @@ import { sendSms } from "@/lib/hubtel-sms";
  * Owner sells credits; every SMS segment sent deducts 1 credit.
  */
 
-export const SMS_CREDIT_PRICE = Number(process.env.SMS_CREDIT_PRICE || "0.10"); // GHS per credit, owner-only (env)
+// Default GHS per credit if the owner hasn't set a price. 0.16 => 500 credits = GH₵80.
+export const SMS_CREDIT_PRICE_DEFAULT = Number(process.env.SMS_CREDIT_PRICE || "0.16");
 export const SMS_LOW_THRESHOLD = 50;
 
 function service() {
@@ -15,6 +16,20 @@ function service() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { cookies: { getAll: () => [], setAll: () => {} } },
   );
+}
+
+// Owner-set price per credit (stored in settings, editable on /admin/hubtel).
+export async function getCreditPrice(supabase?: SC): Promise<number> {
+  const sb = supabase || service();
+  const { data } = await sb.from("settings").select("value").eq("key", "sms_credit_price").maybeSingle();
+  const v = data?.value != null ? Number(data.value) : NaN;
+  return Number.isFinite(v) && v > 0 ? v : SMS_CREDIT_PRICE_DEFAULT;
+}
+
+export async function setCreditPrice(price: number): Promise<void> {
+  if (!Number.isFinite(price) || price <= 0) throw new Error("Price must be greater than 0");
+  const sb = service();
+  await sb.from("settings").upsert({ key: "sms_credit_price", value: String(price) });
 }
 
 // GSM segment count: <=160 chars = 1, otherwise 153 chars per segment

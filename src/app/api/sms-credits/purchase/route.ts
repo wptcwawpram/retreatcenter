@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { SMS_CREDIT_PRICE } from "@/lib/sms-credits";
+import { getCreditPrice } from "@/lib/sms-credits";
 
 async function getAuthUser() {
   const cookieStore = await cookies();
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     if (nCredits <= 0) return NextResponse.json({ error: "Enter how many credits to buy" }, { status: 400 });
 
     // Price computed server-side so it cannot be tampered with
-    const amountGhs = nCredits * SMS_CREDIT_PRICE;
+    const amountGhs = nCredits * (await getCreditPrice());
     const reference = `SMS-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
     const res = await fetch("https://api.paystack.co/transaction/initialize", {

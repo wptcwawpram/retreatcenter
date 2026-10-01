@@ -17,6 +17,8 @@ export default function HubtelAdminPage() {
   const [balance, setBalance] = useState<number | null>(null);
   const [creditBalance, setCreditBalance] = useState<number | null>(null);
   const [newCredits, setNewCredits] = useState("");
+  const [creditPrice, setCreditPrice] = useState("0.16");
+  const [savingPrice, setSavingPrice] = useState(false);
   const [savingCredits, setSavingCredits] = useState(false);
   const [costPerSms, setCostPerSms] = useState("0.03");
   const [alertNumbers, setAlertNumbers] = useState("");
@@ -34,6 +36,7 @@ export default function HubtelAdminPage() {
       const d = await res.json();
       setBalance(d.balance);
       setCreditBalance(d.creditBalance ?? null);
+      if (d.creditPrice != null) setCreditPrice(String(d.creditPrice));
       setCostPerSms(String(d.costPerSms ?? "0.03"));
       setAlertNumbers(d.alertNumbers || "");
       setReportSecretSet(!!d.reportSecretSet);
@@ -56,6 +59,19 @@ export default function HubtelAdminPage() {
       load();
     } catch { toast.error("Failed to update balance"); }
     finally { setSavingBal(false); }
+  };
+
+  const savePrice = async () => {
+    const p = Number(creditPrice);
+    if (!Number.isFinite(p) || p <= 0) { toast.error("Enter a valid price"); return; }
+    setSavingPrice(true);
+    try {
+      const res = await fetch("/api/hubtel", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "set_sms_price", price: p }) });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error);
+      toast.success(`Price set to GH₵${p.toFixed(2)} per credit`);
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+    finally { setSavingPrice(false); }
   };
 
   const setCredits = async (mode: "set" | "grant") => {
@@ -133,6 +149,28 @@ await fetch("${origin}/api/hubtel/usage", {
               {savingBal ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}Update balance
             </Button>
           </div>
+        </div>
+
+        {/* SMS credit selling price (what admins pay to buy credits) */}
+        <div className="rounded-2xl border border-border/60 bg-card p-5 space-y-3">
+          <h2 className="text-sm font-semibold">SMS Credit Price</h2>
+          <p className="text-[11px] text-muted-foreground">What admins pay per credit when buying. 1 credit = 1 SMS (160 chars).</p>
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
+            <div className="flex-1 space-y-1.5">
+              <Label className="text-xs">Price per credit (GH₵)</Label>
+              <Input type="number" step="0.01" min="0" value={creditPrice} onChange={(e) => setCreditPrice(e.target.value)} className="h-9" />
+            </div>
+            <Button onClick={savePrice} disabled={savingPrice} className="gap-1.5">
+              {savingPrice ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}Save price
+            </Button>
+          </div>
+          {Number(creditPrice) > 0 && (
+            <p className="text-[11px] text-muted-foreground">
+              At this rate: 100 = <span className="text-foreground font-medium">GH₵{(Number(creditPrice) * 100).toFixed(2)}</span> ·
+              500 = <span className="text-foreground font-medium">GH₵{(Number(creditPrice) * 500).toFixed(2)}</span> ·
+              1000 = <span className="text-foreground font-medium">GH₵{(Number(creditPrice) * 1000).toFixed(2)}</span>
+            </p>
+          )}
         </div>
 
         {/* SMS credits grant (in-app resold credits, separate from Hubtel wallet) */}

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getHubtelState, getHubtelLedger, setHubtelBalance, setHubtelConfig } from "@/lib/hubtel-balance";
-import { getCreditBalance, adjustCreditBalance } from "@/lib/sms-credits";
+import { getCreditBalance, adjustCreditBalance, getCreditPrice, setCreditPrice } from "@/lib/sms-credits";
 
 // Returns the current user's id + role, or null
 async function getRole() {
@@ -31,7 +31,8 @@ export async function GET() {
   const state = await getHubtelState();
   const ledger = await getHubtelLedger(100);
   const creditBalance = await getCreditBalance();
-  return NextResponse.json({ ...state, ledger, creditBalance });
+  const creditPrice = await getCreditPrice();
+  return NextResponse.json({ ...state, ledger, creditBalance, creditPrice });
 }
 
 // POST /api/hubtel — superadmin only: set balance or config
@@ -58,6 +59,12 @@ export async function POST(request: NextRequest) {
     if (Number.isNaN(target)) return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
     const balance = await adjustCreditBalance({ setTo: target, note: body.note || "Superadmin set SMS credit balance", userId: me.id });
     return NextResponse.json({ success: true, creditBalance: balance });
+  }
+  if (body.action === "set_sms_price") {
+    const price = Number(body.price);
+    if (!Number.isFinite(price) || price <= 0) return NextResponse.json({ error: "Price must be greater than 0" }, { status: 400 });
+    await setCreditPrice(price);
+    return NextResponse.json({ success: true, creditPrice: price });
   }
   if (body.action === "grant_credits") {
     const add = Number(body.credits);
